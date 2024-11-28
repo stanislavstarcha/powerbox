@@ -1,0 +1,73 @@
+$flaticon_powerbox-font: "flaticon_powerbox";
+
+@font-face {
+    font-family: $flaticon_powerbox-font;
+    src: url("../assets/fonts/flaticon_powerbox.woff2?6aaa56ae908cc4d8963b27b731972dda") format("woff2"),
+url("../assets/fonts/flaticon_powerbox.woff?6aaa56ae908cc4d8963b27b731972dda") format("woff"),
+url("../assets/fonts/flaticon_powerbox.eot?6aaa56ae908cc4d8963b27b731972dda#iefix") format("embedded-opentype"),
+url("../assets/fonts/flaticon_powerbox.ttf?6aaa56ae908cc4d8963b27b731972dda") format("truetype"),
+url("../assets/fonts/flaticon_powerbox.svg?6aaa56ae908cc4d8963b27b731972dda#flaticon_powerbox") format("svg");
+}
+
+i[class^="flaticon-"]:before, i[class*=" flaticon-"]:before {
+    font-family: flaticon_powerbox !important;
+    font-style: normal;
+    font-weight: normal !important;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+$flaticon_powerbox-map: (
+    "home": "\f101",
+    "psu": "\f102",
+    "ac-voltage-source": "\f103",
+    "cpu": "\f104",
+    "question": "\f105",
+    "hub": "\f106",
+    "battery-status-full": "\f107",
+    "battery-status": "\f108",
+    "battery-status-1": "\f109",
+    "battery-status-2": "\f10a",
+    "battery-status-3": "\f10b",
+    "electric-station": "\f10c",
+);
+
+.flaticon-home:before {
+    content: map-get($flaticon_powerbox-map, "home");
+}
+.flaticon-psu:before {
+    content: map-get($flaticon_powerbox-map, "psu");
+}
+.flaticon-ac-voltage-source:before {
+    content: map-get($flaticon_powerbox-map, "ac-voltage-source");
+}
+.flaticon-cpu:before {
+    content: map-get($flaticon_powerbox-map, "cpu");
+}
+.flaticon-question:before {
+    content: map-get($flaticon_powerbox-map, "question");
+}
+.flaticon-battery-status-5:before {
+    content: map-get($flaticon_powerbox-map, "battery-status-full");
+}
+.flaticon-battery-status-1:before {
+    content: map-get($flaticon_powerbox-map, "battery-status-2");
+}
+.flaticon-battery-status-2:before {
+    content: map-get($flaticon_powerbox-map, "battery-status-3");
+}
+.flaticon-battery-status-3:before {
+    content: map-get($flaticon_powerbox-map, "battery-status-1");
+}
+.flaticon-battery-status-4:before {
+    content: map-get($flaticon_powerbox-map, "battery-status");
+}
+.flaticon-hub:before {
+    content: map-get($flaticon_powerbox-map, "hub");
+}
+.flaticon-electric-station:before {
+    content: map-get($flaticon_powerbox-map, "electric-station");
+}

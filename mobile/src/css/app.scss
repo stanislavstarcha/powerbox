@@ -1,0 +1,18 @@
+// app global css in SCSS form
+
+.q-layout__section--marginal {
+    background: white;
+}
+
+.q-page {
+    padding: 15px;
+}
+
+.error-message {
+    padding: 10px;
+    color: #ffffff;
+    background: #ff0000;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-radius: 3px;
+}

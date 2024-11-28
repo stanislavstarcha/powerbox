@@ -1,0 +1,6 @@
+{
+  "appId": "org.capacitor.powerbox",
+  "appName": "powerbox",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
