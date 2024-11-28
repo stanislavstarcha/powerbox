@@ -1,4 +1,6 @@
+sandbox
 .idea
+.vscode
 .python-version
 yarn.lock
 *.pyc
