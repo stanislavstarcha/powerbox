@@ -2,18 +2,18 @@
     <q-page class="">
         <highcharts :options="chartOptions"></highcharts>
 
-        <div class="text-h5 q-mt-lg text-bold">Контролер батареї</div>
+        <div class="text-h5 q-mt-lg text-bold">{{ $t("bms") }}</div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Заряд</div>
+            <div class="col-10">{{ $t("batteryLevel") }}</div>
             <div class="col" v-if="bmsStore.level">{{ bmsStore.level }}%</div>
             <div class="col-2 text-grey-5" v-if="!bmsStore.level">&mdash;</div>
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Напруга батареї</div>
+            <div class="col-10">{{ $t("batteryVoltage") }}</div>
             <div class="col-2" v-if="bmsStore.voltage">
-                {{ bmsStore.voltage.toFixed(2) }} В
+                {{ bmsStore.voltage.toFixed(2) }} {{ $t("volt") }}
             </div>
             <div class="col-2 text-grey-5" v-if="!bmsStore.voltage">
                 &mdash;
@@ -21,7 +21,7 @@
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Струм</div>
+            <div class="col-10">{{ $t("current") }}</div>
             <div class="col-2" v-if="bmsStore.current">
                 {{ bmsStore.current }} А
             </div>
@@ -31,9 +31,9 @@
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Комірка 1</div>
+            <div class="col-10">{{ $t("cellVoltage") }} 1</div>
             <div class="col-2" v-if="bmsStore.cell1Voltage">
-                {{ bmsStore.cell1Voltage.toFixed(2) }} В
+                {{ bmsStore.cell1Voltage.toFixed(2) }} {{ $t("volt") }}
             </div>
             <div class="col-2 text-grey-5" v-if="!bmsStore.cell1Voltage">
                 &mdash;
@@ -41,9 +41,9 @@
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Комірка 2</div>
+            <div class="col-10">{{ $t("cellVoltage") }} 2</div>
             <div class="col-2" v-if="bmsStore.cell2Voltage">
-                {{ bmsStore.cell2Voltage.toFixed(2) }} В
+                {{ bmsStore.cell2Voltage.toFixed(2) }} {{ $t("volt") }}
             </div>
             <div class="col-2 text-grey-5" v-if="!bmsStore.cell2Voltage">
                 &mdash;
@@ -51,9 +51,9 @@
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Комірка 3</div>
+            <div class="col-10">{{ $t("cellVoltage") }} 3</div>
             <div class="col-2" v-if="bmsStore.cell3Voltage">
-                {{ bmsStore.cell3Voltage.toFixed(2) }} В
+                {{ bmsStore.cell3Voltage.toFixed(2) }} {{ $t("volt") }}
             </div>
             <div class="col-2 text-grey-5" v-if="!bmsStore.cell3Voltage">
                 NA
@@ -61,9 +61,9 @@
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Комірка 4</div>
+            <div class="col-10">{{ $t("cellVoltage") }} 4</div>
             <div class="col-2" v-if="bmsStore.cell4Voltage">
-                {{ bmsStore.cell4Voltage.toFixed(2) }} В
+                {{ bmsStore.cell4Voltage.toFixed(2) }} {{ $t("volt") }}
             </div>
             <div class="col-2 text-grey-5" v-if="!bmsStore.cell4Voltage">
                 &mdash;
@@ -71,11 +71,11 @@
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">MOS температура</div>
+            <div class="col-10">{{ $t("mosTemperature") }}</div>
             <div class="col-2">{{ bmsStore.mosTemperature }} ℃</div>
         </div>
         <div class="row q-mt-md">
-            <div class="col-10">Температура сенсора 1</div>
+            <div class="col-10">{{ $t("sensorTemperature") }} 1</div>
             <div class="col-2" v-if="bmsStore.sensor1Temperature">
                 {{ bmsStore.sensor1Temperature }} ℃
             </div>
@@ -84,7 +84,7 @@
             </div>
         </div>
         <div class="row q-mt-md">
-            <div class="col-10">Температура сенсора 2</div>
+            <div class="col-10">{{ $t("sensorTemperature") }} 2</div>
             <div class="col-2" v-if="bmsStore.sensor2Temperature">
                 {{ bmsStore.sensor2Temperature }} ℃
             </div>
@@ -94,7 +94,7 @@
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Дозволити заряд</div>
+            <div class="col-10">{{ $t("allowCharging") }}</div>
             <div class="col-2">
                 <q-toggle
                     v-model="bmsStore.allowCharging"
@@ -104,7 +104,7 @@
             </div>
         </div>
         <div class="row q-mt-md">
-            <div class="col-10">Дозволити розряд</div>
+            <div class="col-10">{{ $t("allowDischarging") }}</div>
             <div class="col-2">
                 <q-toggle
                     v-model="bmsStore.allowDischarging"
@@ -126,23 +126,25 @@ import {
     HISTORY_BMS_CELL3_VOLTAGE,
     HISTORY_BMS_CELL4_VOLTAGE,
 } from "stores/uuids.js";
+import { useI18n } from "vue-i18n";
 
 const bmsStore = useBMSStore();
+const { t } = useI18n();
 
 const chartOptions = ref({
     chart: {
         type: "spline",
         backgroundColor: "transparent",
-        spacing: [0, 0, 0, 0], // Removes outer spacing around the chart
-        margin: [0, 0, 10, 0], // Removes margins within the chart area
+        spacing: [0, 0, 0, 0],
+        margin: [0, 0, 10, 0],
         height: 100,
         animation: false,
     },
     title: {
-        text: null, // Hides title
+        text: null,
     },
     xAxis: {
-        visible: false, // Hides the x-axis completely
+        visible: false,
     },
     yAxis: [
         {
@@ -155,7 +157,7 @@ const chartOptions = ref({
             labels: {
                 style: { fontSize: "9px" },
                 format: "{value}А",
-                align: "left", // Aligns labels to the right
+                align: "left",
                 x: 5,
                 y: 10,
             },
@@ -171,7 +173,7 @@ const chartOptions = ref({
             tickPositions: [2.7, 3, 3.6], // Positions for 3 labels
             labels: {
                 style: { fontSize: "9px" },
-                format: "{value}В",
+                format: "{value}" + t("volt"),
                 align: "left",
                 x: -25,
                 y: 10,

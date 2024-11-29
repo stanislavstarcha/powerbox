@@ -2,7 +2,6 @@ import { acceptHMRUpdate, defineStore } from "pinia";
 import {
     BleClient,
     numbersToDataView,
-    dataViewToNumbers,
 } from "@capacitor-community/bluetooth-le";
 
 import { Loading, QSpinnerGears } from "quasar";
@@ -134,26 +133,26 @@ export const useBLEStore = defineStore("ble", {
                         bmsUUID,
                         bmsStore.parseState,
                     ),
-                    // BleClient.startNotifications(
-                    //     deviceId,
-                    //     coreServiceUUID,
-                    //     psuUUID,
-                    //     psuStore.parseState,
-                    // ),
-                    //
-                    // BleClient.startNotifications(
-                    //     deviceId,
-                    //     coreServiceUUID,
-                    //     inverterUUID,
-                    //     inverterStore.parseState,
-                    // ),
-                    //
-                    // BleClient.startNotifications(
-                    //     deviceId,
-                    //     coreServiceUUID,
-                    //     espUUID,
-                    //     espStore.parseState,
-                    // ),
+                    BleClient.startNotifications(
+                        deviceId,
+                        coreServiceUUID,
+                        psuUUID,
+                        psuStore.parseState,
+                    ),
+
+                    BleClient.startNotifications(
+                        deviceId,
+                        coreServiceUUID,
+                        inverterUUID,
+                        inverterStore.parseState,
+                    ),
+
+                    BleClient.startNotifications(
+                        deviceId,
+                        coreServiceUUID,
+                        espUUID,
+                        espStore.parseState,
+                    ),
 
                     BleClient.startNotifications(
                         deviceId,

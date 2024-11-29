@@ -1,0 +1,53 @@
+export default {
+    connect: "Connect",
+    scanAgain: "Scan again",
+    noStationsFound:
+        "No power stations found. Make sure it's turned on and located nearby.",
+
+    inverter: "Inverter",
+    power: "Power",
+    psu: "Power Supply",
+    current: "Current",
+    bms: "Battery Controller",
+    mainController: "Main Controller",
+
+    voltage: "Voltage",
+    maxChargingCurrent: "Mac charging current.",
+    startInverterAC: "Click to generate 230V",
+    batteryLevel: "Заряд",
+    batteryVoltage: "Battery voltage",
+    cellVoltage: "Cell voltage",
+    mosTemperature: "BMS temperature",
+    sensorTemperature: "Sensor temperature",
+    allowCharging: "Allow Charging",
+    allowDischarging: "Allow Discharging",
+
+    watt: "W",
+    volt: "V",
+    ampere: "A",
+    consumption: "Power Consumption",
+    uptime: "Uptime",
+    memory: "Memory usage",
+    temperature: "Temperature",
+    version: "Version",
+    startPSU: "Click to start charging the battery",
+    acVoltage: "AC voltage",
+
+    inverterErrorTimeout: "Inverter controller is not alive",
+    inverterErrorException: "Unexpected inverter error",
+    inverterErrorNoResponse: "Inverter is not responding",
+    inverterErrorBadResponse: "Bad inverter response",
+    inverterErrorUnderVoltage: "Battery voltage is too low",
+    inverterErrorOverVoltage: "Battery voltage is too high",
+
+    bmsErrorTimeout: "Battery controller is not alive",
+    bmsErrorException: "Unexpected Непередбачена помилка BMS",
+    bmsErrorNoResponse: "Battery controller is not responding",
+    bmsErrorBadResponse: "Incorrect BMS response",
+
+    psuErrorTimeout: "PSU controller is not alive",
+    psuErrorException: "Unexpected PSU error",
+    psuErrorTemperatureSensor: "Temperature sensor failure",
+    psuErrorVoltageSensor: "Voltage sensor failure",
+    psuErrorPin: "Pin initialisation failure",
+};

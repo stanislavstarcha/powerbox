@@ -2,8 +2,7 @@ import { store } from "quasar/wrappers";
 import { createPinia } from "pinia";
 import _ from "underscore";
 
-import { HISTORY_BMS_CURRENT, HISTORY_LENGTH } from "stores/uuids";
-import { unpack_cell_voltage } from "src/utils/ble.js";
+import { HISTORY_LENGTH } from "stores/uuids";
 
 /*
  * If not building with SSR mode, you can
@@ -14,7 +13,7 @@ import { unpack_cell_voltage } from "src/utils/ble.js";
  * with the Store instance.
  */
 
-function DeviceStorePlugin({ store }) {
+function DeviceStorePlugin({ app, options, store }) {
     store.hasErrors = () => {
         const internal = _.isNull(store.$state.internalErrors)
             ? 0

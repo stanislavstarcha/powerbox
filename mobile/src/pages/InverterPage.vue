@@ -2,11 +2,10 @@
     <q-page class="">
         <highcharts :options="chartOptions"></highcharts>
 
-        <div class="text-h5 q-mt-lg text-bold">Інвертор</div>
-        <span>has errors {{ inverterStore.hasErrors() }}</span>
+        <div class="text-h5 q-mt-lg text-bold">{{ $t("inverter") }}</div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Напруга мережі</div>
+            <div class="col-10">{{ $t("acVoltage") }}</div>
             <div class="col-2" v-if="inverterStore.ac">
                 {{ inverterStore.ac }} В
             </div>
@@ -16,9 +15,9 @@
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Споживання</div>
+            <div class="col-10">{{ $t("consumption") }}</div>
             <div class="col-2" v-if="inverterStore.power">
-                {{ inverterStore.power }} Вт
+                {{ inverterStore.power }} {{ $t("watt") }}
             </div>
             <div class="col-2 text-grey-5" v-if="!inverterStore.power">
                 &mdash;
@@ -26,7 +25,7 @@
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Температура</div>
+            <div class="col-10">{{ $t("temperature") }}</div>
             <div class="col-2" v-if="inverterStore.temperature">
                 {{ inverterStore.temperature }} ℃
             </div>
@@ -44,8 +43,10 @@ import {
     HISTORY_INVERTER_POWER,
     HISTORY_INVERTER_TEMPERATURE,
 } from "stores/uuids.js";
+import { useI18n } from "vue-i18n";
 
 const inverterStore = useInverterStore();
+const { t } = useI18n();
 
 const errors = computed(() => {
     if (!inverterStore.internalErrors) return [];
@@ -53,35 +54,27 @@ const errors = computed(() => {
     const results = [];
 
     if (inverterStore.internalErrors & (1 << 0)) {
-        results.push("err 1");
-    }
-
-    if (inverterStore.internalErrors & (1 << 0)) {
-        results.push("Системна помилка контролеру");
+        results.push(t("inverterErrorTimeout"));
     }
 
     if (inverterStore.internalErrors & (1 << 1)) {
-        results.push("Неочикувана системна помилка");
+        results.push(t("inverterErrorException"));
     }
 
     if (inverterStore.internalErrors & (1 << 2)) {
-        results.push("Пристрій не відповідає");
+        results.push(t("inverterErrorNoResponse"));
     }
 
     if (inverterStore.internalErrors & (1 << 3)) {
-        results.push("Невалідна відповідь пристрія");
+        results.push(t("inverterErrorBadResponse"));
     }
 
-    if (inverterStore.internalErrors & (1 << 4)) {
-        results.push("Помилка сенсору температури");
+    if (inverterStore.externalErrors == 10) {
+        results.push(t("inverterErrorUnderVoltage"));
     }
 
-    if (inverterStore.internalErrors & (1 << 5)) {
-        results.push("Помилка сенсору вольтметра");
-    }
-
-    if (inverterStore.internalErrors & (1 << 6)) {
-        results.push("pin initi");
+    if (inverterStore.externalErrors == 20) {
+        results.push(t("inverterErrorOverVoltage"));
     }
 
     return results;
@@ -107,11 +100,11 @@ const chartOptions = ref({
             title: { text: null },
             visible: true,
             max: 2500,
-            tickPositions: [0, 1000, 2500], // Positions for 3 labels
+            tickPositions: [0, 1000, 2500],
             labels: {
                 style: { fontSize: "9px" },
-                format: "{value} Вт",
-                align: "left", // Aligns labels to the right
+                format: "{value} " + t("watt"),
+                align: "left",
                 x: 5,
                 y: 10,
             },

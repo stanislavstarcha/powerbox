@@ -5,8 +5,7 @@
                 v-if="!bleStore.scanning && !bleStore.devices.length"
                 class="col-6 justify-center text-center"
             >
-                Не знайдено жодної станції. Переконайтесь що вона ввімкнена та
-                знаходиться поблизу.
+                {{ $t("noStationsFound") }}
             </div>
         </div>
 
@@ -21,16 +20,35 @@
                     <q-item-label caption>{{ device.deviceId }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                    <q-btn flat @click="connect(device.deviceId)"
-                        >connect</q-btn
-                    >
+                    <q-btn flat @click="connect(device.deviceId)">{{
+                        $t("connect")
+                    }}</q-btn>
                 </q-item-section>
             </q-item>
         </q-list>
 
         <div class="row flex-center" v-if="!bleStore.scanning">
-            <q-btn color="primary" @click="bleStore.scan()" class="q-mt-md"
-                >Шукати знов</q-btn
+            <q-btn color="primary" @click="bleStore.scan()" class="q-mt-md">{{
+                $t("scanAgain")
+            }}</q-btn>
+        </div>
+
+        <div class="row flex-center q-mt-xl">
+            <a
+                v-if="appStore.language === 'uk'"
+                href="javascript:;"
+                color="primary"
+                @click="appStore.setLanguage('en')"
+                class="q-mt-md"
+                >Switch to English</a
+            >
+            <a
+                v-if="appStore.language === 'en'"
+                href="javascript:;"
+                color="primary"
+                @click="appStore.setLanguage('uk')"
+                class="q-mt-md"
+                >Перейти на українську</a
             >
         </div>
     </q-page>
@@ -40,10 +58,12 @@
 import { useAppStore } from "stores/app";
 import { useBLEStore } from "stores/ble";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 
 const appStore = useAppStore();
 const bleStore = useBLEStore();
 const router = useRouter();
+const { t } = useI18n();
 
 bleStore.bootstrap().then((response) => {
     bleStore.scan().then(() => {

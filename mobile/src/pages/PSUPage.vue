@@ -1,14 +1,14 @@
 <template>
     <q-page class="">
         <highcharts :options="chartOptions"></highcharts>
-        <div class="text-h5 q-mt-lg text-bold">Блок живлення</div>
+        <div class="text-h5 q-mt-lg text-bold">{{ $t("psu") }}</div>
         <div v-if="psuStore.hasErrors()">
             <div v-for="error in errors" :key="error" class="error-message">
                 {{ error }}
             </div>
         </div>
         <div class="row q-mt-md">
-            <div class="col-10">Напруга</div>
+            <div class="col-10">{{ $t("voltage") }}</div>
             <div class="col-2" v-if="psuStore.voltage">
                 {{ psuStore.voltage?.toFixed(2) }} В
             </div>
@@ -18,7 +18,7 @@
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">Температура</div>
+            <div class="col-10">{{ $t("temperature") }}</div>
             <div class="col-2" v-if="psuStore.temperature">
                 {{ psuStore.temperature }} ℃
             </div>
@@ -33,43 +33,34 @@
 import { computed, ref } from "vue";
 import { usePSUStore } from "stores/psu";
 import { HISTORY_PSU_TEMPERATURE } from "stores/uuids.js";
+import { useI18n } from "vue-i18n";
 
 const psuStore = usePSUStore();
+const { t } = useI18n();
+
 const errors = computed(() => {
     if (!psuStore.internalErrors) return [];
 
     const results = [];
 
     if (psuStore.internalErrors & (1 << 0)) {
-        results.push("err 1");
-    }
-
-    if (psuStore.internalErrors & (1 << 0)) {
-        results.push("Системна помилка контролеру");
+        results.push(t("psuErrorTimeout"));
     }
 
     if (psuStore.internalErrors & (1 << 1)) {
-        results.push("Неочикувана системна помилка");
-    }
-
-    if (psuStore.internalErrors & (1 << 2)) {
-        results.push("Пристрій не відповідає");
-    }
-
-    if (psuStore.internalErrors & (1 << 3)) {
-        results.push("Невалідна відповідь пристрія");
+        results.push(t("psuErrorException"));
     }
 
     if (psuStore.internalErrors & (1 << 4)) {
-        results.push("Помилка сенсору температури");
+        results.push(t("psuErrorTemperatureSensor"));
     }
 
     if (psuStore.internalErrors & (1 << 5)) {
-        results.push("Помилка сенсору вольтметра");
+        results.push(t("psuErrorVoltageSensor"));
     }
 
     if (psuStore.internalErrors & (1 << 6)) {
-        results.push("pin initi");
+        results.push(t("psuErrorPin"));
     }
 
     return results;
@@ -79,15 +70,15 @@ const chartOptions = ref({
     chart: {
         type: "spline",
         backgroundColor: "transparent",
-        spacing: [0, 0, 0, 0], // Removes outer spacing around the chart
-        margin: [0, 0, 10, 0], // Removes margins within the chart area
+        spacing: [0, 0, 0, 0],
+        margin: [0, 0, 10, 0],
         height: 100,
     },
     title: {
-        text: null, // Hides title
+        text: null,
     },
     xAxis: {
-        visible: false, // Hides the x-axis completely
+        visible: false,
     },
     yAxis: [
         {
@@ -95,16 +86,16 @@ const chartOptions = ref({
             title: { text: null },
             visible: true,
             max: 15,
-            tickPositions: [0, 12, 15], // Positions for 3 labels
+            tickPositions: [0, 12, 15],
             labels: {
                 style: { fontSize: "9px" },
-                format: "{value}В",
-                align: "left", // Aligns labels to the right
+                format: "{value}" + t("volt"),
+                align: "left",
                 x: 5,
                 y: 10,
             },
             gridLineWidth: 0,
-            lineWidth: 0, // Hide grid and axis lines
+            lineWidth: 0,
         },
         {
             opposite: true,
@@ -124,21 +115,21 @@ const chartOptions = ref({
         },
     ],
     legend: {
-        enabled: false, // Hides the legend
+        enabled: false,
     },
     credits: {
-        enabled: false, // Removes the Highcharts watermark
+        enabled: false,
     },
     tooltip: {
-        enabled: false, // Disables tooltips
+        enabled: false,
     },
     plotOptions: {
         series: {
             marker: {
-                enabled: false, // Disables point markers
+                enabled: false,
             },
             clip: false,
-            lineWidth: 4, // Minimal line thickness, adjust as needed
+            lineWidth: 4,
             lineColor: "red",
             animation: false,
         },

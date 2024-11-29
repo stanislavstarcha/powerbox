@@ -7,12 +7,9 @@
             </q-toolbar>
         </q-header>
 
-        <q-footer
-            bordered
-            class="bg-grey-3 text-primary"
-            v-if="bleStore.deviceId"
-        >
+        <q-footer bordered class="bg-grey-3 text-primary">
             <q-tabs
+                v-if="bleStore.deviceId"
                 no-caps
                 active-color="primary"
                 indicator-color="transparent"

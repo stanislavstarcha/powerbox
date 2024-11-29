@@ -15,22 +15,26 @@
 
         <div class="row justify-center">
             <div class="col-auto text-caption text-grey-7 q-ml-xs">
-                Потужність
+                {{ $t("power") }}
             </div>
             <div class="col-auto q-ml-xs q-mr-lg">
-                {{ inverterStore.power }} Вт
+                {{ inverterStore.power }} {{ $t("watt") }}
             </div>
-            <div class="col-auto text-caption text-grey-7 q-ml-xs">Напруга</div>
-            <div class="col-auto q-ml-xs q-mr-lg">{{ bmsStore.voltage }} В</div>
+            <div class="col-auto text-caption text-grey-7 q-ml-xs">
+                {{ $t("voltage") }}
+            </div>
+            <div class="col-auto q-ml-xs q-mr-lg">
+                {{ bmsStore.voltage }} {{ $t("volt") }}
+            </div>
         </div>
 
         <highcharts :options="chartOptions" class="q-mt-md"></highcharts>
 
         <div class="row q-mt-md">
             <div class="col-6 text-center">
-                <div class="text-h5 text-weight-bold">Заряд</div>
+                <div class="text-h5 text-weight-bold">{{ $t("psu") }}</div>
                 <div class="text-caption text-grey-5">
-                    Натисніть щоб почати заряджати батарею
+                    {{ $t("startPSU") }}
                 </div>
                 <q-toggle
                     :color="charging ? 'red' : 'grey'"
@@ -39,7 +43,7 @@
                 />
 
                 <div class="text-caption text-grey-5">
-                    Максимальний струм заряду.
+                    {{ $t("maxChargingCurrent") }}
                 </div>
                 <q-slider
                     class="q-pl-md q-pr-md"
@@ -55,9 +59,9 @@
                 />
             </div>
             <div class="col-6 text-center">
-                <div class="text-h5 text-weight-bold">Інвертор</div>
+                <div class="text-h5 text-weight-bold">{{ $t("inverter") }}</div>
                 <div class="text-caption text-grey-5">
-                    Натисніть для генерації 220В
+                    {{ $t("startInverterAC") }}
                 </div>
                 <q-toggle
                     :color="discharging ? 'blue' : 'grey'"
@@ -76,10 +80,12 @@ import { usePSUStore } from "stores/psu";
 import { useInverterStore } from "stores/inverter";
 
 import { HISTORY_BMS_SOC } from "stores/uuids";
+import { useI18n } from "vue-i18n";
 
 const bmsStore = useBMSStore();
 const psuStore = usePSUStore();
 const inverterStore = useInverterStore();
+const { t } = useI18n();
 
 const currentLimitLabels = ref({
     0: "25A",
@@ -127,49 +133,49 @@ const chartOptions = ref({
     chart: {
         type: "spline",
         backgroundColor: "transparent",
-        spacing: [0, 0, 0, 0], // Removes outer spacing around the chart
-        margin: [10, 0, 10, 0], // Removes margins within the chart area
+        spacing: [0, 0, 0, 0],
+        margin: [10, 0, 10, 0],
         height: 100,
         animation: false,
     },
     title: {
-        text: null, // Hides title
+        text: null,
     },
     xAxis: {
-        visible: false, // Hides the x-axis completely
+        visible: false,
     },
     yAxis: {
         max: 105,
         title: { text: null },
-        visible: true, // Hides the x-axis completely
-        tickPositions: [0, 50, 100], // Positions for 3 labels
+        visible: true,
+        tickPositions: [0, 50, 100],
         labels: {
             style: { fontSize: "9px" },
             format: "{value}%",
-            align: "left", // Aligns labels to the right
-            x: 5, // Adjust to overlap within the chart area
-            y: 10, // Fine-tune vertical position if needed
+            align: "left",
+            x: 5,
+            y: 10,
         },
         gridLineWidth: 0,
-        lineWidth: 0, // Hide grid and axis lines
+        lineWidth: 0,
     },
     legend: {
-        enabled: false, // Hides the legend
+        enabled: false,
     },
     credits: {
-        enabled: false, // Removes the Highcharts watermark
+        enabled: false,
     },
     tooltip: {
-        enabled: false, // Disables tooltips
+        enabled: false,
     },
     plotOptions: {
         series: {
             marker: {
-                enabled: false, // Disables point markers
+                enabled: false,
             },
             animation: false,
             clip: false,
-            lineWidth: 4, // Minimal line thickness, adjust as needed
+            lineWidth: 4,
         },
     },
     series: [
