@@ -19,13 +19,32 @@
             <div class="col-10">{{ $t("uptime") }}</div>
             <div class="col">{{ espStore.uptime }}</div>
         </div>
+        <div class="row q-mt-md items-center">
+            <div class="col-9">{{ $t("avrMode") }}</div>
+            <div class="col-3">
+                <q-toggle
+                    :color="ats ? 'red' : 'grey'"
+                    v-model="ats"
+                    size="70px"
+                />
+            </div>
+        </div>
     </q-page>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useESPStore } from "stores/esp";
+import { useATSStore } from "stores/ats";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 const espStore = useESPStore();
+const atsStore = useATSStore();
+
+const ats = computed({
+    get: () => atsStore.active,
+    set: (value) => {
+        atsStore.set(value);
+    },
+});
 </script>

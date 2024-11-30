@@ -4,9 +4,9 @@ import {
     espUUID,
     inverterUUID,
     historyUUID,
-    chargingUUID,
-    dischargingUUID,
-    currentUUID,
+    setChargingUUID,
+    setDischargingUUID,
+    setCurrentUUID,
     HISTORY_BMS_SOC,
 } from "stores/uuids";
 
@@ -174,10 +174,10 @@ const genHistoryIncrement = () => {
 };
 
 const onChargingControl = (value) => {
-    modifiers[dischargingUUID].callback(!value);
+    modifiers[setDischargingUUID].callback(!value);
 };
 const onDischargingControl = (value) => {
-    modifiers[chargingUUID].callback(!value);
+    modifiers[setChargingUUID].callback(!value);
 };
 
 const onHistoryControl = (value) => {
@@ -265,17 +265,17 @@ const generators = {
 };
 
 const fixed = {
-    [chargingUUID]: true,
-    [dischargingUUID]: false,
-    [currentUUID]: 2,
+    [setChargingUUID]: true,
+    [setDischargingUUID]: false,
+    [setCurrentUUID]: 2,
 };
 
 const modifiers = {
-    [chargingUUID]: {
+    [setChargingUUID]: {
         modifier: onChargingControl,
         callback: null,
     },
-    [dischargingUUID]: {
+    [setDischargingUUID]: {
         modifier: onDischargingControl,
         callback: null,
     },

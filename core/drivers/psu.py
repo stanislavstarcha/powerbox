@@ -94,7 +94,6 @@ class PowerSupplyController(PowerCallbacksMixin):
     INA219 chip and DS18B20 sensor.
     """
 
-    ENABLE_INA219 = False
     ENABLE_DS18X20 = True
 
     # A pin to listen to
@@ -104,9 +103,11 @@ class PowerSupplyController(PowerCallbacksMixin):
     POWER_GATE_PIN = None
 
     # DS18B20 pin
+    TEMPERATURE_ENABLED = True
     TEMPERATURE_PIN = None
 
     # INA219 I2C pins
+    VOLTMETER_ENABLED = False
     VOLTMETER_SCL_PIN = None
     VOLTMETER_SDA_PIN = None
 
@@ -133,6 +134,13 @@ class PowerSupplyController(PowerCallbacksMixin):
     _state = None
     _error = 0
 
+    CURRENT_CHANNEL = 0
+    TURN_OFF_VOLTAGE = 3.5
+    TURN_OFF_MAX_CONFIRMATIONS = 3
+
+    _turn_off_voltage = 3.5
+    _turn_off_confirmations = 0
+
     def __init__(
         self,
         power_button_pin=POWER_BUTTON_PIN,
@@ -142,8 +150,15 @@ class PowerSupplyController(PowerCallbacksMixin):
         current_b_pin=CURRENT_B_PIN,
         i2c=None,
         buzzer=None,
+        turn_off_voltage=TURN_OFF_VOLTAGE,
+        current_limit=CURRENT_CHANNEL,
+        temperature_enabled=TEMPERATURE_ENABLED,
+        voltmeter_enabled=VOLTMETER_ENABLED,
     ):
         self._state = PSUState()
+        self._turn_off_voltage = turn_off_voltage
+        self._temperature_enabled = temperature_enabled
+        self._voltmeter_enabled = voltmeter_enabled
 
         try:
             self._power_button = ButtonController(
@@ -164,26 +179,42 @@ class PowerSupplyController(PowerCallbacksMixin):
             self._state.set_error(self._state.ERROR_PIN)
             logger.error("PSU gate pin failed")
 
-        try:
-            self._ina219 = INA219(i2c=i2c)
-        except Exception as e:
-            self._state.set_error(self._state.ERROR_VOLTAGE_SENSOR)
-            logger.error("PSU voltage sensor failed")
-            logger.critical(e)
+        if voltmeter_enabled:
+            try:
+                self._ina219 = INA219(i2c=i2c)
+            except Exception as e:
+                self._state.set_error(self._state.ERROR_VOLTAGE_SENSOR)
+                logger.error("PSU voltage sensor failed")
+                logger.critical(e)
+
+        self._ds18x20_driver = None
+        if temperature_enabled:
+            try:
+                self._ds18x20_driver = ds18x20.DS18X20(
+                    onewire.OneWire(machine.Pin(temperature_pin))
+                )
+                self._temperature_sensors = self._ds18x20_driver.scan()
+                if not self._temperature_sensors:
+                    logger.warning("No PSU temperature sensors found")
+                else:
+                    logger.info(
+                        "PSU temperature sensors found", self._temperature_sensors
+                    )
+            except Exception as e:
+                self._state.set_error(self._state.ERROR_TEMPERATURE_SENSOR)
+                logger.error("PSU temperature sensor failed")
+                logger.critical(e)
 
         try:
-            self._ds18x20_driver = ds18x20.DS18X20(
-                onewire.OneWire(machine.Pin(temperature_pin))
+            self._current_a_pin = machine.Pin(
+                current_a_pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
             )
-            self._temperature_sensors = self._ds18x20_driver.scan()
-            if not self._temperature_sensors:
-                logger.warning("No PSU temperature sensors found")
-            else:
-                logger.info("PSU temperature sensors found", self._temperature_sensors)
+            self._current_b_pin = machine.Pin(
+                current_b_pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
+            )
+            self.set_current(current_limit)
         except Exception as e:
-            self._ds18x20_driver = None
-            self._state.set_error(self._state.ERROR_TEMPERATURE_SENSOR)
-            logger.error("PSU temperature sensor failed")
+            self._state.set_error(self._state.ERROR_PIN)
             logger.critical(e)
 
         try:
@@ -193,14 +224,30 @@ class PowerSupplyController(PowerCallbacksMixin):
             self._current_b_pin = machine.Pin(
                 current_b_pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
             )
-            self.set_current(self._state.current)
-
+            self.set_current(current_limit)
         except Exception as e:
             self._state.set_error(self._state.ERROR_PIN)
             logger.error("PSU current pin failed")
 
         PowerCallbacksMixin.__init__(self)
         logger.info("Initialized power supply controller")
+
+    def on_bms_state(self, bms_state):
+        triggered = False
+        for voltage in bms_state.cells:
+            if voltage is None:
+                continue
+            voltage /= 1000
+            if voltage > self._turn_off_voltage:
+                triggered = True
+                break
+
+        if triggered:
+            self._turn_off_confirmations += 1
+            if self._turn_off_confirmations >= self.TURN_OFF_MAX_CONFIRMATIONS:
+                self.off()
+        else:
+            self._turn_off_confirmations = 0
 
     def set_current(self, channel):
         self._state.current = channel
@@ -257,10 +304,10 @@ class PowerSupplyController(PowerCallbacksMixin):
         logger.info("Running PSU...")
 
         while True:
-            if self.ENABLE_INA219 and self._ina219:
+            if self._voltmeter_enabled and self._ina219:
                 await self.read_voltage()
 
-            if self.ENABLE_DS18X20 and self._ds18x20_driver:
+            if self._temperature_enabled and self._ds18x20_driver:
                 await self.read_temperature()
 
             self._state.snapshot()

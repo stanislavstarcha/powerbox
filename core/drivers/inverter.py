@@ -184,6 +184,11 @@ class InverterController(PowerCallbacksMixin):
     SHUTDOWN_REQUEST = b"\xAE\x01\x02\x04\x01\x00\x08\xEE"
     TURN_ON_REQUEST = b"\xAE\x01\x02\x04\x00\x00\x07\xEE"
 
+    TURN_OFF_VOLTAGE = 2.7
+    TURN_OFF_MAX_CONFIRMATIONS = 3
+    _turn_off_voltage = 2.7
+    _turn_off_confirmations = 0
+
     _uart = None
 
     # state of the power
@@ -202,8 +207,10 @@ class InverterController(PowerCallbacksMixin):
         uart_tx_pin=UART_TX_PIN,
         uart_rx_pin=UART_RX_PIN,
         buzzer=None,
+        turn_off_voltage=TURN_OFF_VOLTAGE,
     ):
         self._state = InverterState()
+        self._turn_off_voltage = turn_off_voltage
 
         if uart_if is not None:
             tx = machine.Pin(uart_tx_pin, machine.Pin.OUT)
@@ -223,6 +230,23 @@ class InverterController(PowerCallbacksMixin):
 
         PowerCallbacksMixin.__init__(self)
         logger.info(f"Initialized inverter")
+
+    def on_bms_state(self, bms_state):
+        triggered = False
+        for voltage in bms_state.cells:
+            if voltage is None:
+                continue
+            voltage /= 1000
+            if voltage < self._turn_off_voltage:
+                triggered = True
+                break
+
+        if triggered:
+            self._turn_off_confirmations += 1
+            if self._turn_off_confirmations >= self.TURN_OFF_MAX_CONFIRMATIONS:
+                self.off()
+        else:
+            self._turn_off_confirmations = 0
 
     def on(self):
         if self.power_on_callbacks:

@@ -22,6 +22,8 @@ class CONF:
         UART_TX_PIN = 17
 
     class PowerSupplyController:
+        VOLTMETER_ENABLED = False
+        TEMPERATURE_ENABLED = True
         POWER_BUTTON_PIN = 34
         POWER_GATE_PIN = 27
         TEMPERATURE_PIN = 33

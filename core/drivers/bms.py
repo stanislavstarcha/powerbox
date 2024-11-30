@@ -396,6 +396,7 @@ class BMSController:
 
     _uart = None
     _state: BMSState = None
+    _state_callbacks = []
 
     def __init__(
         self,
@@ -405,6 +406,7 @@ class BMSController:
         uart_tx_pin=UART_TX_PIN,
     ):
         self._state = BMSState()
+        self._state_callbacks = []
 
         try:
             self._uart = machine.UART(
@@ -418,6 +420,9 @@ class BMSController:
         except Exception as e:
             logger.error("Failed to initialize BMS controller")
             logger.critical(e)
+
+    def add_state_callback(self, callback):
+        self._state_callbacks.append(callback)
 
     async def run(self):
         logger.info("Running BMS controller")
@@ -435,6 +440,9 @@ class BMSController:
             try:
                 self._state.parse(data)
                 self._state.reset_error(self._state.ERROR_NO_RESPONSE)
+                if self._state_callbacks:
+                    for callback in self._state_callbacks:
+                        callback(self._state)
                 logger.debug("BMS status", self._state.voltage, self._state.current)
                 return True
             except Exception as e:

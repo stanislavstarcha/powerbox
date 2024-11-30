@@ -1,15 +1,17 @@
 export default {
-    connect: "Connect",
-    scanAgain: "Scan again",
-    noStationsFound:
-        "No power stations found. Make sure it's turned on and located nearby.",
-
     inverter: "Inverter",
     power: "Power",
     psu: "Power Supply",
     current: "Current",
     bms: "Battery Controller",
     mainController: "Main Controller",
+
+    connect: "Connect",
+    scanAgain: "Scan again",
+    noStationsFound:
+        "No power stations found. Make sure it's turned on and located nearby.",
+    searchingForDevices: "Searching for stations...",
+    connectingToDevice: "Connecting ot the station...",
 
     voltage: "Voltage",
     maxChargingCurrent: "Mac charging current.",
@@ -50,4 +52,6 @@ export default {
     psuErrorTemperatureSensor: "Temperature sensor failure",
     psuErrorVoltageSensor: "Voltage sensor failure",
     psuErrorPin: "Pin initialisation failure",
+
+    avrMode: "Reserve switch mode",
 };

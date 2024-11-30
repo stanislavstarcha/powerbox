@@ -11,9 +11,8 @@ import { useBLEStore } from "stores/ble.js";
 import {
     HISTORY_PSU_TEMPERATURE,
     HISTORY_PSU_VOLTAGE,
-    HISTORY_LENGTH,
-    chargingUUID,
-    currentUUID,
+    setChargingUUID,
+    setCurrentUUID,
 } from "stores/uuids.js";
 
 export const usePSUStore = defineStore("psu", {
@@ -59,13 +58,13 @@ export const usePSUStore = defineStore("psu", {
             const bleStore = useBLEStore();
             const signal = pack_bool(value);
             console.log("send charging signal", signal);
-            bleStore.writeState(chargingUUID, signal);
+            bleStore.writeState(setChargingUUID, signal);
         },
 
         setCurrentLimit(value) {
             this.currentLimit = value;
             const bleStore = useBLEStore();
-            bleStore.writeState(currentUUID, value);
+            bleStore.writeState(setCurrentUUID, value);
         },
     },
 });

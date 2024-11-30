@@ -14,10 +14,12 @@ from drivers.const import (
     BLE_PSU_UUID,
     BLE_ESP_UUID,
     BLE_HISTORY_UUID,
-    BLE_COMMAND_UUID,
-    BLE_CHARGING_UUID,
-    BLE_DISCHARGING_UUID,
-    BLE_CURRENT_UUID,
+    BLE_ATS_UUID,
+    BLE_SET_COMMAND_UUID,
+    BLE_SET_CHARGING_UUID,
+    BLE_SET_DISCHARGING_UUID,
+    BLE_SET_CURRENT_UUID,
+    BLE_SET_ATS_UUID,
     BLE_INFO_SERVICE_UUID,
     BLE_MANUFACTURER_UUID,
     BLE_MODEL_NUMBER_UUID,
@@ -60,18 +62,21 @@ class BLEServerController:
         BLE_INVERTER_UUID: None,
         BLE_PSU_UUID: None,
         BLE_ESP_UUID: None,
+        BLE_ATS_UUID: None,
         BLE_HISTORY_UUID: None,
-        BLE_COMMAND_UUID: None,
-        BLE_CHARGING_UUID: None,
-        BLE_DISCHARGING_UUID: None,
-        BLE_CURRENT_UUID: None,
+        BLE_SET_COMMAND_UUID: None,
+        BLE_SET_CHARGING_UUID: None,
+        BLE_SET_DISCHARGING_UUID: None,
+        BLE_SET_CURRENT_UUID: None,
+        BLE_SET_ATS_UUID: None,
     }
 
-    def __init__(self, bms, psu, inverter, wroom, instructions):
+    def __init__(self, bms, psu, inverter, wroom, ats, instructions):
         self._bms = bms
         self._psu = psu
         self._inverter = inverter
         self._wroom = wroom
+        self._ats = ats
         self._instructions = instructions
 
         self._bms.state.attach_ble(self)
@@ -109,11 +114,13 @@ class BLEServerController:
                 self.HANDLE[BLE_INVERTER_UUID],
                 self.HANDLE[BLE_PSU_UUID],
                 self.HANDLE[BLE_ESP_UUID],
+                self.HANDLE[BLE_ATS_UUID],
                 self.HANDLE[BLE_HISTORY_UUID],
-                self.HANDLE[BLE_COMMAND_UUID],
-                self.HANDLE[BLE_CHARGING_UUID],
-                self.HANDLE[BLE_DISCHARGING_UUID],
-                self.HANDLE[BLE_CURRENT_UUID],
+                self.HANDLE[BLE_SET_COMMAND_UUID],
+                self.HANDLE[BLE_SET_CHARGING_UUID],
+                self.HANDLE[BLE_SET_DISCHARGING_UUID],
+                self.HANDLE[BLE_SET_CURRENT_UUID],
+                self.HANDLE[BLE_SET_ATS_UUID],
             ),
             (
                 self.HANDLE[BLE_MANUFACTURER_UUID],
@@ -129,17 +136,13 @@ class BLEServerController:
                         (BLE_INVERTER_UUID, FLAG_READ | FLAG_NOTIFY),
                         (BLE_PSU_UUID, FLAG_READ | FLAG_NOTIFY),
                         (BLE_ESP_UUID, FLAG_READ | FLAG_NOTIFY),
+                        (BLE_ATS_UUID, FLAG_READ | FLAG_NOTIFY),
                         (BLE_HISTORY_UUID, FLAG_NOTIFY),
-                        (BLE_COMMAND_UUID, FLAG_WRITE),
-                        (BLE_CHARGING_UUID, FLAG_READ | FLAG_WRITE | FLAG_NOTIFY),
-                        (
-                            BLE_DISCHARGING_UUID,
-                            FLAG_READ | FLAG_WRITE | FLAG_NOTIFY,
-                        ),
-                        (
-                            BLE_CURRENT_UUID,
-                            FLAG_READ | FLAG_WRITE | FLAG_NOTIFY,
-                        ),
+                        (BLE_SET_COMMAND_UUID, FLAG_WRITE),
+                        (BLE_SET_CHARGING_UUID, FLAG_WRITE),
+                        (BLE_SET_DISCHARGING_UUID, FLAG_WRITE),
+                        (BLE_SET_CURRENT_UUID, FLAG_WRITE),
+                        (BLE_SET_ATS_UUID, FLAG_WRITE),
                     ),
                 ),
                 (
@@ -240,6 +243,12 @@ class BLEServerController:
             self._ble_write(handle, state)
             return
 
+        if handle == self.HANDLE[BLE_ATS_UUID]:
+            state = self._ats.state.get_ble_state()
+            logger.info("BLE reading BLE_ATS state", state, len(state))
+            self._ble_write(handle, state)
+            return
+
     def on_write_state(self, connection, handle):
         if not self._ble:
             return
@@ -251,30 +260,37 @@ class BLEServerController:
         logger.info("BLE received data", data.hex())
         value = int.from_bytes(data, "big")
 
-        if handle == self.HANDLE[BLE_CHARGING_UUID]:
+        if handle == self.HANDLE[BLE_SET_CHARGING_UUID]:
             logger.debug("Writing charging state", data, value, data == 0x01)
             if value:
                 self._instructions.add(self._psu.on)
             else:
                 self._instructions.add(self._psu.off)
 
-        if handle == self.HANDLE[BLE_DISCHARGING_UUID]:
+        if handle == self.HANDLE[BLE_SET_DISCHARGING_UUID]:
             logger.debug("Writing discharging state", value)
             if value:
                 self._instructions.add(self._inverter.on)
             else:
                 self._instructions.add(self._inverter.off)
 
-        if handle == self.HANDLE[BLE_CURRENT_UUID]:
+        if handle == self.HANDLE[BLE_SET_CURRENT_UUID]:
             logger.debug("Writing current state", value)
             self._instructions.add(self._psu.set_current, value)
 
-        if handle == self.HANDLE[BLE_COMMAND_UUID]:
+        if handle == self.HANDLE[BLE_SET_ATS_UUID]:
+            logger.debug("Writing ats state", value)
+            if value:
+                self._instructions.add(self._ats.enable)
+            else:
+                self._instructions.add(self._ats.disable)
+
+        if handle == self.HANDLE[BLE_SET_COMMAND_UUID]:
             logger.debug("Writing command state", value)
             if value == COMMAND_PULL_HISTORY:
-                # self._instructions.add(self._inverter.state.pull_history)
+                self._instructions.add(self._inverter.state.pull_history)
                 self._instructions.add(self._bms.state.pull_history)
-                # self._instructions.add(self._psu.state.pull_history)
+                self._instructions.add(self._psu.state.pull_history)
 
     def notify(self, uuid, state):
         if not self._ble or self._connection is None:

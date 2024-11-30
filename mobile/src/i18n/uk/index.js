@@ -6,6 +6,9 @@ export default {
     bms: "Контролер батареї",
     mainController: "Головний контролер",
 
+    searchingForDevices: "Шукаємо пристрої...",
+    connectingToDevice: "Зʼєднуємось зі станцієй...",
+
     voltage: "Напруга",
     maxChargingCurrent: "Максимальний струм заряду.",
     startInverterAC: "Натисніть для генерації 230В",
@@ -49,4 +52,6 @@ export default {
     psuErrorTemperatureSensor: "Помилка сенсору температури",
     psuErrorVoltageSensor: "Помилка сенсору вольтметра",
     psuErrorPin: "Помилка ініціалізаціії кнопки",
+
+    avrMode: "Режим вводу резерву",
 };

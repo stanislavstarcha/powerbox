@@ -11,6 +11,7 @@ import { useBMSStore } from "stores/bms";
 import { usePSUStore } from "stores/psu";
 import { useInverterStore } from "stores/inverter";
 import { useESPStore } from "stores/esp";
+import { useATSStore } from "stores/ats";
 import { useHistoryStore } from "stores/history";
 
 import {
@@ -19,14 +20,17 @@ import {
     psuUUID,
     espUUID,
     inverterUUID,
+    atsUUID,
     historyUUID,
-    commandUUID,
+    setCommandUUID,
 } from "stores/uuids";
+import { i18n } from "src/boot/i18n";
 
 const bmsStore = useBMSStore();
 const espStore = useESPStore();
 const psuStore = usePSUStore();
 const inverterStore = useInverterStore();
+const atsStore = useATSStore();
 const historyStore = useHistoryStore();
 
 async function loadBluetoothModule() {
@@ -58,7 +62,7 @@ export const useBLEStore = defineStore("ble", {
         async scan() {
             this.scanning = true;
             Loading.show({
-                message: "Шукаємо пристрої...",
+                message: "searchingForDevices",
                 spinner: QSpinnerGears,
             });
             this.clearDevices();
@@ -102,7 +106,7 @@ export const useBLEStore = defineStore("ble", {
         async connect(deviceId) {
             try {
                 Loading.show({
-                    message: "Зʼєднуємось зі станцієй...",
+                    message: "connectingToDevice",
                     spinner: QSpinnerGears,
                 });
                 this.deviceId = deviceId;
@@ -118,12 +122,13 @@ export const useBLEStore = defineStore("ble", {
                     this.router.push({ name: "Discover" });
                 });
 
-                const [bmsState, psuState, inverterState, espState] =
+                const [bmsState, psuState, inverterState, espState, atsState] =
                     await Promise.all([
                         BleClient.read(deviceId, coreServiceUUID, bmsUUID),
                         BleClient.read(deviceId, coreServiceUUID, psuUUID),
                         BleClient.read(deviceId, coreServiceUUID, inverterUUID),
                         BleClient.read(deviceId, coreServiceUUID, espUUID),
+                        BleClient.read(deviceId, coreServiceUUID, atsUUID),
                     ]);
 
                 await Promise.all([
@@ -160,15 +165,23 @@ export const useBLEStore = defineStore("ble", {
                         historyUUID,
                         historyStore.parseState,
                     ),
+
+                    BleClient.startNotifications(
+                        deviceId,
+                        coreServiceUUID,
+                        atsUUID,
+                        atsStore.parseState,
+                    ),
                 ]);
 
                 // request history
-                await this.writeState(commandUUID, 0x01);
+                await this.writeState(setCommandUUID, 0x01);
 
                 bmsStore.parseState(bmsState);
                 psuStore.parseState(psuState);
                 inverterStore.parseState(inverterState);
                 espStore.parseState(espState);
+                atsStore.parseState(atsState);
 
                 console.log("Connected to device:", deviceId);
                 Loading.hide();

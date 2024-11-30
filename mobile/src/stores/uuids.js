@@ -5,13 +5,15 @@ const bmsUUID = "549fa451-cf65-4ea1-a462-9527d8d06440";
 const psuUUID = "bd9e30e5-3e45-4660-8a1f-2a4f12bfaa5e";
 const espUUID = "a61dc670-fb5c-4f8c-afa8-7bcd088dc146";
 const inverterUUID = "226396fe-22a8-48ce-aa95-188899618fd9";
+const atsUUID = "c56dc4f9-9b70-4c42-8044-e62f7e4a8894";
 
 const historyUUID = "b1e71c63-5154-4bc5-bad6-4dc170b926d4";
-const commandUUID = "eb47891b-c111-463b-8f39-4a5115c352bd";
+const setCommandUUID = "eb47891b-c111-463b-8f39-4a5115c352bd";
 
-const chargingUUID = "3719b9de-d6ff-4170-bdb0-b9e7ade6a56e";
-const dischargingUUID = "ed071461-02ae-4c54-a4d9-944cfd46b19d";
-const currentUUID = "945fb6ac-a80a-4c9d-af17-36e83521e2ce";
+const setChargingUUID = "3719b9de-d6ff-4170-bdb0-b9e7ade6a56e";
+const setDischargingUUID = "ed071461-02ae-4c54-a4d9-944cfd46b19d";
+const setCurrentUUID = "945fb6ac-a80a-4c9d-af17-36e83521e2ce";
+const setATSUUID = "8c6f915b-7459-4627-95ee-feb1ea52b202";
 
 const HISTORY_LENGTH = 180;
 
@@ -36,11 +38,13 @@ export {
     psuUUID,
     espUUID,
     inverterUUID,
+    atsUUID,
     historyUUID,
-    commandUUID,
-    chargingUUID,
-    dischargingUUID,
-    currentUUID,
+    setCommandUUID,
+    setChargingUUID,
+    setDischargingUUID,
+    setCurrentUUID,
+    setATSUUID,
     HISTORY_LENGTH,
     HISTORY_BMS_SOC,
     HISTORY_BMS_CURRENT,

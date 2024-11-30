@@ -1,10 +1,9 @@
-VERSION = "0.7.0"
-
 import asyncio
 import machine
 import micropython
 import network
 import time
+import ujson
 
 from logging import logger
 
@@ -24,7 +23,9 @@ from lib.queue import InstructionsQueue
 from boot import CONF
 
 
-micropython.kbd_intr(-1)
+def read_settings():
+    with open("settings.json", "r") as f:
+        return ujson.load(f)
 
 
 def disable_wifi():
@@ -33,9 +34,15 @@ def disable_wifi():
     logger.debug("Disabled wifi")
 
 
+def disable_keyboard_interrupt():
+    micropython.kbd_intr(-1)
+
+
 async def main():
+    disable_keyboard_interrupt()
     logger.info("Bootstrapping the app...")
     disable_wifi()
+    settings = read_settings()
 
     buzzer = BuzzerController(signal_pin=CONF.BuzzerController.SIGNAL_PIN)
     buzzer.boot()
@@ -64,6 +71,7 @@ async def main():
     ats = ATSController(
         nc_pin=CONF.ATSController.NC_PIN,
         no_pin=CONF.ATSController.NO_PIN,
+        enabled=settings["ats"]["enabled"],
     )
 
     oled.syslog("Init BMS...")
@@ -82,6 +90,7 @@ async def main():
         uart_rx_pin=CONF.InverterController.UART_RX_PIN,
         uart_tx_pin=CONF.InverterController.UART_TX_PIN,
         buzzer=buzzer,
+        turn_off_voltage=settings.get("inverter", {}).get("turn_off_voltage"),
     )
 
     oled.syslog("Init PSU...")
@@ -93,14 +102,26 @@ async def main():
         current_a_pin=CONF.PowerSupplyController.CURRENT_A_PIN,
         current_b_pin=CONF.PowerSupplyController.CURRENT_B_PIN,
         buzzer=buzzer,
+        voltmeter_enabled=CONF.PowerSupplyController.VOLTMETER_ENABLED,
+        temperature_enabled=CONF.PowerSupplyController.TEMPERATURE_ENABLED,
+        turn_off_voltage=settings.get("psu", {}).get("turn_off_voltage"),
+        current_limit=settings.get("psu", {}).get("current_limit"),
     )
+
+    bms.add_state_callback(inverter.on_bms_state)
+    bms.add_state_callback(psu.on_bms_state)
 
     oled.syslog("Init WROOM...")
     wroom = WROOMController()
 
     oled.syslog("Init BLE...")
     ble = BLEServerController(
-        bms=bms, psu=psu, inverter=inverter, wroom=wroom, instructions=instructions
+        bms=bms,
+        psu=psu,
+        inverter=inverter,
+        wroom=wroom,
+        ats=ats,
+        instructions=instructions,
     )
 
     oled.syslog("Init storage...")
