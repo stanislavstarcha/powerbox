@@ -1,0 +1,47 @@
+from micropython import const
+
+MANUFACTURER = "Electrocat"
+MODEL = "DOBROTVIR-4A"
+FIRMWARE = "0.9.0"
+
+LOGGER_TRANSPORT = const(0)
+LOGGER_LEVEL = const(4)
+
+WIFI_ENABLED = const(False)
+
+STORAGE_ENABLED = const(False)
+STORAGE_CS_PIN = const(5)
+STORAGE_SCK_PIN = const(18)
+STORAGE_MOSI_PIN = const(19)
+STORAGE_MISO_PIN = const(23)
+
+BMS_BAUD_RATE = const(115200)
+BMS_UART_IF = const(1)
+BMS_UART_RX_PIN = const(16)
+BMS_UART_TX_PIN = const(17)
+
+PSU_VOLTMETER_ENABLED = const(False)
+PSU_TEMPERATURE_ENABLED = const(True)
+PSU_POWER_BUTTON_PIN = const(34)
+PSU_POWER_GATE_PIN = const(27)
+PSU_TEMPERATURE_PIN = const(33)
+PSU_CURRENT_A_PIN = const(14)
+PSU_CURRENT_B_PIN = const(12)
+PSU_CURRENT_CHANNEL = const(0)
+PSU_MAX_CELL_VOLTAGE = const(3.5)
+
+INVERTER_MIN_CELL_VOLTAGE = const(2.7)
+INVERTER_POWER_BUTTON_PIN = const(22)
+INVERTER_POWER_GATE_PIN = const(21)
+INVERTER_UART_IF = const(2)
+INVERTER_UART_RX_PIN = const(2)
+INVERTER_UART_TX_PIN = const(4)
+
+ATS_NO_PIN = const(35)
+ATS_NC_PIN = const(32)
+
+I2C_SDA_PIN = const(25)
+I2C_SCL_PIN = const(26)
+
+OLED_I2C_ADDRESS = const(0x3C)
+BUZZER_SIGNAL_PIN = const(13)

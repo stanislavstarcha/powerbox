@@ -71,7 +71,21 @@ class BLEServerController:
         BLE_SET_ATS_UUID: None,
     }
 
-    def __init__(self, bms, psu, inverter, wroom, ats, instructions):
+    def __init__(
+        self,
+        manufacturer=None,
+        model=None,
+        firmware=None,
+        bms=None,
+        psu=None,
+        inverter=None,
+        wroom=None,
+        ats=None,
+        instructions=None,
+    ):
+        self._manufacturer = manufacturer
+        self._model = model
+        self._firmware = firmware
         self._bms = bms
         self._psu = psu
         self._inverter = inverter
@@ -156,9 +170,9 @@ class BLEServerController:
             ]
         )
 
-        self._ble.gatts_write(self.HANDLE[BLE_MANUFACTURER_UUID], "Powerbox")
-        self._ble.gatts_write(self.HANDLE[BLE_MODEL_NUMBER_UUID], "DBR-4")
-        self._ble.gatts_write(self.HANDLE[BLE_FIRMWARE_REV_UUID], "20241118")
+        self._ble.gatts_write(self.HANDLE[BLE_MANUFACTURER_UUID], self._manufacturer)
+        self._ble.gatts_write(self.HANDLE[BLE_MODEL_NUMBER_UUID], self._model)
+        self._ble.gatts_write(self.HANDLE[BLE_FIRMWARE_REV_UUID], self._firmware)
 
         self.start_advertising()
 

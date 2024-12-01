@@ -154,6 +154,16 @@ class BaseState:
             return 0
         return int(100 * voltage) + 1
 
+    @staticmethod
+    def _pack_language(language):
+        if language == "uk":
+            return 1
+
+        if language == "en":
+            return 2
+
+        return 0
+
     def get_ble_state(self):
         """Create a snapshot for BLE current and historical state"""
         pass

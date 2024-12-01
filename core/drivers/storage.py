@@ -16,6 +16,7 @@ class StorageState(BaseState):
 
 class StorageController:
 
+    ENABLED = False
     CS_PIN = 10
     SCK_PIN = 12
     MOSI_PIN = 11
@@ -24,10 +25,13 @@ class StorageController:
     _sd = None
     _state = None
 
-    def __init__(self, cs=CS_PIN, sck=SCK_PIN, mosi=MOSI_PIN, miso=MISO_PIN):
+    def __init__(
+        self, cs=CS_PIN, sck=SCK_PIN, mosi=MOSI_PIN, miso=MISO_PIN, enabled=ENABLED
+    ):
 
         self._state = StorageState()
-        return
+        if not enabled:
+            return
 
         try:
             self._sd = machine.SDCard(

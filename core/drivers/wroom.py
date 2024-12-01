@@ -20,20 +20,6 @@ class WROOMState(BaseState):
     temperature = 0
     heartbeat = True
 
-    # whether ATS mode is enabled
-    ats = False
-
-    # major - case version
-    # minor - PCBA version
-    # patch - ESP32 chip
-    hardware_version = None
-
-    # micropython version
-    firmware_version = None
-
-    # software version
-    software_version = None
-
     DISPLAY_METRICS = ["temperature", "memory"]
 
     def clear(self):
@@ -52,12 +38,10 @@ class WROOMState(BaseState):
             self.display_metric_type = "c"
 
     def get_ble_state(self):
-        version = 100
         uptime = int(time.time())
         return struct.pack(
-            ">IHBBB",
+            ">IBBB",
             self._pack(uptime),
-            self._pack(version),
             self._pack(self.temperature),
             self._pack(self.memory),
             self._pack(self.internal_errors),

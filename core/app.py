@@ -3,7 +3,6 @@ import machine
 import micropython
 import network
 import time
-import ujson
 
 from logging import logger
 
@@ -20,12 +19,7 @@ from drivers.wroom import WROOMController
 
 from lib.queue import InstructionsQueue
 
-from boot import CONF
-
-
-def read_settings():
-    with open("settings.json", "r") as f:
-        return ujson.load(f)
+import conf
 
 
 def disable_wifi():
@@ -42,80 +36,81 @@ async def main():
     disable_keyboard_interrupt()
     logger.info("Bootstrapping the app...")
     disable_wifi()
-    settings = read_settings()
 
-    buzzer = BuzzerController(signal_pin=CONF.BuzzerController.SIGNAL_PIN)
+    buzzer = BuzzerController(signal_pin=conf.BUZZER_SIGNAL_PIN)
     buzzer.boot()
 
     instructions = InstructionsQueue()
 
     i2c = machine.I2C(
         0,
-        scl=machine.Pin(CONF.I2C.SCL_PIN),
-        sda=machine.Pin(CONF.I2C.SDA_PIN),
+        scl=machine.Pin(conf.I2C_SCL_PIN),
+        sda=machine.Pin(conf.I2C_SDA_PIN),
         freq=400000,
     )
 
-    oled = OLEDController(
+    display = OLEDController(
         i2c=i2c,
-        i2c_address=CONF.OLEDController.ADDRESS,
+        i2c_address=conf.OLED_I2C_ADDRESS,
     )
 
-    oled.syslog("Init logger...")
+    display.syslog("Init logger...")
     logger.setup(
-        transport=CONF.LoggerController.transport,
-        level=CONF.LoggerController.level,
+        transport=conf.LOGGER_TRANSPORT,
+        level=conf.LOGGER_LEVEL,
     )
 
-    oled.syslog("Init AST...")
+    display.syslog("Init AST...")
     ats = ATSController(
-        nc_pin=CONF.ATSController.NC_PIN,
-        no_pin=CONF.ATSController.NO_PIN,
-        enabled=settings["ats"]["enabled"],
+        nc_pin=conf.ATS_NC_PIN,
+        no_pin=conf.ATS_NO_PIN,
     )
 
-    oled.syslog("Init BMS...")
+    display.syslog("Init BMS...")
     bms = BMSController(
-        baud_rate=CONF.BMSController.BAUD_RATE,
-        uart_if=CONF.BMSController.UART_IF,
-        uart_rx_pin=CONF.BMSController.UART_RX_PIN,
-        uart_tx_pin=CONF.BMSController.UART_TX_PIN,
+        baud_rate=conf.BMS_BAUD_RATE,
+        uart_if=conf.BMS_UART_IF,
+        uart_rx_pin=conf.BMS_UART_RX_PIN,
+        uart_tx_pin=conf.BMS_UART_TX_PIN,
     )
 
-    oled.syslog("Init Inverter...")
+    display.syslog("Init Inverter...")
     inverter = InverterController(
-        power_button_pin=CONF.InverterController.POWER_BUTTON_PIN,
-        power_gate_pin=CONF.InverterController.POWER_GATE_PIN,
-        uart_if=CONF.InverterController.UART_IF,
-        uart_rx_pin=CONF.InverterController.UART_RX_PIN,
-        uart_tx_pin=CONF.InverterController.UART_TX_PIN,
+        power_button_pin=conf.INVERTER_POWER_BUTTON_PIN,
+        power_gate_pin=conf.INVERTER_POWER_GATE_PIN,
+        uart_if=conf.INVERTER_UART_IF,
+        uart_rx_pin=conf.INVERTER_UART_RX_PIN,
+        uart_tx_pin=conf.INVERTER_UART_TX_PIN,
         buzzer=buzzer,
-        turn_off_voltage=settings.get("inverter", {}).get("turn_off_voltage"),
+        turn_off_voltage=conf.INVERTER_MIN_CELL_VOLTAGE,
     )
 
-    oled.syslog("Init PSU...")
+    display.syslog("Init PSU...")
     psu = PowerSupplyController(
-        power_button_pin=CONF.PowerSupplyController.POWER_BUTTON_PIN,
-        power_gate_pin=CONF.PowerSupplyController.POWER_GATE_PIN,
-        temperature_pin=CONF.PowerSupplyController.TEMPERATURE_PIN,
+        power_button_pin=conf.PSU_POWER_BUTTON_PIN,
+        power_gate_pin=conf.PSU_POWER_GATE_PIN,
+        temperature_pin=conf.PSU_TEMPERATURE_PIN,
+        temperature_enabled=conf.PSU_TEMPERATURE_ENABLED,
+        current_a_pin=conf.PSU_CURRENT_A_PIN,
+        current_b_pin=conf.PSU_CURRENT_B_PIN,
+        voltmeter_enabled=conf.PSU_VOLTMETER_ENABLED,
+        turn_off_voltage=conf.PSU_MAX_CELL_VOLTAGE,
+        current_limit=conf.PSU_CURRENT_CHANNEL,
         i2c=i2c,
-        current_a_pin=CONF.PowerSupplyController.CURRENT_A_PIN,
-        current_b_pin=CONF.PowerSupplyController.CURRENT_B_PIN,
         buzzer=buzzer,
-        voltmeter_enabled=CONF.PowerSupplyController.VOLTMETER_ENABLED,
-        temperature_enabled=CONF.PowerSupplyController.TEMPERATURE_ENABLED,
-        turn_off_voltage=settings.get("psu", {}).get("turn_off_voltage"),
-        current_limit=settings.get("psu", {}).get("current_limit"),
     )
 
     bms.add_state_callback(inverter.on_bms_state)
     bms.add_state_callback(psu.on_bms_state)
 
-    oled.syslog("Init WROOM...")
+    display.syslog("Init WROOM...")
     wroom = WROOMController()
 
-    oled.syslog("Init BLE...")
+    display.syslog("Init BLE...")
     ble = BLEServerController(
+        manufacturer=conf.MANUFACTURER,
+        model=conf.MODEL,
+        firmware=conf.FIRMWARE,
         bms=bms,
         psu=psu,
         inverter=inverter,
@@ -124,21 +119,22 @@ async def main():
         instructions=instructions,
     )
 
-    oled.syslog("Init storage...")
+    display.syslog("Init storage...")
     storage = StorageController(
-        cs=CONF.StorageController.CS_PIN,
-        miso=CONF.StorageController.MISO_PIN,
-        mosi=CONF.StorageController.MOSI_PIN,
-        sck=CONF.StorageController.SCK_PIN,
+        enabled=conf.STORAGE_ENABLED,
+        cs=conf.STORAGE_CS_PIN,
+        miso=conf.STORAGE_MISO_PIN,
+        mosi=conf.STORAGE_MOSI_PIN,
+        sck=conf.STORAGE_SCK_PIN,
     )
 
-    oled.syslog("Init Telemetry...")
+    display.syslog("Init Telemetry...")
     telemetry = Telemetry(
         ats=ats,
         ble=ble,
         bms=bms,
         inverter=inverter,
-        oled=oled,
+        oled=display,
         psu=psu,
         storage=storage,
         esp=wroom,
@@ -155,17 +151,17 @@ async def main():
     coroutines = [
         asyncio.create_task(instructions.run()),
         asyncio.create_task(telemetry.run()),
-        # asyncio.create_task(ats.run()),
+        asyncio.create_task(ats.run()),
         asyncio.create_task(ble.run()),
         asyncio.create_task(bms.run()),
         asyncio.create_task(inverter.run()),
-        asyncio.create_task(oled.run()),
+        asyncio.create_task(display.run()),
         asyncio.create_task(psu.run()),
         asyncio.create_task(storage.run()),
         asyncio.create_task(wroom.run()),
     ]
 
-    oled.syslog("Running controllers...")
+    display.syslog("Running controllers...")
     await asyncio.gather(*coroutines)
 
     logger.info(f"Running...")

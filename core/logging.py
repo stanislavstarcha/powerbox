@@ -4,7 +4,7 @@ import socket
 import uio
 import sys
 
-from boot import CONF
+import conf
 
 
 class LogLevels:

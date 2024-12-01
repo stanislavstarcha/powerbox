@@ -43,9 +43,7 @@ class ATSController:
 
     _state = False
 
-    def __init__(
-        self, nc_pin=NC_PIN, no_pin=NO_PIN, on_change=None, enabled=ENABLED, **kwargs
-    ):
+    def __init__(self, nc_pin=NC_PIN, no_pin=NO_PIN, on_change=None, **kwargs):
         self._state = ATSState()
         self._on_change = on_change
         self._nc_pin = machine.Pin(nc_pin, machine.Pin.IN, machine.Pin.PULL_DOWN)
