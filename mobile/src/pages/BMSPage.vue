@@ -4,6 +4,12 @@
 
         <div class="text-h5 q-mt-lg text-bold">{{ $t("bms") }}</div>
 
+        <div v-if="bmsStore.hasErrors()">
+            <div v-for="error in errors" :key="error" class="error-message">
+                {{ error }}
+            </div>
+        </div>
+
         <div class="row q-mt-md">
             <div class="col-10">{{ $t("batteryLevel") }}</div>
             <div class="col" v-if="bmsStore.level">{{ bmsStore.level }}%</div>
@@ -117,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useBMSStore } from "stores/bms";
 import {
     HISTORY_BMS_CURRENT,
@@ -130,6 +136,22 @@ import { useI18n } from "vue-i18n";
 
 const bmsStore = useBMSStore();
 const { t } = useI18n();
+
+const errors = computed(() => {
+    if (!bmsStore.internalErrors) return [];
+
+    const results = [];
+
+    if (bmsStore.internalErrors & (1 << 0)) {
+        results.push(t("bmsErrorTimeout"));
+    }
+
+    if (bmsStore.internalErrors & (1 << 1)) {
+        results.push(t("bmsErrorException"));
+    }
+
+    return results;
+});
 
 const chartOptions = ref({
     chart: {

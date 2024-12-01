@@ -3,11 +3,18 @@
 </template>
 
 <script setup>
+import { onMounted } from "vue";
+import { useQuasar } from "quasar";
+
 defineOptions({
     name: "App",
 });
 
-import { useQuasar } from "quasar";
+onMounted(async () => {
+    // console.log("App mounted");
+    // const appStore = useAppStore();
+    // await appStore.loadLanguage();
+});
 
 const $q = useQuasar();
 $q.iconMapFn = (iconName) => {

@@ -37,7 +37,7 @@ export default route(function (/* { store, ssrContext } */) {
     Router.beforeEach(async (to, from) => {
         const appStore = useAppStore();
 
-        if (!appStore.initialized && to.name !== "Discover") {
+        if (!appStore.initialised && to.name !== "Discover") {
             return { name: "Discover" };
         }
         // if (!appStore.deviceId && to.path !== "/discover") {

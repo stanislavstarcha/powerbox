@@ -54,4 +54,5 @@ export default {
     psuErrorPin: "Помилка ініціалізаціії кнопки",
 
     avrMode: "Режим вводу резерву",
+    appLanguage: "Мова інтерфейсу",
 };

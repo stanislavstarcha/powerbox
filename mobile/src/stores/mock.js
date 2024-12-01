@@ -4,6 +4,7 @@ import {
     espUUID,
     inverterUUID,
     historyUUID,
+    atsUUID,
     setChargingUUID,
     setDischargingUUID,
     setCurrentUUID,
@@ -15,20 +16,28 @@ const randomValue = (max = 100, min = 0) =>
 
 const genBmsState = () => {
     let offset = 0;
-    const buffer = new ArrayBuffer(18);
+    const buffer = new ArrayBuffer(17);
     const view = new DataView(buffer);
+
+    // voltage
+    view.setUint8(offset, randomValue(150));
+    offset += 2;
+
+    // current
+    view.setUint16(offset, randomValue(512));
+    offset += 2;
 
     // level
     view.setUint8(offset, randomValue(100));
     offset += 1;
 
-    // voltage
-    view.setUint8(offset, randomValue(150));
+    // charging state
+    view.setUint8(offset, randomValue(2));
     offset += 1;
 
-    // current
-    view.setUint16(offset, randomValue(512));
-    offset += 2;
+    // discharging state
+    view.setUint8(offset, randomValue(2));
+    offset += 1;
 
     // mos temp
     view.setUint8(offset, randomValue(75));
@@ -58,61 +67,45 @@ const genBmsState = () => {
     view.setUint8(offset, randomValue(100));
     offset += 1;
 
-    // cell 1 resistance
-    view.setUint8(offset, randomValue(255));
-    offset += 1;
-
-    // cell 2 resistance
-    view.setUint8(offset, randomValue(255));
-    offset += 1;
-
-    // cell 3 resistance
-    view.setUint8(offset, randomValue(255));
-    offset += 1;
-
-    // cell 4 resistance
-    view.setUint8(offset, randomValue(255));
-    offset += 1;
-
-    // charging
-    view.setUint8(offset, randomValue(1));
-    offset += 1;
-
-    // discharging
-    view.setUint8(offset, randomValue(1));
-    offset += 1;
-
-    // balancing
-    view.setUint8(offset, randomValue(1));
-    offset += 1;
-
     // device error
-    view.setUint8(offset, randomValue(1));
-    offset += 1;
+    view.setUint16(offset, randomValue(256));
+    offset += 2;
 
     // error
-    view.setUint8(offset, randomValue(1));
+    view.setUint8(offset, randomValue(64));
 
-    return buffer;
+    return view;
 };
 
 const genPsuState = () => {
     let offset = 0;
-    const buffer = new ArrayBuffer(3);
+    const buffer = new ArrayBuffer(7);
     const view = new DataView(buffer);
 
     // voltage
     view.setUint16(offset, randomValue(1460));
     offset += 2;
 
+    // active
+    view.setUint8(offset, randomValue(1));
+    offset += 1;
+
+    // current
+    view.setUint8(offset, randomValue(3));
+    offset += 1;
+
     // temperature
     view.setUint8(offset, randomValue(150));
     offset += 1;
 
-    // error
+    // device error
+    view.setUint8(offset, randomValue(2));
+    offset += 1;
+
+    // internal error
     view.setUint8(offset, randomValue(2));
 
-    return buffer;
+    return view;
 };
 
 const genEspState = () => {
@@ -136,24 +129,44 @@ const genEspState = () => {
     view.setUint8(offset, randomValue(100));
     offset += 1;
 
-    // error
+    // internal error
     view.setUint8(offset, randomValue(2));
 
-    return buffer;
+    return view;
+};
+
+const genATSState = () => {
+    let offset = 0;
+    const buffer = new ArrayBuffer(2);
+    const view = new DataView(buffer);
+
+    // active
+    view.setUint8(offset, randomValue(1));
+    offset += 1;
+
+    // error
+    view.setUint8(offset, randomValue(64));
+    offset += 1;
+
+    return view;
 };
 
 const genInverterState = () => {
     let offset = 0;
-    const buffer = new ArrayBuffer(6);
+    const buffer = new ArrayBuffer(7);
     const view = new DataView(buffer);
-
-    // ac
-    view.setUint8(offset, randomValue(255));
-    offset += 1;
 
     // power
     view.setUint16(offset, randomValue(2500));
     offset += 2;
+
+    // active
+    view.setUint8(offset, randomValue(1));
+    offset += 1;
+
+    // ac
+    view.setUint8(offset, randomValue(255));
+    offset += 1;
 
     // temperature
     view.setUint8(offset, randomValue(100));
@@ -166,7 +179,7 @@ const genInverterState = () => {
     // device error
     view.setUint8(offset, randomValue(1));
 
-    return buffer;
+    return view;
 };
 
 const genHistoryIncrement = () => {
@@ -261,6 +274,7 @@ const generators = {
     [psuUUID]: genPsuState,
     [espUUID]: genEspState,
     [inverterUUID]: genInverterState,
+    [atsUUID]: genATSState,
     [historyUUID]: genHistoryIncrement,
 };
 
@@ -303,7 +317,7 @@ function requestLEScan(options, callback) {
     });
 }
 
-async function initialize() {
+async function initialise() {
     console.debug("Initializing BLE");
 }
 
@@ -349,7 +363,7 @@ async function startNotifications(
 }
 
 export {
-    initialize,
+    initialise,
     connect,
     requestLEScan,
     read,

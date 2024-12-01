@@ -5,7 +5,6 @@ import { acceptHMRUpdate, defineStore } from "pinia";
 import { useBMSStore } from "stores/bms";
 import { usePSUStore } from "stores/psu";
 import { useInverterStore } from "stores/inverter";
-import { useESPStore } from "stores/esp";
 
 import {
     HISTORY_BMS_SOC,
@@ -20,27 +19,31 @@ import {
     HISTORY_PSU_TEMPERATURE,
 } from "stores/uuids";
 
-const bmsStore = useBMSStore();
-const psuStore = usePSUStore();
-const inverterStore = useInverterStore();
-
 export const useHistoryStore = defineStore("history", {
     state: () => ({
-        routes: {
-            [HISTORY_BMS_SOC]: bmsStore,
-            [HISTORY_BMS_CURRENT]: bmsStore,
-            [HISTORY_BMS_CELL1_VOLTAGE]: bmsStore,
-            [HISTORY_BMS_CELL2_VOLTAGE]: bmsStore,
-            [HISTORY_BMS_CELL3_VOLTAGE]: bmsStore,
-            [HISTORY_BMS_CELL4_VOLTAGE]: bmsStore,
-            [HISTORY_PSU_TEMPERATURE]: psuStore,
-            [HISTORY_PSU_VOLTAGE]: psuStore,
-            [HISTORY_INVERTER_POWER]: inverterStore,
-            [HISTORY_INVERTER_TEMPERATURE]: inverterStore,
-        },
+        routes: null,
     }),
 
     actions: {
+        initialise() {
+            const bmsStore = useBMSStore();
+            const psuStore = usePSUStore();
+            const inverterStore = useInverterStore();
+
+            this.routes = {
+                [HISTORY_BMS_SOC]: bmsStore,
+                [HISTORY_BMS_CURRENT]: bmsStore,
+                [HISTORY_BMS_CELL1_VOLTAGE]: bmsStore,
+                [HISTORY_BMS_CELL2_VOLTAGE]: bmsStore,
+                [HISTORY_BMS_CELL3_VOLTAGE]: bmsStore,
+                [HISTORY_BMS_CELL4_VOLTAGE]: bmsStore,
+                [HISTORY_PSU_TEMPERATURE]: psuStore,
+                [HISTORY_PSU_VOLTAGE]: psuStore,
+                [HISTORY_INVERTER_POWER]: inverterStore,
+                [HISTORY_INVERTER_TEMPERATURE]: inverterStore,
+            };
+        },
+
         parseState(view) {
             const { chartType, incremental, dataType, length, offset } =
                 this.unpackHeader(view.getUint32(0, true));

@@ -9,7 +9,7 @@
 
         <q-footer bordered class="bg-grey-3 text-primary">
             <q-tabs
-                v-if="bleStore.deviceId"
+                v-if="appStore.deviceId"
                 no-caps
                 active-color="primary"
                 indicator-color="transparent"
@@ -26,7 +26,14 @@
                     name="inverter"
                     to="/inverter"
                     icon="flaticon-ac-voltage-source"
-                />
+                >
+                    <q-badge
+                        v-if="inverterStore.hasErrors()"
+                        color="red"
+                        floating
+                        >!</q-badge
+                    >
+                </q-route-tab>
                 <q-route-tab name="psu" to="/psu" icon="flaticon-psu">
                     <q-badge v-if="psuStore.hasErrors()" color="red" floating
                         >!</q-badge
@@ -48,13 +55,13 @@
 
 <script setup>
 import { ref } from "vue";
-import { useBLEStore } from "stores/ble";
+import { useAppStore } from "stores/app";
 import { useBMSStore } from "stores/bms";
 import { usePSUStore } from "stores/psu";
 import { useInverterStore } from "stores/inverter";
 import { useESPStore } from "stores/esp";
 
-const bleStore = useBLEStore();
+const appStore = useAppStore();
 const bmsStore = useBMSStore();
 const espStore = useESPStore();
 const psuStore = usePSUStore();

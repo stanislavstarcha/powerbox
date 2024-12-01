@@ -1,5 +1,3 @@
-import _ from "underscore";
-
 import { acceptHMRUpdate, defineStore } from "pinia";
 import {
     unpack,
@@ -10,7 +8,6 @@ import {
 } from "src/utils/ble.js";
 
 import {
-    HISTORY_LENGTH,
     HISTORY_BMS_SOC,
     HISTORY_BMS_CURRENT,
     HISTORY_BMS_CELL1_VOLTAGE,

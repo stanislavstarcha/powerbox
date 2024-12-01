@@ -1,4 +1,3 @@
-import _ from "underscore";
 import { acceptHMRUpdate, defineStore } from "pinia";
 import {
     unpack,
@@ -6,14 +5,13 @@ import {
     unpack_voltage,
     pack_bool,
 } from "src/utils/ble.js";
-import { useBLEStore } from "stores/ble.js";
 
 import {
     HISTORY_PSU_TEMPERATURE,
     HISTORY_PSU_VOLTAGE,
     setChargingUUID,
-    setCurrentUUID,
 } from "stores/uuids.js";
+import { useAppStore } from "stores/app.js";
 
 export const usePSUStore = defineStore("psu", {
     state: () => ({
@@ -55,16 +53,8 @@ export const usePSUStore = defineStore("psu", {
 
         setCharging(value) {
             this.active = value;
-            const bleStore = useBLEStore();
-            const signal = pack_bool(value);
-            console.log("send charging signal", signal);
-            bleStore.writeState(setChargingUUID, signal);
-        },
-
-        setCurrentLimit(value) {
-            this.currentLimit = value;
-            const bleStore = useBLEStore();
-            bleStore.writeState(setCurrentUUID, value);
+            const appStore = useAppStore();
+            appStore.writeState(setChargingUUID, pack_bool(value));
         },
     },
 });

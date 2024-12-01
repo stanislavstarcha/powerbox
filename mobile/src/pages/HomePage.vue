@@ -78,6 +78,7 @@ import { ref, computed } from "vue";
 import { useBMSStore } from "stores/bms";
 import { usePSUStore } from "stores/psu";
 import { useInverterStore } from "stores/inverter";
+import { useAppStore } from "stores/app";
 
 import { HISTORY_BMS_SOC } from "stores/uuids";
 import { useI18n } from "vue-i18n";
@@ -85,6 +86,8 @@ import { useI18n } from "vue-i18n";
 const bmsStore = useBMSStore();
 const psuStore = usePSUStore();
 const inverterStore = useInverterStore();
+const appStore = useAppStore();
+
 const { t } = useI18n();
 
 const currentLimitLabels = ref({
@@ -109,9 +112,9 @@ const discharging = computed({
 });
 
 const currentLimit = computed({
-    get: () => psuStore.currentLimit,
+    get: () => appStore.currentLimit,
     set: (value) => {
-        psuStore.setCurrentLimit(value);
+        appStore.setCurrentLimit(value);
     },
 });
 

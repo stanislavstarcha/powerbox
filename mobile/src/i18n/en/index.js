@@ -43,9 +43,9 @@ export default {
     inverterErrorOverVoltage: "Battery voltage is too high",
 
     bmsErrorTimeout: "Battery controller is not alive",
-    bmsErrorException: "Unexpected Непередбачена помилка BMS",
+    bmsErrorException: "Unexpected battery controller error",
     bmsErrorNoResponse: "Battery controller is not responding",
-    bmsErrorBadResponse: "Incorrect BMS response",
+    bmsErrorBadResponse: "Incorrect Battery controller response",
 
     psuErrorTimeout: "PSU controller is not alive",
     psuErrorException: "Unexpected PSU error",
@@ -54,4 +54,5 @@ export default {
     psuErrorPin: "Pin initialisation failure",
 
     avrMode: "Reserve switch mode",
+    appLanguage: "Language",
 };

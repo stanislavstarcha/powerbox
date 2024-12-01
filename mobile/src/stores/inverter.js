@@ -1,12 +1,11 @@
-import _ from "underscore";
 import { acceptHMRUpdate, defineStore } from "pinia";
-import { unpack, unpack_bool, unpack_voltage } from "src/utils/ble.js";
-import { useBLEStore } from "stores/ble.js";
+import { unpack, unpack_bool } from "src/utils/ble.js";
 import {
     setDischargingUUID,
     HISTORY_INVERTER_POWER,
     HISTORY_INVERTER_TEMPERATURE,
 } from "stores/uuids.js";
+import { useAppStore } from "stores/app.js";
 
 export const useInverterStore = defineStore("inverter", {
     state: () => ({
@@ -49,8 +48,8 @@ export const useInverterStore = defineStore("inverter", {
 
         setDischarging(value) {
             this.active = value;
-            const bleStore = useBLEStore();
-            bleStore.writeState(setDischargingUUID, value);
+            const appStore = useAppStore();
+            appStore.writeState(setDischargingUUID, value);
         },
     },
 });

@@ -1,15 +1,11 @@
 import { acceptHMRUpdate, defineStore } from "pinia";
-import { unpack, unpack_bool, pack_bool } from "src/utils/ble.js";
-import { useBLEStore } from "stores/ble.js";
-import { atsUUID } from "stores/uuids.js";
+import { unpack } from "src/utils/ble.js";
 
 export const useESPStore = defineStore("esp", {
     state: () => ({
-        version: null,
         uptime: 0,
         temperature: null,
         memory: null,
-        ats: false,
         internalErrors: null,
     }),
 
@@ -20,14 +16,7 @@ export const useESPStore = defineStore("esp", {
             this.uptime = unpack(view.getUint32(offset));
             offset += 4;
 
-            const version = unpack(view.getUint16(offset));
-            const major = (version >> 13) & 0x07; // 3 bits (111)
-            const minor = (version >> 8) & 0x1f; // 5 bits (11111)
-            const patch = version & 0xff; // 8 bits (11111111)
-            this.version = major + "." + minor + "." + patch;
-            offset += 2;
-
-            this.temperature = unpack(view.getUint8(offset, true));
+            this.temperature = unpack(view.getUint8(offset));
             offset += 1;
 
             this.memory = unpack(view.getUint8(offset));
@@ -35,12 +24,6 @@ export const useESPStore = defineStore("esp", {
 
             this.internalErrors = unpack(view.getUint8(offset));
             offset += 1;
-        },
-
-        setATS(value) {
-            this.ats = value;
-            const bleStore = useBLEStore();
-            bleStore.writeState(atsUUID, pack_bool(value));
         },
     },
 });

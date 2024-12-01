@@ -1,11 +1,10 @@
 import { acceptHMRUpdate, defineStore } from "pinia";
-import { unpack, unpack_bool, pack_bool } from "src/utils/ble.js";
-import { useBLEStore } from "stores/ble.js";
-import { setATSUUID } from "stores/uuids.js";
+import { unpack, unpack_bool } from "src/utils/ble.js";
 
 export const useATSStore = defineStore("ats", {
     state: () => ({
         active: false,
+        enabled: false,
     }),
 
     actions: {
@@ -17,12 +16,6 @@ export const useATSStore = defineStore("ats", {
 
             this.internalErrors = unpack(view.getUint8(offset));
             offset += 1;
-        },
-
-        set(value) {
-            this.active = value;
-            const bleStore = useBLEStore();
-            bleStore.writeState(setATSUUID, pack_bool(value));
         },
     },
 });
