@@ -1,6 +1,6 @@
 import { store } from "quasar/wrappers";
 import { createPinia } from "pinia";
-import _ from "underscore";
+import _ from "lodash";
 
 import { HISTORY_LENGTH } from "stores/uuids";
 
@@ -25,7 +25,7 @@ function DeviceStorePlugin({ app, options, store }) {
     };
 
     store.initialiseChartData = () => {
-        store.$state.chartData = _.mapObject(store.$state.chartMappings, () =>
+        store.$state.chartData = _.mapValues(store.$state.chartMappings, () =>
             new Array(HISTORY_LENGTH).fill(null),
         );
     };

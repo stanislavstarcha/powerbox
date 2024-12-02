@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 import { Loading, QSpinnerGears } from "quasar";
 import { acceptHMRUpdate, defineStore } from "pinia";
 import { Preferences } from "@capacitor/preferences";
@@ -27,9 +29,11 @@ import {
     setCurrentUUID,
 } from "stores/uuids";
 
+const DEFAULT_LANGUAGE = "uk";
+
 let BleClient;
 async function loadBluetoothModule() {
-    if (process.env.NODE_ENV === "production" && false) {
+    if (process.env.NODE_ENV === "production" || true) {
         const bleModule = await import("@capacitor-community/bluetooth-le");
         BleClient = bleModule.BleClient;
         console.log("Loaded Bluetooth Module", BleClient);
@@ -40,7 +44,6 @@ async function loadBluetoothModule() {
 }
 
 export const useAppStore = defineStore("app", {
-    router: useRouter(),
     state: () => ({
         initialised: false,
         scanning: false,
@@ -63,7 +66,7 @@ export const useAppStore = defineStore("app", {
             this.historyStore = useHistoryStore();
 
             await loadBluetoothModule();
-            await BleClient.initialise();
+            await BleClient.initialize();
             await this.historyStore.initialise();
             await this.loadAppPreferences();
         },
@@ -114,6 +117,7 @@ export const useAppStore = defineStore("app", {
                     message: "connectingToDevice",
                     spinner: QSpinnerGears,
                 });
+
                 this.deviceId = deviceId;
                 this.bmsStore.initialiseChartData();
                 this.psuStore.initialiseChartData();
@@ -122,10 +126,11 @@ export const useAppStore = defineStore("app", {
                 await BleClient.connect(deviceId, (deviceId) => {
                     this.deviceId = null;
                     this.devices = [];
-                    this.loadDevicePreferences().then(() => {
-                        this.router.push({ name: "Discover" });
-                    });
+                    const router = useRouter();
+                    router.push({ name: "Discover" });
                 });
+
+                await this.loadDevicePreferences();
 
                 const [bmsState, psuState, inverterState, espState, atsState] =
                     await Promise.all([
@@ -218,16 +223,17 @@ export const useAppStore = defineStore("app", {
         },
 
         async loadAppPreferences() {
-            this.language = await Preferences.get("language");
-            i18n.global.locale = this.language;
+            const value = await Preferences.get({ key: "language" });
+            this.setLanguage(
+                _.defaultTo(JSON.parse(value.value), DEFAULT_LANGUAGE),
+            );
         },
 
         async loadDevicePreferences() {
-            const ats = await Preferences.get("ats");
-            const current = await Preferences.get("current");
-
-            this.setATS(ats);
-            this.setCurrentLimit(current);
+            const ats = await Preferences.get({ key: "ats" });
+            const current = await Preferences.get({ key: "current" });
+            this.setATS(_.defaultTo(JSON.parse(ats.value), false));
+            this.setCurrentLimit(_.defaultTo(JSON.parse(current.value), 0));
         },
 
         async savePreference(key, value) {
@@ -245,7 +251,8 @@ export const useAppStore = defineStore("app", {
         },
 
         setLanguage(language) {
-            this.savePreference("language", value).then(() => {
+            console.log("set language", language);
+            this.savePreference("language", language).then(() => {
                 this.language = language;
                 i18n.global.locale = language;
             });

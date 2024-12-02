@@ -32,7 +32,7 @@ export default {
     memory: "Memory usage",
     temperature: "Temperature",
     version: "Version",
-    startPSU: "Click to start charging the battery",
+    startPSU: "Click to charge the battery",
     acVoltage: "AC voltage",
 
     inverterErrorTimeout: "Inverter controller is not alive",

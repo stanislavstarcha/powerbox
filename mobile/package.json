@@ -23,6 +23,7 @@
     "@quasar/extras": "^1.16.4",
     "highcharts": "11.4.8",
     "highcharts-vue": "^2.0.1",
+    "lodash": "^4.17.21",
     "pinia": "^2.0.11",
     "quasar": "^2.17.4",
     "underscore": "^1.13.7",
