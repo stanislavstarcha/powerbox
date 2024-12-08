@@ -234,7 +234,7 @@ class InverterController(PowerCallbacksMixin):
     def on_bms_state(self, bms_state):
         triggered = False
         for voltage in bms_state.cells:
-            if voltage is None:
+            if voltage is None or voltage == 0:
                 continue
             voltage /= 1000
             if voltage < self._turn_off_voltage:
@@ -245,6 +245,7 @@ class InverterController(PowerCallbacksMixin):
             self._turn_off_confirmations += 1
             if self._turn_off_confirmations >= self.TURN_OFF_MAX_CONFIRMATIONS:
                 self.off()
+                self._turn_off_confirmations = 0
         else:
             self._turn_off_confirmations = 0
 
@@ -341,7 +342,7 @@ class InverterController(PowerCallbacksMixin):
 
         if self._state.is_valid():
             logger.debug(
-                f"AC: {self._state.ac}, Power: {self._state.power} Temperature: {self._state.temperature} DC: {self._state.dc}"
+                f"AC: {self._state.ac}, Temperature: {self._state.temperature} DC: {self._state.dc} ERR: {self._state.external_errors}"
             )
             self._state.reset_error(self._state.ERROR_BAD_RESPONSE)
         else:

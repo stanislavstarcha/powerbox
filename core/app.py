@@ -34,14 +34,13 @@ def disable_keyboard_interrupt():
 
 async def main():
     disable_keyboard_interrupt()
-    logger.info("Bootstrapping the app...")
+    logger.info("Bootstrapping app ver: ", conf.FIRMWARE)
     disable_wifi()
 
     buzzer = BuzzerController(signal_pin=conf.BUZZER_SIGNAL_PIN)
     buzzer.boot()
 
     instructions = InstructionsQueue()
-
     i2c = machine.I2C(
         0,
         scl=machine.Pin(conf.I2C_SCL_PIN),

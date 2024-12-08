@@ -443,7 +443,9 @@ class BMSController:
                 if self._state_callbacks:
                     for callback in self._state_callbacks:
                         callback(self._state)
-                logger.debug("BMS status", self._state.voltage, self._state.current)
+                logger.debug(
+                    "BMS V", self._state.voltage, "T: ", self._state.mos_temperature
+                )
                 return True
             except Exception as e:
                 logger.critical(e)

@@ -44,12 +44,30 @@ python initialize.py \
 mpremote connect /dev/cu.usbserial-0001 exec "import machine; machine.reset()"
 ```
 
-Building micropython
+Building OTA micropython
+
+1. Install esp-idf (see README.md)
 ```
+cd esp-idf
+./install.sh
+source export.sh
+```
+2. Build micropython with OTA support
+
+
+```
+export $POWERBOX_HOME="~/workspace/powerbox"
 cd micropython/ports/esp32
-make BOARD=MYBOARD FROZEN_MANIFEST=/path/to/my/project/manifest.py
+make BOARD=ESP32_GENERIC FROZEN_MANIFEST=$POWERBOX_HOME/manifest.py BOARD_VARIANT=OTA
 ```
 
-Freeze codebase
 ```
+python -m esptool --chip esp32 -b 460800 --port /dev/cu.usbserial-0001 \
+--before default_reset --after hard_reset write_flash \
+--flash_mode dio --flash_size 4MB --flash_freq 40m \
+0x1000 build-ESP32_GENERIC-OTA/bootloader/bootloader.bin \
+0x8000 build-ESP32_GENERIC-OTA/partition_table/partition-table.bin \
+0xd000 build-ESP32_GENERIC-OTA/ota_data_initial.bin \
+0x10000 $POWERBOX_HOME/resources/firmware/ota-0.8.0.bin \
+0x190000 $POWERBOX_HOME/resources/firmware/ota-0.10.0.bin
 ```

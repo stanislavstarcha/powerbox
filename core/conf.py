@@ -2,7 +2,7 @@ from micropython import const
 
 MANUFACTURER = "Electrocat"
 MODEL = "DOBROTVIR-4A"
-FIRMWARE = "0.9.0"
+FIRMWARE = "0.10.0"
 
 LOGGER_TRANSPORT = const(0)
 LOGGER_LEVEL = const(4)
@@ -27,7 +27,7 @@ PSU_POWER_GATE_PIN = const(27)
 PSU_TEMPERATURE_PIN = const(33)
 PSU_CURRENT_A_PIN = const(14)
 PSU_CURRENT_B_PIN = const(12)
-PSU_CURRENT_CHANNEL = const(0)
+PSU_CURRENT_CHANNEL = const(2)
 PSU_MAX_CELL_VOLTAGE = const(3.5)
 
 INVERTER_MIN_CELL_VOLTAGE = const(2.7)
