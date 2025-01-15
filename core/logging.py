@@ -148,20 +148,6 @@ class Logger:
 
     def setup(self, transport=None, level=None, wifi=None):
         self._level = level
-        if transport == "wifi":
-            self._transport = WIFILoggerTransport(
-                wifi=wifi,
-                host=CONF.WIFILogger.HOST,
-                port=CONF.WIFILogger.PORT,
-            )
-
-        if transport == "uart":
-            self._transport = UARTLoggerTransport(
-                uart_if=CONF.UARTLogger.UART_IF,
-                baud_rate=CONF.UARTLogger.BAUD_RATE,
-                uart_rx_pin=CONF.UARTLogger.UART_RX_PIN,
-                uart_tx_pin=CONF.UARTLogger.UART_TX_PIN,
-            )
 
     def debug(self, *messages):
         self._log(LogLevels.DEBUG, *messages)

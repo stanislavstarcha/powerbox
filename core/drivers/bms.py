@@ -434,8 +434,8 @@ class BMSController:
             await self._state.sleep()
 
     def request_status(self, delay=50):
-        # logger.debug("Requesting BMS status...")
         data = self.query(self.STATUS_REQUEST, delay=delay)
+        logger.debug("Requesting BMS status...", data)
         if data:
             try:
                 self._state.parse(data)

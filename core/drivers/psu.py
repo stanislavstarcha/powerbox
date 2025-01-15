@@ -1,15 +1,14 @@
-import asyncio
 import machine
 import struct
-
-import onewire, ds18x20
-from lib.ina219 import INA219
 
 from drivers.button import ButtonController
 from drivers import BaseState, PowerCallbacksMixin
 from drivers.history import HistoricalData
 
 from drivers.const import BLE_PSU_UUID
+
+from lib.tachometer import Tachometer
+
 
 from drivers.const import (
     HISTORY_PSU_VOLTAGE,
@@ -89,27 +88,13 @@ class PowerSupplyController(PowerCallbacksMixin):
 
     Current pins define corresponding CD4051B multiplexer A,B pins. C pin is grounded
     and not available in the controller.
-
-    Optionally control voltage and temperature of the PSU via
-    INA219 chip and DS18B20 sensor.
     """
-
-    ENABLE_DS18X20 = True
 
     # A pin to listen to
     POWER_BUTTON_PIN = None
 
     # A pin to turn on/off PSU via MOSFET
     POWER_GATE_PIN = None
-
-    # DS18B20 pin
-    TEMPERATURE_ENABLED = True
-    TEMPERATURE_PIN = None
-
-    # INA219 I2C pins
-    VOLTMETER_ENABLED = False
-    VOLTMETER_SCL_PIN = None
-    VOLTMETER_SDA_PIN = None
 
     # Current control pins
     # Two pins define 4 channels ranging from 0 (lowest) current to 3.
@@ -121,15 +106,12 @@ class PowerSupplyController(PowerCallbacksMixin):
     # PSU button controller
     _power_button = None
 
-    # INA219 driver instance
-    _ina219 = None
-
-    # DS18B20 driver instance
-    _ds18x20_driver = None
-
     # current pin instances
     _current_a_pin = None
     _current_b_pin = None
+
+    # fan tachometer
+    _tachometer = None
 
     _state = None
     _error = 0
@@ -145,20 +127,26 @@ class PowerSupplyController(PowerCallbacksMixin):
         self,
         power_button_pin=POWER_BUTTON_PIN,
         power_gate_pin=POWER_GATE_PIN,
-        temperature_pin=TEMPERATURE_PIN,
         current_a_pin=CURRENT_A_PIN,
         current_b_pin=CURRENT_B_PIN,
-        i2c=None,
+        fan_tachometer_pin=None,
+        uart_tx_pin=None,
         buzzer=None,
         turn_off_voltage=TURN_OFF_VOLTAGE,
         current_limit=CURRENT_CHANNEL,
-        temperature_enabled=TEMPERATURE_ENABLED,
-        voltmeter_enabled=VOLTMETER_ENABLED,
     ):
         self._state = PSUState()
         self._turn_off_voltage = turn_off_voltage
-        self._temperature_enabled = temperature_enabled
-        self._voltmeter_enabled = voltmeter_enabled
+
+        if fan_tachometer_pin:
+            self._tachometer = Tachometer(
+                pin=machine.Pin(fan_tachometer_pin, machine.Pin.IN),
+                period_ms=300,
+                done_callback=self.on_tachometer,
+            )
+
+        if uart_tx_pin:
+            self._uart_tx_pin = uart_tx_pin
 
         try:
             self._power_button = ButtonController(
@@ -178,32 +166,6 @@ class PowerSupplyController(PowerCallbacksMixin):
         except Exception as e:
             self._state.set_error(self._state.ERROR_PIN)
             logger.error("PSU gate pin failed")
-
-        if voltmeter_enabled:
-            try:
-                self._ina219 = INA219(i2c=i2c)
-            except Exception as e:
-                self._state.set_error(self._state.ERROR_VOLTAGE_SENSOR)
-                logger.error("PSU voltage sensor failed")
-                logger.critical(e)
-
-        self._ds18x20_driver = None
-        if temperature_enabled:
-            try:
-                self._ds18x20_driver = ds18x20.DS18X20(
-                    onewire.OneWire(machine.Pin(temperature_pin))
-                )
-                self._temperature_sensors = self._ds18x20_driver.scan()
-                if not self._temperature_sensors:
-                    logger.warning("No PSU temperature sensors found")
-                else:
-                    logger.info(
-                        "PSU temperature sensors found", self._temperature_sensors
-                    )
-            except Exception as e:
-                self._state.set_error(self._state.ERROR_TEMPERATURE_SENSOR)
-                logger.error("PSU temperature sensor failed")
-                logger.critical(e)
 
         try:
             self._current_a_pin = machine.Pin(
@@ -231,6 +193,9 @@ class PowerSupplyController(PowerCallbacksMixin):
 
         PowerCallbacksMixin.__init__(self)
         logger.info("Initialized power supply controller")
+
+    def on_tachometer(self, frequency):
+        print("Fan frequency", frequency)
 
     def on_bms_state(self, bms_state):
         triggered = False
@@ -279,37 +244,11 @@ class PowerSupplyController(PowerCallbacksMixin):
         else:
             self.on()
 
-    async def read_temperature(self):
-        try:
-            self._ds18x20_driver.convert_temp()
-            for sensor in self._temperature_sensors:
-                temperature = self._ds18x20_driver.read_temp(sensor)
-                if temperature is not None:
-                    self._state.temperature = int(temperature)
-                    self._state.reset_error(self._state.ERROR_TEMPERATURE_SENSOR)
-                logger.debug("PSU Temperature", temperature)
-        except Exception as e:
-            self._state.set_error(self._state.ERROR_TEMPERATURE_SENSOR)
-
-    async def read_voltage(self):
-        try:
-            bus_voltage = self._ina219.read_shunt_voltage()
-            self._state.voltage = bus_voltage
-            self._state.reset_error(self._state.ERROR_VOLTAGE_SENSOR)
-            logger.debug("PSU Voltage", bus_voltage)
-        except Exception as e:
-            self._state.set_error(self._state.ERROR_VOLTAGE_SENSOR)
-
     async def run(self):
         logger.info("Running PSU...")
 
         while True:
-            if self._voltmeter_enabled and self._ina219:
-                await self.read_voltage()
-
-            if self._temperature_enabled and self._ds18x20_driver:
-                await self.read_temperature()
-
+            self._tachometer.measure()
             self._state.snapshot()
             await self._state.sleep()
 
