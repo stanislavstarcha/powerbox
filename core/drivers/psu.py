@@ -1,5 +1,7 @@
+import asyncio
 import machine
 import struct
+import time
 
 from drivers.button import ButtonController
 from drivers import BaseState, PowerCallbacksMixin
@@ -23,16 +25,29 @@ from logging import logger
 class PSUState(BaseState):
 
     NAME = "PSU"
-    BLE_STATE_UUID = BLE_PSU_UUID
+    STATE_FREQUENCY = 5
 
-    ERROR_TEMPERATURE_SENSOR = 4
-    ERROR_VOLTAGE_SENSOR = 5
+    BLE_STATE_UUID = BLE_PSU_UUID
     ERROR_PIN = 6
 
+    # on/off
     active = False
-    voltage = None
-    temperature = None
+
+    # current channel (0-3)
     current = 0
+
+    # telemetry
+    power1 = None
+    power2 = None
+    ac = None
+    t1 = None
+    t2 = None
+    t3 = None
+    state = None
+    unknown = None
+
+    _power_crc = None
+    _data_crc = None
 
     history = {
         HISTORY_PSU_VOLTAGE: HistoricalData(
@@ -49,35 +64,96 @@ class PSUState(BaseState):
         pass
 
     def clear(self):
-        self.voltage = None
-        self.temperature = None
         self.active = False
 
     def get_ble_state(self):
         return struct.pack(
             ">HBBBBB",
-            self._pack_voltage(self.voltage),
+            self._pack_voltage(0),
             self._pack_bool(self.active),
             self._pack(self.current),
-            self._pack(self.temperature),
+            self._pack(0),
             self._pack(self.external_errors),
             self._pack(self.internal_errors),
         )
 
     def build_history(self):
-        voltage = self._pack_voltage(self.voltage)
+        voltage = self._pack_voltage(0)
         self.history[HISTORY_PSU_VOLTAGE].push(voltage)
-        self.history[HISTORY_PSU_TEMPERATURE].push(self._pack(self.temperature))
+        self.history[HISTORY_PSU_TEMPERATURE].push(self._pack(0))
 
     def set_display_metric(self, metric):
         self.display_metric_glyph = "on" if self.active else "off"
 
-        if self.temperature:
-            self.display_metric_value = int(self.temperature)
-            self.display_metric_type = "c"
-        else:
-            self.display_metric_value = None
-            self.display_metric_type = None
+    def crc(self, data):
+        return sum(b for b in data) % 0xFF
+
+    def parse(self, frame):
+        print("parsing frame")
+        offset = 0
+        header = struct.unpack_from(">BB", frame)
+        if header != (0x49, 0x34):
+            self.error = 101
+            print("bad frame header")
+            return
+        offset += 2
+
+        power1 = struct.unpack_from(">BB", frame, offset)
+        offset += 2
+
+        power2 = struct.unpack_from(">BB", frame, offset)
+        offset += 2
+
+        actual_crc = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        power_crc = self.crc(frame[2:6])
+        if power_crc != actual_crc:
+            self.error = 2
+            print("bad header crc", power_crc, actual_crc)
+            return
+
+        data_header = struct.unpack_from(">B", frame, offset)
+        offset += 1
+
+        state = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        unknown = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        ac = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        t1 = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        t2 = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        t3 = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        reserved = struct.unpack_from(">BBBBBBB", frame, offset)
+        offset += 7
+
+        actual_data_crc = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        data_crc = self.crc(frame[9:21]) - 3
+        if data_crc != actual_data_crc:
+            self.error = 3
+            print("bad data crc", data_crc, actual_data_crc)
+            return False
+
+        self.power1 = power1
+        self.power2 = power2
+        self.ac = ac
+        self.state = state
+        self.t1 = t1
+        self.t2 = t2
+        self.t3 = t3
+        print("succeeded", self.ac, self.t1, self.t2, self.t3)
 
 
 class PowerSupplyController(PowerCallbacksMixin):
@@ -123,6 +199,12 @@ class PowerSupplyController(PowerCallbacksMixin):
     _turn_off_voltage = 3.5
     _turn_off_confirmations = 0
 
+    # UART parameters
+    UART_IF = 0
+    BAUD_RATE = 4800
+    FRAME_SIZE = 22
+    _buffer = None
+
     def __init__(
         self,
         power_button_pin=POWER_BUTTON_PIN,
@@ -130,7 +212,8 @@ class PowerSupplyController(PowerCallbacksMixin):
         current_a_pin=CURRENT_A_PIN,
         current_b_pin=CURRENT_B_PIN,
         fan_tachometer_pin=None,
-        uart_tx_pin=None,
+        uart_if=None,
+        uart_rx_pin=None,
         buzzer=None,
         turn_off_voltage=TURN_OFF_VOLTAGE,
         current_limit=CURRENT_CHANNEL,
@@ -138,15 +221,16 @@ class PowerSupplyController(PowerCallbacksMixin):
         self._state = PSUState()
         self._turn_off_voltage = turn_off_voltage
 
+        self._uart = None
+        self._uart_if = uart_if
+        self._uart_rx_pin = uart_rx_pin
+
         if fan_tachometer_pin:
             self._tachometer = Tachometer(
                 pin=machine.Pin(fan_tachometer_pin, machine.Pin.IN),
                 period_ms=300,
                 done_callback=self.on_tachometer,
             )
-
-        if uart_tx_pin:
-            self._uart_tx_pin = uart_tx_pin
 
         try:
             self._power_button = ButtonController(
@@ -194,6 +278,59 @@ class PowerSupplyController(PowerCallbacksMixin):
         PowerCallbacksMixin.__init__(self)
         logger.info("Initialized power supply controller")
 
+    async def start_metrics_samping(self, timeout=1000):
+
+        if not self._uart_if:
+            return
+
+        self._uart = machine.UART(
+            self._uart_if,
+            baudrate=self.BAUD_RATE,
+            rx=machine.Pin(self._uart_rx_pin, machine.Pin.IN, machine.Pin.PULL_UP),
+        )
+
+        buffer = bytearray()
+
+        started_at = time.ticks_ms()
+        while True:
+            await asyncio.sleep_ms(100)
+            data = self._uart.read()
+
+            if data:
+                print(type(data), type(buffer), data)
+                buffer += data
+                self.extract_frames(buffer)
+
+            diff = time.ticks_ms() - started_at
+            if diff > 1000:
+                break
+
+        self._uart.deinit()
+        self._uart = None
+        self._buffer = None
+        print("Stop measuring samples")
+
+    def extract_frames(self, buffer):
+
+        frame_start = buffer.find(b"\x49\x34")
+        if frame_start < 0:
+            return
+
+        # incomplete buffer
+        if (frame_start + self.FRAME_SIZE) > len(buffer):
+            return
+
+        frame = buffer[frame_start : frame_start + self.FRAME_SIZE]
+        try:
+            print("Extracted frame")
+            error = self.state.parse(frame)
+            if not error:
+                return True
+
+            buffer = buffer[frame_start + self.FRAME_SIZE :]
+        except Exception as e:
+            print(e)
+
     def on_tachometer(self, frequency):
         print("Fan frequency", frequency)
 
@@ -230,6 +367,11 @@ class PowerSupplyController(PowerCallbacksMixin):
         logger.info("Power supply is on")
 
     def off(self):
+
+        if self._uart:
+            self._uart.deinit()
+            self._uart = None
+
         if self.power_off_callbacks:
             for cb in self.power_off_callbacks:
                 cb()
@@ -248,7 +390,10 @@ class PowerSupplyController(PowerCallbacksMixin):
         logger.info("Running PSU...")
 
         while True:
-            self._tachometer.measure()
+            if self.state.active:
+                asyncio.create_task(self.start_metrics_samping())
+                self._tachometer.measure()
+
             self._state.snapshot()
             await self._state.sleep()
 

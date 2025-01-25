@@ -1,8 +1,9 @@
 from micropython import const
 
-MANUFACTURER = "Electrocat"
-MODEL = "DOBROTVIR-4A"
-FIRMWARE = "0.10.0"
+BLE_GAP_NAME = "Tripillia"
+BLE_MANUFACTURER = "egg17"
+BLE_MODEL = "Tripillia-4K12"
+BLE_FIRMWARE = "0.10.0"
 
 LOGGER_TRANSPORT = const(0)
 LOGGER_LEVEL = const(4)
@@ -17,12 +18,11 @@ BMS_UART_TX_PIN = const(16)
 PSU_POWER_BUTTON_PIN = const(34)
 PSU_POWER_GATE_PIN = const(26)
 PSU_FAN_TACHOMETER_PIN = const(36)
-PSU_UART_TX_PIN = const(35)
+PSU_UART_IF = const(2)
+PSU_UART_RX_PIN = const(35)
 PSU_CURRENT_A_PIN = const(14)
 PSU_CURRENT_B_PIN = const(27)
-PSU_CURRENT_CHANNEL = const(2)
-
-
+PSU_CURRENT_CHANNEL = const(3)
 PSU_MAX_CELL_VOLTAGE = const(3.5)
 
 INVERTER_MIN_CELL_VOLTAGE = const(2.7)
@@ -35,4 +35,20 @@ INVERTER_UART_TX_PIN = const(2)
 ATS_NO_PIN = const(35)
 ATS_NC_PIN = const(32)
 
-BUZZER_SIGNAL_PIN = const(13)
+BUZZER_SIGNAL_PIN = const(12)
+
+DISPLAY_WIDTH = const(320)
+DISPLAY_HEIGHT = const(480)
+
+DISPLAY_LED_PIN = const(13)
+DISPLAY_DC_PIN = const(19)
+DISPLAY_MOSI_PIN = const(18)
+DISPLAY_SCLK_PIN = const(5)
+DISPLAY_CS_PIN = const(21)
+
+DISPLAY_MISO_PIN = const(-1)
+DISPLAY_RESET_PIN = const(-1)
+
+DISPLAY_FREQ = const(40000000)
+DISPLAY_OFFSET_X = const(0)
+DISPLAY_OFFSET_Y = const(0)

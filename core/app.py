@@ -1,5 +1,6 @@
-import asyncio
 import micropython
+
+import asyncio
 import network
 import time
 
@@ -11,8 +12,8 @@ from drivers.inverter import InverterController
 from drivers.psu import PowerSupplyController
 from drivers.bms import BMSController
 from drivers.buzzer import BuzzerController
-from drivers.telemetry import Telemetry
 from drivers.wroom import WROOMController
+from display import DisplayController
 
 from lib.queue import InstructionsQueue
 
@@ -31,8 +32,8 @@ def disable_keyboard_interrupt():
 
 async def main():
     # disable_keyboard_interrupt()
-    logger.info("Bootstrapping app ver: ", conf.FIRMWARE)
-    disable_wifi()
+    logger.info("Bootstrapping app ver: ", conf.BLE_FIRMWARE)
+    # disable_wifi()
 
     buzzer = BuzzerController(signal_pin=conf.BUZZER_SIGNAL_PIN)
     buzzer.boot()
@@ -73,7 +74,8 @@ async def main():
         current_b_pin=conf.PSU_CURRENT_B_PIN,
         turn_off_voltage=conf.PSU_MAX_CELL_VOLTAGE,
         fan_tachometer_pin=conf.PSU_FAN_TACHOMETER_PIN,
-        uart_tx_pin=conf.PSU_UART_TX_PIN,
+        uart_if=conf.PSU_UART_IF,
+        uart_rx_pin=conf.PSU_UART_RX_PIN,
         current_limit=conf.PSU_CURRENT_CHANNEL,
         buzzer=buzzer,
     )
@@ -83,27 +85,6 @@ async def main():
 
     wroom = WROOMController()
 
-    ble = BLEServerController(
-        manufacturer=conf.MANUFACTURER,
-        model=conf.MODEL,
-        firmware=conf.FIRMWARE,
-        bms=bms,
-        psu=psu,
-        inverter=inverter,
-        wroom=wroom,
-        ats=ats,
-        instructions=instructions,
-    )
-
-    telemetry = Telemetry(
-        ats=ats,
-        ble=ble,
-        bms=bms,
-        inverter=inverter,
-        psu=psu,
-        esp=wroom,
-    )
-
     psu.add_power_callback(True, inverter.off)
     psu.add_power_callback(True, bms.enable_charge)
     psu.add_power_callback(False, bms.disable_charge)
@@ -112,11 +93,37 @@ async def main():
     inverter.add_power_callback(True, bms.enable_discharge)
     inverter.add_power_callback(False, bms.disable_discharge)
 
+    ble = BLEServerController(
+        gap_name=conf.BLE_GAP_NAME,
+        manufacturer=conf.BLE_MANUFACTURER,
+        model=conf.BLE_MODEL,
+        firmware=conf.BLE_FIRMWARE,
+        instructions=instructions,
+        ats=ats,
+        bms=bms,
+        inverter=inverter,
+        psu=psu,
+        wroom=wroom,
+    )
+    ble.initialize()
+
+    display = DisplayController(
+        width=conf.DISPLAY_WIDTH,
+        height=conf.DISPLAY_HEIGHT,
+        led_pin=conf.DISPLAY_LED_PIN,
+        miso_pin=conf.DISPLAY_MISO_PIN,
+        mosi_pin=conf.DISPLAY_MOSI_PIN,
+        sck_pin=conf.DISPLAY_SCLK_PIN,
+        dc_pin=conf.DISPLAY_DC_PIN,
+        cs_pin=conf.DISPLAY_CS_PIN,
+        frequency=conf.DISPLAY_FREQ,
+    )
+
     coroutines = [
+        asyncio.create_task(display.run()),
+        # asyncio.create_task(ble.run()),
         asyncio.create_task(instructions.run()),
-        asyncio.create_task(telemetry.run()),
         asyncio.create_task(ats.run()),
-        asyncio.create_task(ble.run()),
         asyncio.create_task(bms.run()),
         asyncio.create_task(inverter.run()),
         asyncio.create_task(psu.run()),

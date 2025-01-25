@@ -73,35 +73,37 @@ class BLEServerController:
 
     def __init__(
         self,
+        gap_name=None,
         manufacturer=None,
         model=None,
         firmware=None,
+        instructions=None,
         bms=None,
         psu=None,
         inverter=None,
         wroom=None,
         ats=None,
-        instructions=None,
     ):
+        self._state = BLEState()
+
+        self._gap_name = gap_name
         self._manufacturer = manufacturer
         self._model = model
         self._firmware = firmware
+        self._instructions = instructions
+
         self._bms = bms
         self._psu = psu
         self._inverter = inverter
         self._wroom = wroom
         self._ats = ats
-        self._instructions = instructions
 
         self._bms.state.attach_ble(self)
         self._psu.state.attach_ble(self)
         self._inverter.state.attach_ble(self)
         self._wroom.state.attach_ble(self)
 
-        self._state = BLEState()
-
     async def run(self):
-        self.initialize()
         logger.info("Running Bluetooth controller...")
         while True:
             self._state.snapshot()
@@ -110,9 +112,9 @@ class BLEServerController:
     def collect(self):
         return self._state
 
-    def initialize(self):
-        self._name = "Dobrotvir"
-
+    def initialize(
+        self,
+    ):
         self._ble = BLE()
         self._ble.active(False)
         self._ble.active(True)
@@ -120,7 +122,7 @@ class BLEServerController:
         time.sleep_ms(100)
 
         self._ble.irq(self.on_ble_irq)
-        self._ble.config(gap_name=self._name)
+        self._ble.config(gap_name=self._gap_name)
 
         (
             (
@@ -200,7 +202,7 @@ class BLEServerController:
             return
 
         adv_data = self._get_advertisement_payload(
-            name=self._name,
+            name=self._gap_name,
             services=[BLE_INFO_SERVICE_UUID, BLE_CORE_SERVICE_UUID],
             appearance=960,
         )

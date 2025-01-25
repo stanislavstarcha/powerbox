@@ -212,10 +212,10 @@ class InverterController(PowerCallbacksMixin):
         self._state = InverterState()
         self._turn_off_voltage = turn_off_voltage
 
-        if uart_if is not None:
-            tx = machine.Pin(uart_tx_pin, machine.Pin.OUT)
-            rx = machine.Pin(uart_rx_pin, machine.Pin.IN)
-            self._uart = machine.UART(uart_if, baudrate=baud_rate, tx=tx, rx=rx)
+        self._uart_if = uart_if
+        self._baud_rate = baud_rate
+        self._tx_pin = uart_tx_pin
+        self._rx_pin = uart_rx_pin
 
         self._power_button = ButtonController(
             listen_pin=power_button_pin,
@@ -254,12 +254,23 @@ class InverterController(PowerCallbacksMixin):
             for cb in self.power_on_callbacks:
                 cb()
 
+        if self._uart_if is not None:
+            self._uart = machine.UART(
+                self._uart_if,
+                baudrate=self._baud_rate,
+                tx=machine.Pin(self._uart_tx_pin, machine.Pin.OUT),
+                rx=machine.Pin(self._uart_rx_pin, machine.Pin.IN),
+            )
+
         self._power_gate_pin.on()
         self._state.active = True
         self._state.notify()
         logger.info("Inverter is on")
 
     def off(self):
+        if self._uart is not None:
+            self._uart.deinit()
+
         if self.power_off_callbacks:
             for cb in self.power_off_callbacks:
                 cb()

@@ -1,73 +1,89 @@
-# setup ESP32 chip
+# Install and run firmware
 
-### ESP32 S3
+```
+cd $HOME
+git clone https://github.com/stanislavstarcha/powerbox
+export POWERBOX_HOME=$HOME/powerbox
+```
 
-1. Find port `ls /dev/tty*`
+Connect ESP32 to USB and find the port `ls /dev/tty*`
 
 A typical serial port should look like this 
 - `/dev/tty.usbmodem11101`
 - `/dev/cu.usbserial-0001`
 - `/dev/tty.usbmodem1234561`
 
-In case serial port does not respond, a host restart might be needed 
 
-2. Update firmware 
+## Build firmware
 
-**ESP32S3 (usb-c)**
-
-Download firmware https://micropython.org/resources/firmware/ESP32_GENERIC_S3-20240602-v1.23.0.bin
-or specific version at
-https://micropython.org/download/ESP32_GENERIC_S3/
-
+Install LVGL micropython
 ```
-esptool.py --chip esp32s3 --baud 9600 --port /dev/tty.usbmodem1234561 erase_flash
-esptool.py --chip esp32s3 --baud 9600 write_flash -z 0 ./resources/firmware/ESP32_GENERIC_S3-20240602-v1.23.0.bin
+git clone https://github.com/lvgl-micropython/lvgl_micropython
 ```
 
-ESP32 (microusb)
-
-Download firmware https://micropython.org/resources/firmware/ESP32_GENERIC-20240602-v1.23.0.bin
-or specific version at
-https://micropython.org/download/ESP32_GENERIC/
-
+### Copy fonts
 ```
-esptool.py --chip esp32 --baud 115200 --port /dev/cu.usbserial-0001 erase_flash
-esptool.py --chip esp32 --baud 460800 --port /dev/cu.usbserial-0001 write_flash -z 0x1000 ./resources/firmware/ESP32_GENERIC-20240602-v1.23.0.bin
-```
+cp ./resources/fonts/Roboto-Black.ttf $LVGL_HOME/lib/lvgl/scripts/built_in_font
+cp ./resources/fonts/Roboto-Regular.ttf $LVGL_HOME/lib/lvgl/scripts/built_in_font
+cp ./resources/fonts/Material-Sharp-28.ttf $LVGL_HOME/lib/lvgl/scripts/built_in_font
 
 ```
-python initialize.py \
---baud_rate 115200 \
---port /dev/cu.usbserial-0001 \
---erase
 
-mpremote connect /dev/cu.usbserial-0001 exec "import machine; machine.reset()"
-```
+### Build fonts
 
-Building OTA micropython
-
-1. Install esp-idf (see README.md)
-```
-cd esp-idf
-./install.sh
-source export.sh
-```
-2. Build micropython with OTA support
-
+Modify `$LVGL_HOME/lib/lvgl/scripts/built_in_font/generate_all.py` and add 
 
 ```
-export $POWERBOX_HOME="~/workspace/powerbox"
-cd micropython/ports/esp32
-make BOARD=ESP32_GENERIC FROZEN_MANIFEST=$POWERBOX_HOME/manifest.py BOARD_VARIANT=OTA
+print("\nGenerating 12 px Roboto Ukrainian")
+os.system("lv_font_conv --no-compress --no-prefilter --bpp 2 --size 12 --font Roboto-Regular.ttf --format lvgl -o lv_font_roboto_12.c -r 0xB0,0x20-0x22,0x27-0x40,0x5B-0x5F,0x7B-0x7D,0xA0,0xA7,0xA9,0xAB,0xBB,0x2BC,0x404,0x406-0x407,0x410-0x429,0x42C,0x42E-0x449,0x44C,0x44E-0x44F,0x454,0x456-0x457,0x490-0x491,0x2011,0x2013,0x2019,0x201C,0x201E,0x2030,0x20AC,0x2116")
+
+print("\nGenerating 24 px Glyphs")
+os.system("lv_font_conv --no-compress --no-prefilter --bpp 2 --size 24 --font Material-Sharp-28.ttf --format lvgl -o lv_font_material_24.c -r 0xEAC3,0xEAC9,0xEAD0,0xEACF,0xE000,0xe1a7,0xe1a8")
+
+print("\nGenerating 24 px Roboto")
+os.system("lv_font_conv --no-compress --no-prefilter --bpp 2 --size 26 --font Roboto-Black.ttf --format lvgl -o lv_font_roboto_24.c -r 0x20,0x30-0x39,0x412,0x442")
+
+print("\nGenerating 120 px Roboto")
+os.system("lv_font_conv --no-compress --no-prefilter --bpp 2 --size 120 --font Roboto-Black.ttf --format lvgl -o lv_font_roboto_120.c --symbols 0123456789%")
 ```
 
+and then build the fonts
+
 ```
-python -m esptool --chip esp32 -b 460800 --port /dev/cu.usbserial-0001 \
+cd $LVGL_HOME/lib/lvgl/scripts/built_in_font
+python generate_all.py
+```
+
+
+### Modify headers
+
+Open `$LVGL_HOME/lib/lvconf.h`
+
+And set to 0 (disable) all `#define LV_FONT_MONTSERRAT_*`
+and define custom fonts we've built earlier
+
+```
+#define LV_FONT_MONTSERRAT_14 0
+...
+
+#define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(lv_font_roboto_12) LV_FONT_DECLARE(lv_font_roboto_24) LV_FONT_DECLARE(lv_font_roboto_120) LV_FONT_DECLARE(lv_font_material_24)
+```
+
+
+### Build binaries
+
+```
+export POWERBOX_HOME="$HOME/workspace/powerbox"
+python make.py esp32 BOARD=ESP32_GENERIC DISPLAY=ILI9488 FROZEN_MANIFEST=$POWERBOX_HOME/manifest.py
+```
+
+### Flash firmware
+
+Instead of `/dev/cu.usbserial-0001` use the actual port 
+
+```
+python -m esptool --chip esp32 -p /dev/cu.usbserial-0001 -b 460800 \
 --before default_reset --after hard_reset write_flash \
---flash_mode dio --flash_size 4MB --flash_freq 40m \
-0x1000 build-ESP32_GENERIC-OTA/bootloader/bootloader.bin \
-0x8000 build-ESP32_GENERIC-OTA/partition_table/partition-table.bin \
-0xd000 build-ESP32_GENERIC-OTA/ota_data_initial.bin \
-0x10000 $POWERBOX_HOME/resources/firmware/ota-0.8.0.bin \
-0x190000 $POWERBOX_HOME/resources/firmware/ota-0.10.0.bin
+--flash_mode dio --flash_size 4MB --flash_freq 40m --erase-all 0x0 \
+./build/lvgl_micropy_ESP32_GENERIC-4.bin
 ```
