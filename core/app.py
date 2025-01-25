@@ -13,7 +13,7 @@ from drivers.psu import PowerSupplyController
 from drivers.bms import BMSController
 from drivers.buzzer import BuzzerController
 from drivers.wroom import WROOMController
-from display import DisplayController
+from drivers.display import DisplayController
 
 from lib.queue import InstructionsQueue
 

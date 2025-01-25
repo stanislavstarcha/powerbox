@@ -1,6 +1,6 @@
 # Install and run firmware
 
-```
+```shell
 cd $HOME
 git clone https://github.com/stanislavstarcha/powerbox
 export POWERBOX_HOME=$HOME/powerbox
@@ -17,12 +17,14 @@ A typical serial port should look like this
 ## Build firmware
 
 Install LVGL micropython
-```
+```shell
+cd $HOME
 git clone https://github.com/lvgl-micropython/lvgl_micropython
+export LVGL_HOME=$HOME/lvgl_micropython
 ```
 
 ### Copy fonts
-```
+```shell
 cp ./resources/fonts/Roboto-Black.ttf $LVGL_HOME/lib/lvgl/scripts/built_in_font
 cp ./resources/fonts/Roboto-Regular.ttf $LVGL_HOME/lib/lvgl/scripts/built_in_font
 cp ./resources/fonts/Material-Sharp-28.ttf $LVGL_HOME/lib/lvgl/scripts/built_in_font
@@ -33,7 +35,7 @@ cp ./resources/fonts/Material-Sharp-28.ttf $LVGL_HOME/lib/lvgl/scripts/built_in_
 
 Modify `$LVGL_HOME/lib/lvgl/scripts/built_in_font/generate_all.py` and add 
 
-```
+```python
 print("\nGenerating 12 px Roboto Ukrainian")
 os.system("lv_font_conv --no-compress --no-prefilter --bpp 2 --size 12 --font Roboto-Regular.ttf --format lvgl -o lv_font_roboto_12.c -r 0xB0,0x20-0x22,0x27-0x40,0x5B-0x5F,0x7B-0x7D,0xA0,0xA7,0xA9,0xAB,0xBB,0x2BC,0x404,0x406-0x407,0x410-0x429,0x42C,0x42E-0x449,0x44C,0x44E-0x44F,0x454,0x456-0x457,0x490-0x491,0x2011,0x2013,0x2019,0x201C,0x201E,0x2030,0x20AC,0x2116")
 
@@ -49,7 +51,7 @@ os.system("lv_font_conv --no-compress --no-prefilter --bpp 2 --size 120 --font R
 
 and then build the fonts
 
-```
+```shell
 cd $LVGL_HOME/lib/lvgl/scripts/built_in_font
 python generate_all.py
 ```
@@ -67,13 +69,14 @@ and define custom fonts we've built earlier
 ...
 
 #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(lv_font_roboto_12) LV_FONT_DECLARE(lv_font_roboto_24) LV_FONT_DECLARE(lv_font_roboto_120) LV_FONT_DECLARE(lv_font_material_24)
+
+#define LV_FONT_DEFAULT &lv_font_roboto_12
 ```
 
 
 ### Build binaries
 
-```
-export POWERBOX_HOME="$HOME/workspace/powerbox"
+```shell
 python make.py esp32 BOARD=ESP32_GENERIC DISPLAY=ILI9488 FROZEN_MANIFEST=$POWERBOX_HOME/manifest.py
 ```
 
@@ -81,7 +84,7 @@ python make.py esp32 BOARD=ESP32_GENERIC DISPLAY=ILI9488 FROZEN_MANIFEST=$POWERB
 
 Instead of `/dev/cu.usbserial-0001` use the actual port 
 
-```
+```shell
 python -m esptool --chip esp32 -p /dev/cu.usbserial-0001 -b 460800 \
 --before default_reset --after hard_reset write_flash \
 --flash_mode dio --flash_size 4MB --flash_freq 40m --erase-all 0x0 \
