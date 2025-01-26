@@ -1,7 +1,7 @@
 from collections import deque
 import struct
 
-from drivers.const import HISTORY_SIZE
+from const import HISTORY_SIZE
 
 
 class HistoricalData:

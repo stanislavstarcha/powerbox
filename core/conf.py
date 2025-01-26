@@ -1,5 +1,6 @@
 from micropython import const
 
+BLE_ENABLED = True
 BLE_GAP_NAME = "Tripillia"
 BLE_MANUFACTURER = "egg17"
 BLE_MODEL = "Tripillia-4K12"
@@ -37,6 +38,7 @@ ATS_NC_PIN = const(32)
 
 BUZZER_SIGNAL_PIN = const(12)
 
+DISPLAY_ENABLED = True
 DISPLAY_WIDTH = const(320)
 DISPLAY_HEIGHT = const(480)
 

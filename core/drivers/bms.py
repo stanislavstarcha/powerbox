@@ -1,12 +1,11 @@
 import machine
 import struct
-import time
 
-from drivers import BaseState
+from drivers import BaseState, UART
 from drivers.history import HistoricalData
 from logging import logger
 
-from drivers.const import (
+from const import (
     HISTORY_BMS_SOC,
     HISTORY_BMS_CURRENT,
     HISTORY_BMS_CELL1_VOLTAGE,
@@ -123,9 +122,6 @@ class BMSState(BaseState):
     DISPLAY_METRICS = ["mos", "soc"]
 
     counter = 100
-
-    def __init__(self):
-        pass
 
     def clear(self):
         self.cells = [None, None, None, None]
@@ -327,16 +323,12 @@ class BMSState(BaseState):
         assert descriptor == 0x9C
         offset += 3
 
-    def set_display_metric(self, metric):
-        self.display_metric_glyph = "charging-discharging"
-
-        if metric == "soc":
-            self.display_metric_value = self.soc
-            self.display_metric_type = "%"
-
-        if metric == "mos":
-            self.display_metric_value = self.mos_temperature
-            self.display_metric_type = "c"
+    @staticmethod
+    def crc(frame):
+        result = 0
+        for b in frame:
+            result += b
+        return [(result >> 8) & 0xFF, result & 0xFF]
 
     def build_history(self):
 
@@ -396,7 +388,6 @@ class BMSController:
 
     _uart = None
     _state: BMSState = None
-    _state_callbacks = []
 
     def __init__(
         self,
@@ -406,23 +397,13 @@ class BMSController:
         uart_tx_pin=UART_TX_PIN,
     ):
         self._state = BMSState()
-        self._state_callbacks = []
-
-        try:
-            self._uart = machine.UART(
-                uart_if,
-                baudrate=baud_rate,
-                rx=machine.Pin(uart_rx_pin, machine.Pin.IN, machine.Pin.PULL_UP),
-                tx=machine.Pin(uart_tx_pin, machine.Pin.OUT, machine.Pin.PULL_UP),
-                timeout=20,
-            )
-            logger.info("Initialized BMS controller")
-        except Exception as e:
-            logger.error("Failed to initialize BMS controller")
-            logger.critical(e)
-
-    def add_state_callback(self, callback):
-        self._state_callbacks.append(callback)
+        self._uart = UART(
+            interface=uart_if,
+            tx_pin=uart_tx_pin,
+            rx_pin=uart_rx_pin,
+            baud_rate=baud_rate,
+        )
+        self._uart.enable()
 
     async def run(self):
         logger.info("Running BMS controller")
@@ -434,29 +415,26 @@ class BMSController:
             await self._state.sleep()
 
     def request_status(self, delay=50):
-        data = self.query(self.STATUS_REQUEST, delay=delay)
+        data = self._uart.query(self.STATUS_REQUEST, delay=delay)
         logger.debug("Requesting BMS status...", data)
         if data:
             try:
-                self._state.parse(data)
-                self._state.reset_error(self._state.ERROR_NO_RESPONSE)
-                if self._state_callbacks:
-                    for callback in self._state_callbacks:
-                        callback(self._state)
+                self.state.parse(data)
+                self.state.reset_error(self._state.ERROR_NO_RESPONSE)
                 logger.debug(
-                    "BMS V", self._state.voltage, "T: ", self._state.mos_temperature
+                    "BMS V", self.state.voltage, "T: ", self.state.mos_temperature
                 )
                 return True
             except Exception as e:
                 logger.critical(e)
 
         self.state.clear()
-        self._state.set_error(self._state.ERROR_NO_RESPONSE)
+        self.state.set_error(self._state.ERROR_NO_RESPONSE)
         return False
 
     def enable_charge(self, delay=50):
         logger.debug("Enabling BMS charging...")
-        data = self.query(self.ENABLE_CHARGE, delay=delay)
+        data = self._uart.query(self.ENABLE_CHARGE, delay=delay)
         if data:
             logger.info("Enabled BMS charging")
             self._state.reset_error(self._state.ERROR_NO_RESPONSE)
@@ -468,7 +446,7 @@ class BMSController:
 
     def disable_charge(self, delay=50):
         logger.debug("Disabling BMS charging")
-        data = self.query(self.DISABLE_CHARGE, delay=delay)
+        data = self._uart.query(self.DISABLE_CHARGE, delay=delay)
         if data:
             logger.info("Disabled BMS charging")
             self._state.reset_error(self._state.ERROR_NO_MODIFY_RESPONSE)
@@ -480,7 +458,7 @@ class BMSController:
 
     def enable_discharge(self, delay=50):
         logger.debug("Enabling BMS discharging")
-        data = self.query(self.ENABLE_DISCHARGE, delay=delay)
+        data = self._uart.query(self.ENABLE_DISCHARGE, delay=delay)
         if data:
             logger.info("Enabled BMS discharging")
             self._state.reset_error(self._state.ERROR_NO_MODIFY_RESPONSE)
@@ -491,8 +469,7 @@ class BMSController:
         return False
 
     def disable_discharge(self, delay=50):
-        # logger.info("Disabling BMS discharging")
-        data = self.query(self.DISABLE_DISCHARGE, delay=delay)
+        data = self._uart.query(self.DISABLE_DISCHARGE, delay=delay)
         if data:
             logger.info("Disabled BMS discharging")
             self._state.reset_error(self._state.ERROR_NO_MODIFY_RESPONSE)
@@ -501,19 +478,6 @@ class BMSController:
         logger.error("Failed to disable BMS discharging")
         self._state.set_error(self._state.ERROR_NO_MODIFY_RESPONSE)
         return False
-
-    def query(self, frame, delay=0):
-        self._uart.write(frame)
-        if delay:
-            time.sleep_ms(delay)
-
-        return self._uart.read()
-
-    def crc(frame):
-        result = 0
-        for b in frame:
-            result += b
-        return [(result >> 8) & 0xFF, result & 0xFF]
 
     @property
     def state(self):

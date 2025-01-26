@@ -2,14 +2,14 @@ import asyncio
 import machine
 import struct
 
+from drivers import BaseState, UART
 from drivers.button import ButtonController
-from drivers import BaseState, PowerCallbacksMixin
 from drivers.history import HistoricalData
 
 from logging import logger
-from drivers.const import BLE_INVERTER_UUID
+from const import BLE_INVERTER_UUID
 
-from drivers.const import (
+from const import (
     HISTORY_INVERTER_POWER,
     HISTORY_INVERTER_TEMPERATURE,
     DATA_TYPE_BYTE,
@@ -59,6 +59,8 @@ class InverterState(BaseState):
 
     # battery level
     level = None
+
+    tachometer = None
 
     # if state is valid
     _valid = False
@@ -140,19 +142,23 @@ class InverterState(BaseState):
         actual_checksum = actual_checksum % 100
         self._valid = actual_checksum == checksum
 
+    def parse_buffer(self, buffer):
+        if 0xAE in buffer and 0xEE in buffer:
+            frame_start = buffer.find(b"\xAE")
+            frame_end = buffer.find(b"\xEE") + 1
+            self.parse_frame(buffer[frame_start:frame_end])
+
+        if self._state.is_valid():
+            logger.debug(
+                f"AC: {self._state.ac}, Temperature: {self._state.temperature} DC: {self._state.dc} ERR: {self._state.external_errors}"
+            )
+            self._state.reset_error(self._state.ERROR_BAD_RESPONSE)
+        else:
+            self._state.set_error(self._state.ERROR_BAD_RESPONSE)
+            logger.warning("Inverter state is not valid")
+
     def is_valid(self):
         return self._valid
-
-    def set_display_metric(self, metric):
-        self.display_metric_glyph = "on" if self.active else "off"
-
-        if metric == "power":
-            self.display_metric_value = self.power
-            self.display_metric_type = "w"
-
-        if metric == "temperature":
-            self.display_metric_value = self.temperature
-            self.display_metric_type = "c"
 
     def build_history(self):
         self.history[HISTORY_INVERTER_POWER].push(self._pack(self.power))
@@ -170,7 +176,7 @@ class InverterState(BaseState):
         )
 
 
-class InverterController(PowerCallbacksMixin):
+class InverterController:
 
     POWER_BUTTON_PIN = None
     POWER_GATE_PIN = None
@@ -211,11 +217,12 @@ class InverterController(PowerCallbacksMixin):
     ):
         self._state = InverterState()
         self._turn_off_voltage = turn_off_voltage
-
-        self._uart_if = uart_if
-        self._baud_rate = baud_rate
-        self._tx_pin = uart_tx_pin
-        self._rx_pin = uart_rx_pin
+        self._uart = UART(
+            interface=uart_if,
+            tx_pin=uart_tx_pin,
+            rx_pin=uart_rx_pin,
+            baud_rate=baud_rate,
+        )
 
         self._power_button = ButtonController(
             listen_pin=power_button_pin,
@@ -224,11 +231,11 @@ class InverterController(PowerCallbacksMixin):
         )
 
         self._power_gate_pin = machine.Pin(
-            power_gate_pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
+            power_gate_pin,
+            machine.Pin.OUT,
+            machine.Pin.PULL_DOWN,
         )
         self._power_gate_pin.off()
-
-        PowerCallbacksMixin.__init__(self)
         logger.info(f"Initialized inverter")
 
     def on_bms_state(self, bms_state):
@@ -250,34 +257,15 @@ class InverterController(PowerCallbacksMixin):
             self._turn_off_confirmations = 0
 
     def on(self):
-        if self.power_on_callbacks:
-            for cb in self.power_on_callbacks:
-                cb()
-
-        if self._uart_if is not None:
-            self._uart = machine.UART(
-                self._uart_if,
-                baudrate=self._baud_rate,
-                tx=machine.Pin(self._uart_tx_pin, machine.Pin.OUT),
-                rx=machine.Pin(self._uart_rx_pin, machine.Pin.IN),
-            )
-
+        self._uart.enable()
         self._power_gate_pin.on()
-        self._state.active = True
-        self._state.notify()
+        self._state.on()
         logger.info("Inverter is on")
 
     def off(self):
-        if self._uart is not None:
-            self._uart.deinit()
-
-        if self.power_off_callbacks:
-            for cb in self.power_off_callbacks:
-                cb()
-
+        self._uart.disable()
         self._power_gate_pin.off()
-        self._state.active = False
-        self._state.notify()
+        self._state.off()
         logger.info("Inverter is off")
 
     def on_power_trigger(self):
@@ -288,77 +276,23 @@ class InverterController(PowerCallbacksMixin):
 
     async def run(self):
         logger.info("Running inverter controller...")
-        asyncio.create_task(self.read_status())
         while True:
-
             if self._state.active:
                 try:
                     logger.debug("Requesting inverter status")
-                    self._uart.write(self.STATUS_REQUEST)
+                    self.read_status()
                 except Exception as e:
                     logger.error("Failed request to inverter")
                     logger.critical(e)
+                self._state.snapshot()
 
-            self._state.snapshot()
             await self._state.sleep()
 
-    def _mock_uart_read(self):
-        return b"\xae\x01\x12\x83\x022\x00\x00\x01\x08\x00\x17\x00\x00\x037\xee"
-
-    def _mock_uart_any(self):
-        return True
-
     async def read_status(self):
-
-        if not self._uart:
-            return
-
-        buffer = b""
-        logger.debug("Running inverter status reader")
-
-        while True:
-
-            if not self._state.active:
-                await asyncio.sleep(5)
-                continue
-
-            if self._uart.any():
-                # if self._mock_uart_any():
-                data = self._uart.read()
-                # data = self._mock_uart_read()
-                if data:
-                    logger.debug(f"Inverter received data: {data}")
-                    buffer += data
-                    if 0xAE in buffer and 0xEE in buffer:
-                        frame_start = buffer.find(b"\xAE")
-                        frame_end = buffer.find(b"\xEE") + 1
-                        self.process_frame(buffer[frame_start:frame_end])
-                        buffer = buffer[frame_end:]
-
-                    # prevent OOM in case some garbage comes into the buffer
-                    if len(buffer) > 1024:
-                        logger.error("Inverter buffer has no frames")
-                        buffer = b""
-
-            # unblock other coroutines
-            # await asyncio.sleep_ms(100)
-            await asyncio.sleep_ms(1000)
-
-    def process_frame(self, frame):
-        try:
-            self._state.parse(frame)
-        except Exception as e:
-            logger.critical(e)
-            return
-
-        if self._state.is_valid():
-            logger.debug(
-                f"AC: {self._state.ac}, Temperature: {self._state.temperature} DC: {self._state.dc} ERR: {self._state.external_errors}"
-            )
-            self._state.reset_error(self._state.ERROR_BAD_RESPONSE)
-        else:
-            self._state.set_error(self._state.ERROR_BAD_RESPONSE)
-            logger.warning("Inverter state is not valid")
+        data = self._uart.query(self.STATUS_REQUEST)
+        if data:
+            self.parse_buffer(data)
+            logger.debug(f"Inverter received data: {data}")
 
     @staticmethod
     def as_hex(data):

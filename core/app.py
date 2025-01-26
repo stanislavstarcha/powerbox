@@ -12,18 +12,18 @@ from drivers.inverter import InverterController
 from drivers.psu import PowerSupplyController
 from drivers.bms import BMSController
 from drivers.buzzer import BuzzerController
-from drivers.wroom import WROOMController
+from drivers.mcu import MCUController
 from drivers.display import DisplayController
 
 from lib.queue import InstructionsQueue
+from const import (
+    EVENT_STATE_ON,
+    EVENT_STATE_OFF,
+    EVENT_STATE_CHANGE,
+    EVENT_STATE_ERROR,
+)
 
 import conf
-
-
-def disable_wifi():
-    network.WLAN(network.STA_IF).active(False)
-    network.WLAN(network.AP_IF).active(False)
-    logger.debug("Disabled wifi")
 
 
 def disable_keyboard_interrupt():
@@ -33,12 +33,12 @@ def disable_keyboard_interrupt():
 async def main():
     # disable_keyboard_interrupt()
     logger.info("Bootstrapping app ver: ", conf.BLE_FIRMWARE)
-    # disable_wifi()
 
     buzzer = BuzzerController(signal_pin=conf.BUZZER_SIGNAL_PIN)
     buzzer.boot()
 
     instructions = InstructionsQueue()
+    mcu = MCUController()
 
     logger.setup(
         transport=conf.LOGGER_TRANSPORT,
@@ -80,54 +80,71 @@ async def main():
         buzzer=buzzer,
     )
 
-    bms.add_state_callback(inverter.on_bms_state)
-    bms.add_state_callback(psu.on_bms_state)
+    if conf.BLE_ENABLED:
+        ble = BLEServerController(
+            gap_name=conf.BLE_GAP_NAME,
+            manufacturer=conf.BLE_MANUFACTURER,
+            model=conf.BLE_MODEL,
+            firmware=conf.BLE_FIRMWARE,
+            instructions=instructions,
+            ats=ats,
+            bms=bms,
+            inverter=inverter,
+            psu=psu,
+            mcu=mcu,
+        )
+        ble.initialize()
 
-    wroom = WROOMController()
+    if conf.DISPLAY_ENABLED:
+        display = DisplayController(
+            width=conf.DISPLAY_WIDTH,
+            height=conf.DISPLAY_HEIGHT,
+            led_pin=conf.DISPLAY_LED_PIN,
+            miso_pin=conf.DISPLAY_MISO_PIN,
+            mosi_pin=conf.DISPLAY_MOSI_PIN,
+            sck_pin=conf.DISPLAY_SCLK_PIN,
+            dc_pin=conf.DISPLAY_DC_PIN,
+            cs_pin=conf.DISPLAY_CS_PIN,
+            frequency=conf.DISPLAY_FREQ,
+        )
 
-    psu.add_power_callback(True, inverter.off)
-    psu.add_power_callback(True, bms.enable_charge)
-    psu.add_power_callback(False, bms.disable_charge)
+        mcu.state.add_callback(EVENT_STATE_CHANGE, display.on_mcu_state)
+        bms.state.add_callback(EVENT_STATE_CHANGE, display.on_bms_state)
+        ats.state.add_callback(EVENT_STATE_CHANGE, display.on_ats_state)
+        psu.state.add_callback(EVENT_STATE_CHANGE, display.on_psu_state)
+        inverter.state.add_callback(EVENT_STATE_CHANGE, display.on_inverter_state)
 
-    inverter.add_power_callback(True, psu.off)
-    inverter.add_power_callback(True, bms.enable_discharge)
-    inverter.add_power_callback(False, bms.disable_discharge)
+        psu.state.add_callback(EVENT_STATE_ON, display.show_psu_state)
+        psu.state.add_callback(EVENT_STATE_OFF, display.hide_psu_state)
+        inverter.state.add_callback(EVENT_STATE_ON, display.show_inverter_state)
+        inverter.state.add_callback(EVENT_STATE_OFF, display.hide_inverter_state)
 
-    ble = BLEServerController(
-        gap_name=conf.BLE_GAP_NAME,
-        manufacturer=conf.BLE_MANUFACTURER,
-        model=conf.BLE_MODEL,
-        firmware=conf.BLE_FIRMWARE,
-        instructions=instructions,
-        ats=ats,
-        bms=bms,
-        inverter=inverter,
-        psu=psu,
-        wroom=wroom,
-    )
-    ble.initialize()
+    bms.state.add_callback(EVENT_STATE_CHANGE, inverter.on_bms_state)
+    bms.state.add_callback(EVENT_STATE_CHANGE, psu.on_bms_state)
 
-    display = DisplayController(
-        width=conf.DISPLAY_WIDTH,
-        height=conf.DISPLAY_HEIGHT,
-        led_pin=conf.DISPLAY_LED_PIN,
-        miso_pin=conf.DISPLAY_MISO_PIN,
-        mosi_pin=conf.DISPLAY_MOSI_PIN,
-        sck_pin=conf.DISPLAY_SCLK_PIN,
-        dc_pin=conf.DISPLAY_DC_PIN,
-        cs_pin=conf.DISPLAY_CS_PIN,
-        frequency=conf.DISPLAY_FREQ,
-    )
+    psu.state.add_callback(EVENT_STATE_ON, inverter.off)
+    psu.state.add_callback(EVENT_STATE_ON, bms.enable_charge)
+    psu.state.add_callback(EVENT_STATE_OFF, bms.disable_charge)
 
-    coroutines = [
-        asyncio.create_task(display.run()),
-        # asyncio.create_task(ble.run()),
+    inverter.state.add_callback(EVENT_STATE_ON, psu.off)
+    inverter.state.add_callback(EVENT_STATE_ON, bms.enable_discharge)
+    inverter.state.add_callback(EVENT_STATE_OFF, bms.disable_discharge)
+
+    coroutines = []
+
+    if conf.DISPLAY_ENABLED:
+        coroutines.append(asyncio.create_task(display.run()))
+
+    if conf.BLE_ENABLED:
+        coroutines.append(asyncio.create_task(ble.run()))
+
+    coroutines += [
         asyncio.create_task(instructions.run()),
         asyncio.create_task(ats.run()),
         asyncio.create_task(bms.run()),
         asyncio.create_task(inverter.run()),
         asyncio.create_task(psu.run()),
-        asyncio.create_task(wroom.run()),
+        asyncio.create_task(mcu.run()),
     ]
 
     await asyncio.gather(*coroutines)

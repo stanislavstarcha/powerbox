@@ -1,8 +1,78 @@
 import asyncio
+import machine
 import time
 
-from drivers.const import BLE_HISTORY_UUID
-from logging import logger
+from const import BLE_HISTORY_UUID, EVENT_STATE_CHANGE, EVENT_STATE_ON, EVENT_STATE_OFF
+
+
+class UART:
+
+    _uart = None
+    _interface = None
+    _rx_pin = None
+    _tx_pin = None
+    _baud_rate = None
+    _timeout = None
+
+    def __init__(
+        self, interface, tx_pin=None, rx_pin=None, baud_rate=9600, timeout=None
+    ):
+        self._interface = interface
+        self._rx_pin = rx_pin
+        self._tx_pin = tx_pin
+        self._baud_rate = baud_rate
+        self._timeout = timeout
+
+    def enable(self):
+
+        tx = (
+            machine.Pin(self._tx_pin, machine.Pin.OUT, machine.Pin.PULL_UP)
+            if self._tx_pin
+            else None
+        )
+
+        rx = (
+            machine.Pin(self._rx_pin, machine.Pin.IN, machine.Pin.PULL_UP)
+            if self._rx_pin
+            else None
+        )
+
+        self._uart = machine.UART(
+            self._interface,
+            baudrate=self._baud_rate,
+            rx=rx,
+            tx=tx,
+        )
+
+    def disable(self):
+        if self._uart:
+            self._uart.deinit()
+
+    def query(self, frame, delay=0):
+        self._uart.write(frame)
+        if delay:
+            time.sleep_ms(delay)
+
+        return self._uart.read()
+
+    def sample(self, timeout=1000, max_size=512):
+        """Read whatever data is available for `timeout` milliseconds or when `maxsize` bytes accumulated."""
+
+        buffer = bytearray()
+
+        started_at = time.ticks_ms()
+        while True:
+            data = self._uart.read()
+            if data:
+                buffer += data
+                if len(buffer) > max_size:
+                    break
+
+            diff = time.ticks_ms() - started_at
+            if diff > timeout:
+                break
+
+        return buffer
 
 
 class BaseState:
@@ -51,13 +121,32 @@ class BaseState:
     # how often to record and update historical BLE state
     HISTORY_FREQUENCY = 1
 
-    # a list of display metrics to build
-    # the metrics will be rotating on each snapshot call
-    DISPLAY_METRICS = None
-    _rotating_metric_index = 0
-    display_metric_value = None
-    display_metric_type = None
-    display_metric_glyph = None
+    _callbacks = None
+
+    def __init__(self):
+        self._callbacks = {
+            EVENT_STATE_CHANGE: [],
+            EVENT_STATE_ON: [],
+            EVENT_STATE_OFF: [],
+        }
+
+    def add_callback(self, event, callback):
+        self._callbacks[event].append(callback)
+
+    def on(self):
+        self.active = True
+        if self._callbacks[EVENT_STATE_ON]:
+            for cb in self._callbacks[EVENT_STATE_ON]:
+                cb()
+
+        self.notify()
+
+    def off(self):
+        self.active = False
+        if self._callbacks[EVENT_STATE_OFF]:
+            for cb in self._callbacks[EVENT_STATE_OFF]:
+                cb()
+        self.notify()
 
     def fail(self, e=None):
         self.set_error(self.ERROR_EXCEPTION)
@@ -90,15 +179,6 @@ class BaseState:
         self._state_modified = time.time()
         self.check_health()
 
-        # build display metric
-        display_metric = None
-        if self.DISPLAY_METRICS:
-            display_metric = self.DISPLAY_METRICS[self._rotating_metric_index]
-            self._rotating_metric_index = (self._rotating_metric_index + 1) % len(
-                self.DISPLAY_METRICS
-            )
-
-        self.set_display_metric(display_metric)
         if self._state_modified - self._history_modified >= self.HISTORY_FREQUENCY:
             self.build_history()
             self._notify_history_update()
@@ -154,16 +234,6 @@ class BaseState:
             return 0
         return int(100 * voltage) + 1
 
-    @staticmethod
-    def _pack_language(language):
-        if language == "uk":
-            return 1
-
-        if language == "en":
-            return 2
-
-        return 0
-
     def get_ble_state(self):
         """Create a snapshot for BLE current and historical state"""
         pass
@@ -185,20 +255,13 @@ class BaseState:
         self._ble = instance
 
     def notify(self):
+
         if self.BLE_STATE_UUID and self._ble:
             self._ble.notify(self.BLE_STATE_UUID, self.get_ble_state())
 
-    def get_display_metric(self):
-        """Return a tuple of metric value and type"""
-        return (
-            self.display_metric_glyph,
-            self.display_metric_value,
-            self.display_metric_type,
-        )
-
-    def set_display_metric(self, metric):
-        """Custom method to set controller metric, glyph and unit"""
-        pass
+        if self._callbacks[EVENT_STATE_CHANGE]:
+            for cb in self._callbacks[EVENT_STATE_CHANGE]:
+                cb(self)
 
     def pull_history(self):
 
@@ -209,19 +272,3 @@ class BaseState:
             chunks = data.ble_chunks()
             for chunk in chunks:
                 self._ble.notify(BLE_HISTORY_UUID, chunk)
-
-
-class PowerCallbacksMixin:
-
-    power_on_callbacks = None
-    power_off_callbacks = None
-
-    def __init__(self):
-        self.power_on_callbacks = []
-        self.power_off_callbacks = []
-
-    def add_power_callback(self, state, callback):
-        if state:
-            self.power_on_callbacks.append(callback)
-        else:
-            self.power_off_callbacks.append(callback)

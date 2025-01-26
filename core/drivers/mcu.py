@@ -4,13 +4,13 @@ import struct
 import time
 
 from drivers import BaseState
-from drivers.const import BLE_ESP_UUID
+from const import BLE_ESP_UUID
 
 from logging import logger
 
 
-class WROOMState(BaseState):
-    NAME = "ESP"
+class MCUState(BaseState):
+    NAME = "MCU"
     BLE_STATE_UUID = BLE_ESP_UUID
 
     FREQUENCY = 1
@@ -26,17 +26,6 @@ class WROOMState(BaseState):
         self.memory = None
         self.temperature = None
 
-    def set_display_metric(self, metric):
-        self.display_metric_glyph = "heart" if self.heartbeat else None
-
-        if metric == "memory":
-            self.display_metric_value = self.memory
-            self.display_metric_type = "%"
-
-        if metric == "temperature":
-            self.display_metric_value = int(self.temperature)
-            self.display_metric_type = "c"
-
     def get_ble_state(self):
         uptime = int(time.time())
         return struct.pack(
@@ -48,12 +37,12 @@ class WROOMState(BaseState):
         )
 
 
-class WROOMController:
+class MCUController:
 
     _state = None
 
     def __init__(self):
-        self._state = WROOMState()
+        self._state = MCUState()
 
     async def run(self):
         gc_counter = 0

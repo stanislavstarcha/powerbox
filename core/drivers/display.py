@@ -11,6 +11,9 @@ import lcd_bus  # NOQA
 
 from logging import logger
 
+# BUFFER_SIZE = 25000
+BUFFER_SIZE = 16384
+
 
 ICON_ARROW_RIGHT = micropython.const(0xEAC9)
 ICON_ARROW_UP = micropython.const(0xEACF)
@@ -18,6 +21,16 @@ ICON_ARROW_DOWN = micropython.const(0xEAD0)
 ICON_BLE = micropython.const(0xE1A7)
 ICON_BLE_ACTIVE = micropython.const(0xE1A8)
 ICON_WARNING = micropython.const(0xE000)
+ICON_BATTERY = micropython.const(0xF156)
+ICON_CITY = micropython.const(0xE7EE)
+ICON_DOTS = micropython.const(0xE5D3)
+ICON_MCU = micropython.const(0xE322)
+ICON_HEART = micropython.const(0xE87D)
+
+DEVICE_BMS = micropython.const(0)
+DEVICE_PSU = micropython.const(1)
+DEVICE_INVERTER = micropython.const(2)
+DEVICE_MCU = micropython.const(3)
 
 
 class DisplayObjects:
@@ -35,8 +48,8 @@ class DisplayObjects:
     version_label = None
     version = None
 
-    avr = None
-    avr_label = None
+    ats = None
+    ats_label = None
 
     ble = None
 
@@ -61,10 +74,17 @@ class DisplayObjects:
     capacity = None
     capacity_bar = None
 
+    mcu_label = None
+    mcu_glyph = None
+    mcu_temperature = None
+
+    mcu_health_glyph = None
+
 
 class DisplayController:
 
     widgets = None
+    errors = None
 
     def __init__(
         self,
@@ -79,11 +99,13 @@ class DisplayController:
         frequency=None,
     ):
         self.widgets = DisplayObjects()
+        # bms, psu, inverter, mcu
+        self.errors = [0, 0, 0, 0]
 
         led = machine.Pin(led_pin, machine.Pin.OUT)
         led.on()
 
-        spi_bus = machine.SPI.Bus(host=1, mosi=mosi_pin, miso=miso_pin, sck=sck_pin)
+        spi_bus = machine.SPI.Bus(host=2, mosi=mosi_pin, miso=miso_pin, sck=sck_pin)
         logger.debug("Display SPI bus initialised", gc.mem_free())
 
         display_bus = lcd_bus.SPIBus(
@@ -93,10 +115,9 @@ class DisplayController:
             cs=cs_pin,
         )
         print("Display bus initialised", gc.mem_free())
-        micropython.mem_info(True)
 
         frame_buffer = display_bus.allocate_framebuffer(
-            25000, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA
+            BUFFER_SIZE, lcd_bus.MEMORY_INTERNAL | lcd_bus.MEMORY_DMA
         )
 
         display = ili9488.ILI9488(
@@ -121,14 +142,6 @@ class DisplayController:
 
     async def run(self):
         logger.info("Running Display...")
-
-        self.set_version("0.1.0")
-        self.set_cell_voltage(3.23, 3.22, 3.21, 3.2)
-        self.set_capacity(67)
-        self.set_bms_temperature(27, 32, 33)
-        self.set_psu_state(29, 38, 218, 3400)
-        self.set_inverter_state(28, 232, 4500)
-        self.set_power_consumption(True, 1800, "2:32")
 
         self.show_bms_state()
         self.show_inverter_state()
@@ -190,7 +203,7 @@ class DisplayController:
         self.widgets.bms_temperature_bat_2 = self.create_label(7, 1, font_size=12)
 
         # ats mode
-        self.widgets.avr_label = self.create_label(
+        self.widgets.ats_label = self.create_label(
             8,
             0,
             "АВР",
@@ -199,12 +212,11 @@ class DisplayController:
             color="grey",
             is_hidden=False,
         )
-        self.widgets.avr = self.create_label(
+        self.widgets.ats = self.create_glyph(
             8,
             1,
-            "Мережа",
+            code=ICON_DOTS,
             col_span=2,
-            font_size=12,
             is_hidden=False,
         )
 
@@ -226,6 +238,33 @@ class DisplayController:
 
         self.widgets.ble = self.create_glyph(
             11, 0, ICON_BLE, row_span=2, is_hidden=False
+        )
+
+        # mcu data
+        self.widgets.mcu_memory = self.create_label(
+            0,
+            4,
+            col_span=2,
+            font_size=12,
+            color="grey",
+            is_hidden=False,
+        )
+
+        self.widgets.mcu_glyph = self.create_glyph(
+            0,
+            5,
+            code=ICON_MCU,
+            col_span=2,
+            color="grey",
+            is_hidden=False,
+        )
+
+        self.widgets.mcu_temperature = self.create_label(
+            0,
+            6,
+            col_span=2,
+            color="grey",
+            is_hidden=False,
         )
 
         # psu data
@@ -394,7 +433,14 @@ class DisplayController:
         self.widgets.bms_voltage_cell_4.set_text(f"{v4} В")
 
     def set_ats_mode(self, mode):
-        pass
+        if mode == 0:
+            self.widgets.ats.set_text(chr(ICON_DOTS))
+
+        if mode == 1:
+            self.widgets.ats.set_text(chr(ICON_CITY))
+
+        if mode == 2:
+            self.widgets.ats.set_text(chr(ICON_BATTERY))
 
     def set_bms_temperature(
         self, temperature_mos, bms_temperature_bat_1, bms_temperature_bat_2
@@ -405,9 +451,6 @@ class DisplayController:
 
     def set_version(self, version):
         self.widgets.version.set_text(version)
-
-    def set_error(self, code):
-        self.widgets.error.set_text(code)
 
     def set_capacity(self, value):
         self.widgets.capacity.set_text(f"{value}%")
@@ -429,6 +472,16 @@ class DisplayController:
             self.widgets.power_timer.set_text(f"До повного розряду {seconds}")
         else:
             self.widgets.power_timer.set_text(f"До повного заряду {seconds}")
+
+    def show_error_state(self):
+        self._show_widget(self.widgets.error_glyph)
+        self._show_widget(self.widgets.error_label)
+        self._show_widget(self.widgets.error)
+
+    def hide_error_state(self):
+        self._hide_widget(self.widgets.error_glyph)
+        self._hide_widget(self.widgets.error_label)
+        self._sho_hide_widgetw_widget(self.widgets.error)
 
     def show_bms_state(self):
         self._show_widget(self.widgets.bms_voltage_label)
@@ -542,3 +595,99 @@ class DisplayController:
             v3=random.randint(280, 340) / 100,
             v4=random.randint(280, 340) / 100,
         )
+
+    def on_ats_state(self, state):
+        self.set_ats_mode(state.mode)
+
+    def set_error(self, device_id, error):
+        self.errors[device_id] = error
+        if any(self.errors):
+            codes = []
+
+            if self.errors[DEVICE_BMS]:
+                codes.append(f"В{self.errors[DEVICE_BMS]}")
+
+            if self.errors[DEVICE_PSU]:
+                codes.append(f"Р{self.errors[DEVICE_PSU]}")
+
+            if self.errors[DEVICE_INVERTER]:
+                codes.append(f"І{self.errors[DEVICE_INVERTER]}")
+
+            if self.errors[DEVICE_MCU]:
+                codes.append(f"М{self.errors[DEVICE_MCU]}")
+
+            self.widgets.error.set_text(" ".join(codes))
+            self.show_error_state()
+
+    def reset_error(self, device_id):
+        self.errors[device_id] = 0
+        if not any(self.errors):
+            self.hide_error_state()
+
+    def on_bms_state(self, state):
+        if state.internal_errors:
+            self.set_error(DEVICE_BMS, state.internal_errors)
+            return
+
+        self.reset_error(DEVICE_BMS)
+        direction = state.current & (1 << 15)
+        current = round((state.current & (0xFFFF >> 1)) / 100)
+        power = state.voltage * current
+
+        self.set_capacity(state.soc)
+        self.set_power_consumption(
+            direction=direction,
+            power=power,
+            seconds=0,
+        )
+
+        self.set_bms_temperature(
+            temperature_mos=state.mos_temperature,
+            bms_temperature_bat_1=state.sensor1_temperature,
+            bms_temperature_bat_2=state.sensor2_temperature,
+        )
+
+        self.set_cell_voltage(
+            v1=state.cells[0],
+            v2=state.cells[1],
+            v3=state.cells[2],
+            v4=state.cells[3],
+        )
+
+    def on_psu_state(self, state):
+
+        if state.internal_errors:
+            self.set_error(DEVICE_PSU, state.internal_errors)
+            print("psu errors", state.internal_errors)
+            return
+
+        self.reset_error(DEVICE_PSU)
+        average_temperature = int((state.t1 + state.t2) / 2)
+        self.set_psu_state(
+            t1=average_temperature,
+            t2=state.t2,
+            ac_voltage=state.ac,
+            tachometer=state.tachometer,
+        )
+
+    def on_inverter_state(self, state):
+
+        if state.internal_errors:
+            self.set_error(DEVICE_INVERTER, state.internal_errors)
+            return
+
+        self.reset_error(DEVICE_INVERTER)
+        self.set_inverter_state(
+            temperature=state.temperature,
+            ac_voltage=state.ac,
+            tachometer=state.tachometer,
+        )
+
+    def on_mcu_state(self, state):
+        if state.internal_errors:
+            self.set_error(DEVICE_MCU, state.internal_errors)
+            return
+
+        self.reset_error(DEVICE_MCU)
+        self.widgets.mcu_temperature.set_text(f"{state.temperature}°С")
+        self.widgets.mcu_memory.set_text(f"{state.memory}%")

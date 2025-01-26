@@ -7,7 +7,7 @@ import time
 
 from logging import logger
 
-from drivers.const import (
+from const import (
     BLE_CORE_SERVICE_UUID,
     BLE_BMS_UUID,
     BLE_INVERTER_UUID,
@@ -45,9 +45,6 @@ class BLEState(BaseState):
 
     active = False
 
-    def set_display_metric(self, metric):
-        self.display_metric_glyph = "ble-client-on" if self.active else "ble-client-off"
-
 
 class BLEServerController:
 
@@ -81,7 +78,7 @@ class BLEServerController:
         bms=None,
         psu=None,
         inverter=None,
-        wroom=None,
+        mcu=None,
         ats=None,
     ):
         self._state = BLEState()
@@ -95,13 +92,13 @@ class BLEServerController:
         self._bms = bms
         self._psu = psu
         self._inverter = inverter
-        self._wroom = wroom
+        self._mcu = mcu
         self._ats = ats
 
         self._bms.state.attach_ble(self)
         self._psu.state.attach_ble(self)
         self._inverter.state.attach_ble(self)
-        self._wroom.state.attach_ble(self)
+        self._mcu.state.attach_ble(self)
 
     async def run(self):
         logger.info("Running Bluetooth controller...")
@@ -254,7 +251,7 @@ class BLEServerController:
             return
 
         if handle == self.HANDLE[BLE_ESP_UUID]:
-            state = self._wroom.state.get_ble_state()
+            state = self._mcu.state.get_ble_state()
             logger.info("BLE reading ESP state", state, len(state))
             self._ble_write(handle, state)
             return
