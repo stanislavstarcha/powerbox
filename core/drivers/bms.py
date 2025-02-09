@@ -165,6 +165,8 @@ class BMSState(BaseState):
 
     def parse(self, response):
 
+        logger.debug("BMS response", response)
+
         _, size = struct.unpack_from(">HH", response)
 
         offset = response.find(b"\x79")
@@ -399,11 +401,12 @@ class BMSController:
         self._state = BMSState()
         self._uart = UART(
             interface=uart_if,
-            tx_pin=uart_tx_pin,
-            rx_pin=uart_rx_pin,
+        )
+        self._uart.init(
+            tx=uart_tx_pin,
+            rx=uart_rx_pin,
             baud_rate=baud_rate,
         )
-        self._uart.enable()
 
     async def run(self):
         logger.info("Running BMS controller")
@@ -416,13 +419,12 @@ class BMSController:
 
     def request_status(self, delay=50):
         data = self._uart.query(self.STATUS_REQUEST, delay=delay)
-        logger.debug("Requesting BMS status...", data)
         if data:
             try:
                 self.state.parse(data)
                 self.state.reset_error(self._state.ERROR_NO_RESPONSE)
                 logger.debug(
-                    "BMS V", self.state.voltage, "T: ", self.state.mos_temperature
+                    "BMS Voltage", self.state.voltage, "Temperature: ", self.state.mos_temperature
                 )
                 return True
             except Exception as e:

@@ -1,8 +1,7 @@
-import asyncio
 import machine
 import struct
 
-from drivers import BaseState, UART
+from drivers import BaseState
 from drivers.button import ButtonController
 from drivers.history import HistoricalData
 
@@ -146,16 +145,12 @@ class InverterState(BaseState):
         if 0xAE in buffer and 0xEE in buffer:
             frame_start = buffer.find(b"\xAE")
             frame_end = buffer.find(b"\xEE") + 1
-            self.parse_frame(buffer[frame_start:frame_end])
+            self.parse(buffer[frame_start:frame_end])
 
-        if self._state.is_valid():
-            logger.debug(
-                f"AC: {self._state.ac}, Temperature: {self._state.temperature} DC: {self._state.dc} ERR: {self._state.external_errors}"
-            )
-            self._state.reset_error(self._state.ERROR_BAD_RESPONSE)
+        if self.is_valid():
+            self.reset_error(self.ERROR_BAD_RESPONSE)
         else:
-            self._state.set_error(self._state.ERROR_BAD_RESPONSE)
-            logger.warning("Inverter state is not valid")
+            self.set_error(self.ERROR_BAD_RESPONSE)
 
     def is_valid(self):
         return self._valid
@@ -208,7 +203,7 @@ class InverterController:
         self,
         power_button_pin=POWER_BUTTON_PIN,
         power_gate_pin=POWER_GATE_PIN,
-        uart_if=UART_IF,
+        uart=None,
         baud_rate=BAUD_RATE,
         uart_tx_pin=UART_TX_PIN,
         uart_rx_pin=UART_RX_PIN,
@@ -217,12 +212,11 @@ class InverterController:
     ):
         self._state = InverterState()
         self._turn_off_voltage = turn_off_voltage
-        self._uart = UART(
-            interface=uart_if,
-            tx_pin=uart_tx_pin,
-            rx_pin=uart_rx_pin,
-            baud_rate=baud_rate,
-        )
+
+        self._uart = uart
+        self._tx_pin = uart_tx_pin
+        self._rx_pin = uart_rx_pin
+        self._baud_rate = baud_rate
 
         self._power_button = ButtonController(
             listen_pin=power_button_pin,
@@ -257,13 +251,12 @@ class InverterController:
             self._turn_off_confirmations = 0
 
     def on(self):
-        self._uart.enable()
+        self._uart.init(rx=self._rx_pin, tx=self._tx_pin, baud_rate=self._baud_rate)
         self._power_gate_pin.on()
         self._state.on()
         logger.info("Inverter is on")
 
     def off(self):
-        self._uart.disable()
         self._power_gate_pin.off()
         self._state.off()
         logger.info("Inverter is off")
@@ -279,7 +272,6 @@ class InverterController:
         while True:
             if self._state.active:
                 try:
-                    logger.debug("Requesting inverter status")
                     self.read_status()
                 except Exception as e:
                     logger.error("Failed request to inverter")
@@ -288,11 +280,17 @@ class InverterController:
 
             await self._state.sleep()
 
-    async def read_status(self):
-        data = self._uart.query(self.STATUS_REQUEST)
+    def read_status(self):
+        data = self._uart.query(self.STATUS_REQUEST, delay=50)
         if data:
-            self.parse_buffer(data)
-            logger.debug(f"Inverter received data: {data}")
+            self._state.parse_buffer(data)
+
+            if self._state.is_valid():
+                logger.debug(
+                    f"AC: {self._state.ac}, Temperature: {self._state.temperature} DC: {self._state.dc} ERR: {self._state.external_errors}"
+                )
+            else:
+                logger.warning("Inverter state is not valid")
 
     @staticmethod
     def as_hex(data):

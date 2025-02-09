@@ -1,7 +1,7 @@
 import machine
 import struct
 
-from drivers import BaseState, UART
+from drivers import BaseState
 from drivers.button import ButtonController
 from drivers.history import HistoricalData
 
@@ -33,6 +33,8 @@ class PSUState(BaseState):
 
     # current channel (0-3)
     current = 0
+
+    FRAME_SIZE = 22
 
     # telemetry
     power1 = None
@@ -82,7 +84,6 @@ class PSUState(BaseState):
         return sum(b for b in data) % 0xFF
 
     def parse(self, frame):
-        print("parsing frame")
         offset = 0
         header = struct.unpack_from(">BB", frame)
         if header != (0x49, 0x34):
@@ -146,9 +147,12 @@ class PSUState(BaseState):
         self.t1 = t1
         self.t2 = t2
         self.t3 = t3
-        print("succeeded", self.ac, self.t1, self.t2, self.t3)
+        print("PSU", self.ac, self.t1, self.t2, self.t3)
 
     def parse_buffer(self, buffer):
+
+        if buffer is None:
+            return
 
         frame_start = buffer.find(b"\x49\x34")
         if frame_start < 0:
@@ -214,8 +218,6 @@ class PowerSupplyController:
     _turn_off_voltage = 3.5
     _turn_off_confirmations = 0
 
-    # UART parameters
-    FRAME_SIZE = 22
     _buffer = None
 
     def __init__(
@@ -225,14 +227,15 @@ class PowerSupplyController:
         current_a_pin=CURRENT_A_PIN,
         current_b_pin=CURRENT_B_PIN,
         fan_tachometer_pin=None,
-        uart_if=None,
+        uart=None,
         uart_rx_pin=None,
         buzzer=None,
         turn_off_voltage=TURN_OFF_VOLTAGE,
         current_limit=CURRENT_CHANNEL,
     ):
         self._state = PSUState()
-        self._uart = UART(interface=uart_if, rx_pin=uart_rx_pin, baud_rate=4800)
+        self._uart = uart
+        self._uart_rx_pin = uart_rx_pin
         self._turn_off_voltage = turn_off_voltage
 
         if fan_tachometer_pin:
@@ -313,13 +316,12 @@ class PowerSupplyController:
         self._current_b_pin.value((channel >> 1) & 0x01)  # MSB (B)
 
     def on(self):
-        self._uart.enable()
+        self._uart.init(rx=self._uart_rx_pin, baud_rate=4800)
         self._power_gate_pin.on()
         self._state.on()
         logger.info("Power supply is on")
 
     def off(self):
-        self._uart.disable()
         self._power_gate_pin.off()
         self._state.off()
         logger.info("Power supply is off")
@@ -332,7 +334,6 @@ class PowerSupplyController:
 
     async def run(self):
         logger.info("Running PSU...")
-
         while True:
             if self.state.active:
                 self._state.parse_buffer(self._uart.sample(timeout=500))

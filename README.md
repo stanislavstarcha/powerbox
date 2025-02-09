@@ -20,7 +20,7 @@ Install LVGL micropython
 ```shell
 cd $HOME
 git clone https://github.com/lvgl-micropython/lvgl_micropython
-export LVGL_HOME=$HOME/lvgl_micropython
+export LVGL_HOME=$HOME/workspace/lvgl_micropython
 ```
 
 ### Copy fonts

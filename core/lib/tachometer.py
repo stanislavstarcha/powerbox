@@ -15,17 +15,16 @@ class Tachometer:
 
     _total_pulses = None
 
-    def __init__(self, pin, period_ms, max_pulses=100, done_callback=None):
+    def __init__(self, pin, period_ms, max_pulses=None, done_callback=None):
         self._pin = pin
         self._period_ms = period_ms
         self._max_pulses = max_pulses
         self._done_callback = done_callback
+        self._timer = machine.Timer(-1)
 
     def measure(self):
-        print("Measurng...")
         self._started_us = time.ticks_us()
         self._total_pulses = 0
-        self._timer = machine.Timer(-1)
         self._timer.init(
             period=self._period_ms,
             mode=machine.Timer.ONE_SHOT,
@@ -48,5 +47,5 @@ class Tachometer:
     def callback(self, pin):
         if self._pin.value():
             self._total_pulses += 1
-            if self._total_pulses >= self._max_pulses:
+            if self._max_pulses and self._total_pulses >= self._max_pulses:
                 self.finish(self._timer)

@@ -1,54 +1,52 @@
 import asyncio
 import machine
 import time
+import gc
 
 from const import BLE_HISTORY_UUID, EVENT_STATE_CHANGE, EVENT_STATE_ON, EVENT_STATE_OFF
+from logging import logger
 
 
 class UART:
 
+    _active = None
     _uart = None
     _interface = None
-    _rx_pin = None
-    _tx_pin = None
     _baud_rate = None
     _timeout = None
 
     def __init__(
-        self, interface, tx_pin=None, rx_pin=None, baud_rate=9600, timeout=None
+        self, interface, timeout=None
     ):
         self._interface = interface
-        self._rx_pin = rx_pin
-        self._tx_pin = tx_pin
-        self._baud_rate = baud_rate
         self._timeout = timeout
+        self._uart = machine.UART(self._interface)
 
-    def enable(self):
+    def init(self, rx=None, tx=None, baud_rate=9600):
 
         tx = (
-            machine.Pin(self._tx_pin, machine.Pin.OUT, machine.Pin.PULL_UP)
-            if self._tx_pin
+            machine.Pin(tx, machine.Pin.OUT, machine.Pin.PULL_UP)
+            if tx
             else None
         )
 
         rx = (
-            machine.Pin(self._rx_pin, machine.Pin.IN, machine.Pin.PULL_UP)
-            if self._rx_pin
+            machine.Pin(rx, machine.Pin.IN, machine.Pin.PULL_UP)
+            if rx
             else None
         )
 
-        self._uart = machine.UART(
-            self._interface,
-            baudrate=self._baud_rate,
-            rx=rx,
-            tx=tx,
-        )
+        if rx and tx:
+            self._uart.init(baudrate=baud_rate, rx=rx, tx=tx)
+            logger.info("Initialized bidiriectional UART", baud_rate, rx, tx)
+        elif rx:
+            self._uart.init(baudrate=baud_rate, rx=rx)
+            logger.info("Initialized read-only UART", baud_rate, rx)
 
-    def disable(self):
-        if self._uart:
-            self._uart.deinit()
+        gc.collect()
 
     def query(self, frame, delay=0):
+        logger.debug("UART query", self._interface, frame)
         self._uart.write(frame)
         if delay:
             time.sleep_ms(delay)
@@ -58,6 +56,7 @@ class UART:
     def sample(self, timeout=1000, max_size=512):
         """Read whatever data is available for `timeout` milliseconds or when `maxsize` bytes accumulated."""
 
+        logger.debug("UART sample", self._interface, timeout, max_size)
         buffer = bytearray()
 
         started_at = time.ticks_ms()
@@ -116,10 +115,10 @@ class BaseState:
     history = None
 
     # how often to update display and BLE state
-    STATE_FREQUENCY = 1
+    STATE_FREQUENCY = 5
 
     # how often to record and update historical BLE state
-    HISTORY_FREQUENCY = 1
+    HISTORY_FREQUENCY = 5
 
     _callbacks = None
 

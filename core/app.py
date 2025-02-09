@@ -1,4 +1,5 @@
 import micropython
+import sys
 
 import asyncio
 import network
@@ -6,6 +7,7 @@ import time
 
 from logging import logger
 
+from drivers import UART
 from drivers.ats import ATSController
 from drivers.ble import BLEServerController
 from drivers.inverter import InverterController
@@ -45,6 +47,8 @@ async def main():
         level=conf.LOGGER_LEVEL,
     )
 
+    uart = UART(conf.UART_IF)
+
     ats = ATSController(
         nc_pin=conf.ATS_NC_PIN,
         no_pin=conf.ATS_NO_PIN,
@@ -60,7 +64,7 @@ async def main():
     inverter = InverterController(
         power_button_pin=conf.INVERTER_POWER_BUTTON_PIN,
         power_gate_pin=conf.INVERTER_POWER_GATE_PIN,
-        uart_if=conf.INVERTER_UART_IF,
+        uart=uart,
         uart_rx_pin=conf.INVERTER_UART_RX_PIN,
         uart_tx_pin=conf.INVERTER_UART_TX_PIN,
         buzzer=buzzer,
@@ -74,7 +78,7 @@ async def main():
         current_b_pin=conf.PSU_CURRENT_B_PIN,
         turn_off_voltage=conf.PSU_MAX_CELL_VOLTAGE,
         fan_tachometer_pin=conf.PSU_FAN_TACHOMETER_PIN,
-        uart_if=conf.PSU_UART_IF,
+        uart=uart,
         uart_rx_pin=conf.PSU_UART_RX_PIN,
         current_limit=conf.PSU_CURRENT_CHANNEL,
         buzzer=buzzer,
@@ -108,16 +112,16 @@ async def main():
             frequency=conf.DISPLAY_FREQ,
         )
 
-        mcu.state.add_callback(EVENT_STATE_CHANGE, display.on_mcu_state)
-        bms.state.add_callback(EVENT_STATE_CHANGE, display.on_bms_state)
-        ats.state.add_callback(EVENT_STATE_CHANGE, display.on_ats_state)
-        psu.state.add_callback(EVENT_STATE_CHANGE, display.on_psu_state)
-        inverter.state.add_callback(EVENT_STATE_CHANGE, display.on_inverter_state)
+        # mcu.state.add_callback(EVENT_STATE_CHANGE, display.on_mcu_state)
+        # bms.state.add_callback(EVENT_STATE_CHANGE, display.on_bms_state)
+        # ats.state.add_callback(EVENT_STATE_CHANGE, display.on_ats_state)
+        # psu.state.add_callback(EVENT_STATE_CHANGE, display.on_psu_state)
+        # inverter.state.add_callback(EVENT_STATE_CHANGE, display.on_inverter_state)
 
-        psu.state.add_callback(EVENT_STATE_ON, display.show_psu_state)
-        psu.state.add_callback(EVENT_STATE_OFF, display.hide_psu_state)
-        inverter.state.add_callback(EVENT_STATE_ON, display.show_inverter_state)
-        inverter.state.add_callback(EVENT_STATE_OFF, display.hide_inverter_state)
+        # psu.state.add_callback(EVENT_STATE_ON, display.show_psu_state)
+        # psu.state.add_callback(EVENT_STATE_OFF, display.hide_psu_state)
+        # inverter.state.add_callback(EVENT_STATE_ON, display.show_inverter_state)
+        # inverter.state.add_callback(EVENT_STATE_OFF, display.hide_inverter_state)
 
     bms.state.add_callback(EVENT_STATE_CHANGE, inverter.on_bms_state)
     bms.state.add_callback(EVENT_STATE_CHANGE, psu.on_bms_state)
@@ -147,9 +151,15 @@ async def main():
         asyncio.create_task(mcu.run()),
     ]
 
+    print(sys.modules.keys())
+    print(micropython.mem_info())
+    print(micropython.stack_use())
+    print(micropython.qstr_info())
+
     await asyncio.gather(*coroutines)
 
     logger.info(f"Running...")
+
     while True:
         await asyncio.sleep(1)
     logger.info("Finishing up")
