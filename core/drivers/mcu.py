@@ -13,7 +13,7 @@ class MCUState(BaseState):
     NAME = "MCU"
     BLE_STATE_UUID = BLE_ESP_UUID
 
-    FREQUENCY = 1
+    STATE_FREQUENCY = 1
     GC_FREQUENCY = 5
 
     memory = 0
@@ -50,9 +50,12 @@ class MCUController:
             self._state.heartbeat = not self._state.heartbeat
             free_mem = gc.mem_free()
             used_mem = gc.mem_alloc()
+            print("=======", free_mem, used_mem)
             total_mem = free_mem + used_mem
             self._state.memory = int((used_mem / total_mem) * 100)
-            self._state.temperature = int((esp32.raw_temperature() - 32) / 1.8)
+
+            # self._state.temperature = int((esp32.raw_temperature() - 32) / 1.8)
+            self._state.temperature = 0
 
             gc_counter += 1
             if gc_counter >= self._state.GC_FREQUENCY:

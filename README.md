@@ -76,9 +76,17 @@ and define custom fonts we've built earlier
 
 ### Build binaries
 
+ESP32 version 
+
 ```shell
 cd $LVGL_HOME
 python make.py esp32 BOARD=ESP32_GENERIC DISPLAY=ILI9488 FROZEN_MANIFEST=$POWERBOX_HOME/manifest.py
+```
+
+ESP32-S3 OTA version
+```shell
+cd $LVGL_HOME
+python make.py esp32 BOARD=ESP32_GENERIC_S3 DISPLAY=ILI9488 FROZEN_MANIFEST=$POWERBOX_HOME/manifest.py BOARD_VARIANT=SPIRAM_OCT --flash-size=16 --ota
 ```
 
 ### Flash firmware
@@ -92,6 +100,14 @@ python -m esptool --chip esp32 -p /dev/cu.usbserial-0001 -b 460800 \
 --flash_mode dio --flash_size 4MB --flash_freq 40m --erase-all 0x0 \
 ./build/lvgl_micropy_ESP32_GENERIC-4.bin
 ```
+
+Manually write second partition
+```
+python -m esptool --chip esp32s3 -p /dev/tty.wchusbserial59710258441 -b 460800 \
+--before default_reset --after no_reset write_flash --flash_mode dio --flash_size 16MB --flash_freq 80m \
+0x280000 lib/micropython/ports/esp32/build-ESP32_GENERIC_S3-SPIRAM_OCT/micropython.bin
+```
+
 
 The above puts micropython, LVGL library, and the actual code into the firmware.
 

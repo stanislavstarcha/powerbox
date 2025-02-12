@@ -1,8 +1,7 @@
+import machine
 import micropython
-import sys
 
 import asyncio
-import network
 import time
 
 from logging import logger
@@ -25,7 +24,7 @@ from const import (
     EVENT_STATE_ERROR,
 )
 
-import conf
+import conf_s3 as conf
 
 
 def disable_keyboard_interrupt():
@@ -109,6 +108,7 @@ async def main():
             sck_pin=conf.DISPLAY_SCLK_PIN,
             dc_pin=conf.DISPLAY_DC_PIN,
             cs_pin=conf.DISPLAY_CS_PIN,
+            reset_pin=conf.DISPLAY_RESET_PIN,
             frequency=conf.DISPLAY_FREQ,
         )
 
@@ -151,13 +151,7 @@ async def main():
         asyncio.create_task(mcu.run()),
     ]
 
-    print(sys.modules.keys())
-    print(micropython.mem_info())
-    print(micropython.stack_use())
-    print(micropython.qstr_info())
-
     await asyncio.gather(*coroutines)
-
     logger.info(f"Running...")
 
     while True:
