@@ -3,10 +3,10 @@ import struct
 
 from drivers import BaseState
 from drivers.button import ButtonController
-from drivers.history import HistoricalData
+from lib.history import HistoricalData
 
 from logging import logger
-from const import BLE_INVERTER_UUID
+from const import BLE_INVERTER_STATE_UUID
 
 from const import (
     HISTORY_INVERTER_POWER,
@@ -39,7 +39,7 @@ class InverterState(BaseState):
     """
 
     NAME = "INVERTER"
-    BLE_STATE_UUID = BLE_INVERTER_UUID
+    BLE_STATE_UUID = BLE_INVERTER_STATE_UUID
 
     # whether inverter is turned on
     active = False
@@ -143,8 +143,8 @@ class InverterState(BaseState):
 
     def parse_buffer(self, buffer):
         if 0xAE in buffer and 0xEE in buffer:
-            frame_start = buffer.find(b"\xAE")
-            frame_end = buffer.find(b"\xEE") + 1
+            frame_start = buffer.find(b"\xae")
+            frame_end = buffer.find(b"\xee") + 1
             self.parse(buffer[frame_start:frame_end])
 
         if self.is_valid():
@@ -181,9 +181,9 @@ class InverterController:
     UART_RX_PIN = None
     UART_TX_PIN = None
 
-    STATUS_REQUEST = b"\xAE\x01\x01\x03\x05\xEE"
-    SHUTDOWN_REQUEST = b"\xAE\x01\x02\x04\x01\x00\x08\xEE"
-    TURN_ON_REQUEST = b"\xAE\x01\x02\x04\x00\x00\x07\xEE"
+    STATUS_REQUEST = b"\xae\x01\x01\x03\x05\xee"
+    SHUTDOWN_REQUEST = b"\xae\x01\x02\x04\x01\x00\x08\xee"
+    TURN_ON_REQUEST = b"\xae\x01\x02\x04\x00\x00\x07\xee"
 
     TURN_OFF_VOLTAGE = 2.7
     TURN_OFF_MAX_CONFIRMATIONS = 3

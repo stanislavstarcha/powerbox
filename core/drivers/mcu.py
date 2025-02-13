@@ -4,14 +4,14 @@ import struct
 import time
 
 from drivers import BaseState
-from const import BLE_ESP_UUID
+from const import BLE_MCU_STATE_UUID
 
 from logging import logger
 
 
 class MCUState(BaseState):
     NAME = "MCU"
-    BLE_STATE_UUID = BLE_ESP_UUID
+    BLE_STATE_UUID = BLE_MCU_STATE_UUID
 
     STATE_FREQUENCY = 1
     GC_FREQUENCY = 5
@@ -50,7 +50,6 @@ class MCUController:
             self._state.heartbeat = not self._state.heartbeat
             free_mem = gc.mem_free()
             used_mem = gc.mem_alloc()
-            print("=======", free_mem, used_mem)
             total_mem = free_mem + used_mem
             self._state.memory = int((used_mem / total_mem) * 100)
 

@@ -3,21 +3,21 @@
         <div class="text-h5 q-mt-lg text-bold">{{ $t("mainController") }}</div>
         <div class="row q-mt-md">
             <div class="col-10">{{ $t("version") }}</div>
-            <div class="col">{{ espStore.version }}</div>
+            <div class="col">{{ mcuStore.version }}</div>
         </div>
 
         <div class="row q-mt-md">
             <div class="col-10">{{ $t("temperature") }}</div>
-            <div class="col-2">{{ espStore.temperature }} ℃</div>
+            <div class="col-2">{{ mcuStore.temperature }} ℃</div>
         </div>
 
         <div class="row q-mt-md">
             <div class="col-10">{{ $t("memory") }}</div>
-            <div class="col-2">{{ espStore.memory }}%</div>
+            <div class="col-2">{{ mcuStore.memory }}%</div>
         </div>
         <div class="row q-mt-md">
             <div class="col-10">{{ $t("uptime") }}</div>
-            <div class="col">{{ espStore.uptime }}</div>
+            <div class="col">{{ mcuStore.uptime }}</div>
         </div>
         <div class="row q-mt-md items-center">
             <div class="col-9">{{ $t("avrMode") }}</div>
@@ -41,11 +41,11 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useAppStore } from "stores/app";
-import { useESPStore } from "stores/esp";
+import { useMCUStore } from "stores/esp";
 import { useATSStore } from "stores/ats";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
-const espStore = useESPStore();
+const mcuStore = useMCUStore();
 const appStore = useAppStore();
 const atsStore = useATSStore();
 

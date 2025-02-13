@@ -3,12 +3,12 @@ from logging import logger
 import machine
 
 from drivers import BaseState
-from const import BLE_ATS_UUID, ATS_MODE_NONE, ATS_MODE_CITY, ATS_MODE_BATTERY
+from const import BLE_ATS_STATE_UUID, ATS_MODE_NONE, ATS_MODE_CITY, ATS_MODE_BATTERY
 
 
 class ATSState(BaseState):
     NAME = "ATS"
-    BLE_STATE_UUID = BLE_ATS_UUID
+    BLE_STATE_UUID = BLE_ATS_STATE_UUID
 
     mode = ATS_MODE_NONE
 

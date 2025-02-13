@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="100mm"
+   height="100mm"
+   viewBox="0 0 250 250"
+   version="1.2"
+   id="svg87"
+   sodipodi:docname="logo.svg"
+   inkscape:export-filename="A-Front-V3.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview87"
+     pagecolor="#000000"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.43500395"
+     inkscape:cx="489.65072"
+     inkscape:cy="652.86763"
+     inkscape:window-width="1728"
+     inkscape:window-height="959"
+     inkscape:window-x="0"
+     inkscape:window-y="38"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg87"
+     showguides="true" />
+  <defs
+     id="defs1">
+    <inkscape:path-effect
+       effect="fillet_chamfer"
+       id="path-effect4"
+       is_visible="true"
+       lpeversion="1"
+       nodesatellites_param="F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1"
+       radius="0"
+       unit="px"
+       method="auto"
+       mode="F"
+       chamfer_steps="1"
+       flexible="false"
+       use_knot_distance="true"
+       apply_no_radius="true"
+       apply_with_radius="true"
+       only_selected="false"
+       hide_knots="false" />
+    <inkscape:path-effect
+       effect="fillet_chamfer"
+       id="path-effect3"
+       is_visible="true"
+       lpeversion="1"
+       nodesatellites_param="F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1"
+       radius="0"
+       unit="px"
+       method="auto"
+       mode="F"
+       chamfer_steps="1"
+       flexible="false"
+       use_knot_distance="true"
+       apply_no_radius="true"
+       apply_with_radius="true"
+       only_selected="false"
+       hide_knots="false" />
+    <inkscape:path-effect
+       effect="fillet_chamfer"
+       id="path-effect2"
+       is_visible="true"
+       lpeversion="1"
+       nodesatellites_param="F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1 @ F,0,0,1,0,0,0,1"
+       radius="0"
+       unit="px"
+       method="auto"
+       mode="F"
+       chamfer_steps="1"
+       flexible="false"
+       use_knot_distance="true"
+       apply_no_radius="true"
+       apply_with_radius="true"
+       only_selected="false"
+       hide_knots="false" />
+    <color-profile
+       name="SMPTE-RP-431-2-2007-DCI-P3"
+       xlink:href="file:///System/Library/ColorSync/Profiles/DCI(P3)%20RGB.icc"
+       id="color-profile1" />
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1139"
+       y="-0.010629361"
+       height="1.3696846">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1139" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1140"
+       x="-0.19256578"
+       y="-0.19095261"
+       width="1.3149432"
+       height="1.3829614">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1140" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1141"
+       x="0"
+       y="0"
+       width="1"
+       height="1">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1141" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1142"
+       x="0"
+       y="0"
+       width="1"
+       height="1">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1142" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1143"
+       x="0"
+       y="0"
+       width="1"
+       height="1">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1143" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1144"
+       x="-0.010629381"
+       y="-0.010629381"
+       width="1.0212588"
+       height="1.0212588">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1144" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1145"
+       x="0"
+       y="0"
+       width="1"
+       height="1">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1145" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1146"
+       x="-0.031401075"
+       y="-0.040292654"
+       width="1.0647956"
+       height="1.0402927">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1146" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1147"
+       x="-0.010629381"
+       y="-0.010629381"
+       width="1.0212588"
+       height="1.0212588">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1147" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1148"
+       x="-0.0064783869"
+       width="2.6099956">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1148" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1149"
+       x="-2.6421535e-07"
+       y="-0.05700111"
+       width="1.1089611"
+       height="1.0648106">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1149" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1150"
+       x="-14.508595"
+       y="-0.00085049199"
+       width="29.962614"
+       height="1.0048891">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1150" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1151"
+       x="-0.045672497"
+       y="-0.0016364149"
+       width="1.1362023"
+       height="1.0885811">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1151" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1152"
+       x="-0.085910167"
+       y="-0.065965761"
+       width="1.1718203"
+       height="1.1319315">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1152" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1153"
+       x="-0.030636092"
+       y="-0.083237491"
+       width="1.0886868"
+       height="1.1660783">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1153" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1154"
+       x="-0.045672497"
+       y="-0.0016364149"
+       width="1.1362023"
+       height="1.0885811">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1154" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1155"
+       x="-0.085910167"
+       y="-0.065965761"
+       width="1.1718203"
+       height="1.1319315">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1155" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Fade to Black or White"
+       id="filter1156"
+       x="0"
+       y="0"
+       width="1"
+       height="1">
+      <feColorMatrix
+         values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"
+         id="feColorMatrix1156" />
+    </filter>
+  </defs>
+  <g
+     id="g1240"
+     transform="translate(-1598.7407,-2124.3707)">
+    <path
+       id="path50"
+       style="opacity:0.99;fill:none;fill-opacity:1;stroke:#fffffc;stroke-width:6.42273;stroke-miterlimit:4.1;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter1155)"
+       d="m 1709.9581,2247.3241 c 0,13.4433 -8.368,19.6928 -18.6903,19.6928 -10.3222,0 -18.6902,-6.2495 -18.6902,-19.6928 0,-13.4433 9.9174,-28.9895 18.6902,-28.9895 8.7729,0 18.6903,15.5462 18.6903,28.9895 z"
+       sodipodi:nodetypes="ssszs" />
+    <path
+       style="opacity:0.99;fill:none;fill-opacity:1;stroke:#fffffc;stroke-width:6.42274;stroke-miterlimit:4.1;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter1154)"
+       d="m 1709.9276,2247.6476 c -0.7495,39.8099 -19.7739,41.5297 -35.4668,32.3623"
+       id="path51"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="opacity:0.99;fill:none;fill-opacity:1;stroke:#fffffc;stroke-width:6.42274;stroke-miterlimit:4.1;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter1153)"
+       d="m 1613.9163,2241.4063 c 53.2513,26.1567 52.7415,-12.5426 32.1929,-12.9412 -21.5366,-0.4176 -22.4906,21.6756 -14.9748,31.29 10.1774,13.0193 26.4295,5.3757 28.9962,1.4746"
+       id="path52"
+       sodipodi:nodetypes="cssc" />
+    <path
+       id="path50-0"
+       style="opacity:0.99;fill:none;fill-opacity:1;stroke:#fffffc;stroke-width:6.42273;stroke-miterlimit:4.1;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter1152)"
+       d="m 1759.2346,2247.3241 c 0,13.4433 -8.368,19.6928 -18.6903,19.6928 -10.3222,0 -18.6902,-6.2495 -18.6902,-19.6928 0,-13.4432 9.9174,-28.9895 18.6902,-28.9895 8.7729,0 18.6903,15.5463 18.6903,28.9895 z"
+       sodipodi:nodetypes="ssszs" />
+    <path
+       style="opacity:0.99;fill:none;fill-opacity:1;stroke:#fffffc;stroke-width:6.42274;stroke-miterlimit:4.1;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter1151)"
+       d="m 1759.2041,2247.6476 c -0.7495,39.8099 -19.7739,41.5297 -35.4668,32.3623"
+       id="path51-1"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="opacity:0.99;fill:none;fill-opacity:1;stroke:#fffffc;stroke-width:8.56363;stroke-miterlimit:4.1;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter1150)"
+       d="m 1777.6156,2208.2126 c 0.6796,43.1584 -0.03,78.8641 2e-4,79.2669"
+       id="path53"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="opacity:0.99;fill:none;fill-opacity:1;stroke:#fffffc;stroke-width:8.56363;stroke-miterlimit:4.1;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter1149)"
+       d="m 1792.2059,2212.0949 40.2564,10e-5 c -0.7505,31.1056 -35.2857,43.7695 -30.9499,75.118"
+       id="path54"
+       sodipodi:nodetypes="ccc" />
+  </g>
+</svg>

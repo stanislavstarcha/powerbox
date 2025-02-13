@@ -1,8 +1,7 @@
-import machine
 import struct
 
 from drivers import BaseState, UART
-from drivers.history import HistoricalData
+from lib.history import HistoricalData
 from logging import logger
 
 from const import (
@@ -14,7 +13,7 @@ from const import (
     HISTORY_BMS_CELL4_VOLTAGE,
     DATA_TYPE_BYTE,
     DATA_TYPE_WORD,
-    BLE_BMS_UUID,
+    BLE_BMS_STATE_UUID,
 )
 
 
@@ -48,7 +47,7 @@ class BMSErrors:
 class BMSState(BaseState):
 
     NAME = "BMS"
-    BLE_STATE_UUID = BLE_BMS_UUID
+    BLE_STATE_UUID = BLE_BMS_STATE_UUID
 
     ERROR_NO_MODIFY_RESPONSE = 2
 
@@ -372,16 +371,16 @@ class BMSState(BaseState):
 
 class BMSController:
 
-    HEADER = b"\x4E\x57"
+    HEADER = b"\x4e\x57"
 
     # Jikong BMS request signature
-    STATUS_REQUEST = b"\x4E\x57\x00\x13\x00\x00\x00\x00\x06\x03\x00\x00\x00\x00\x00\x00\x68\x00\x00\x01\x29"
+    STATUS_REQUEST = b"\x4e\x57\x00\x13\x00\x00\x00\x00\x06\x03\x00\x00\x00\x00\x00\x00\x68\x00\x00\x01\x29"
 
-    ENABLE_CHARGE = b"\x4E\x57\x00\x14\x00\x00\x00\x00\x02\x03\x02\xAB\x01\x00\x00\x00\x00\x68\x00\x00\x01\xd4"
-    DISABLE_CHARGE = b"\x4E\x57\x00\x14\x00\x00\x00\x00\x02\x03\x02\xAB\x00\x00\x00\x00\x00\x68\x00\x00\x01\xd3"
+    ENABLE_CHARGE = b"\x4e\x57\x00\x14\x00\x00\x00\x00\x02\x03\x02\xab\x01\x00\x00\x00\x00\x68\x00\x00\x01\xd4"
+    DISABLE_CHARGE = b"\x4e\x57\x00\x14\x00\x00\x00\x00\x02\x03\x02\xab\x00\x00\x00\x00\x00\x68\x00\x00\x01\xd3"
 
-    ENABLE_DISCHARGE = b"\x4E\x57\x00\x14\x00\x00\x00\x00\x02\x03\x02\xAC\x01\x00\x00\x00\x00\x68\x00\x00\x01\xd5"
-    DISABLE_DISCHARGE = b"\x4E\x57\x00\x14\x00\x00\x00\x00\x02\x03\x02\xAC\x00\x00\x00\x00\x00\x68\x00\x00\x01\xd4"
+    ENABLE_DISCHARGE = b"\x4e\x57\x00\x14\x00\x00\x00\x00\x02\x03\x02\xac\x01\x00\x00\x00\x00\x68\x00\x00\x01\xd5"
+    DISABLE_DISCHARGE = b"\x4e\x57\x00\x14\x00\x00\x00\x00\x02\x03\x02\xac\x00\x00\x00\x00\x00\x68\x00\x00\x01\xd4"
 
     BAUD_RATE = 115200
     UART_IF = 1
@@ -424,7 +423,10 @@ class BMSController:
                 self.state.parse(data)
                 self.state.reset_error(self._state.ERROR_NO_RESPONSE)
                 logger.debug(
-                    "BMS Voltage", self.state.voltage, "Temperature: ", self.state.mos_temperature
+                    "BMS Voltage",
+                    self.state.voltage,
+                    "Temperature: ",
+                    self.state.mos_temperature,
                 )
                 return True
             except Exception as e:

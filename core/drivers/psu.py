@@ -3,9 +3,9 @@ import struct
 
 from drivers import BaseState
 from drivers.button import ButtonController
-from drivers.history import HistoricalData
+from lib.history import HistoricalData
 
-from const import BLE_PSU_UUID
+from const import BLE_PSU_STATE_UUID
 
 from lib.tachometer import Tachometer
 
@@ -25,7 +25,7 @@ class PSUState(BaseState):
     NAME = "PSU"
     STATE_FREQUENCY = 5
 
-    BLE_STATE_UUID = BLE_PSU_UUID
+    BLE_STATE_UUID = BLE_PSU_STATE_UUID
     ERROR_PIN = 6
 
     # on/off

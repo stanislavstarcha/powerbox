@@ -24,7 +24,7 @@ from const import (
     EVENT_STATE_ERROR,
 )
 
-import conf_s3 as conf
+import conf
 
 
 def disable_keyboard_interrupt():

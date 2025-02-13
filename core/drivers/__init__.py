@@ -3,7 +3,12 @@ import machine
 import time
 import gc
 
-from const import BLE_HISTORY_UUID, EVENT_STATE_CHANGE, EVENT_STATE_ON, EVENT_STATE_OFF
+from const import (
+    BLE_HISTORY_STATE_UUID,
+    EVENT_STATE_CHANGE,
+    EVENT_STATE_ON,
+    EVENT_STATE_OFF,
+)
 from logging import logger
 
 
@@ -15,26 +20,16 @@ class UART:
     _baud_rate = None
     _timeout = None
 
-    def __init__(
-        self, interface, timeout=None
-    ):
+    def __init__(self, interface, timeout=None):
         self._interface = interface
         self._timeout = timeout
         self._uart = machine.UART(self._interface)
 
     def init(self, rx=None, tx=None, baud_rate=9600):
 
-        tx = (
-            machine.Pin(tx, machine.Pin.OUT, machine.Pin.PULL_UP)
-            if tx
-            else None
-        )
+        tx = machine.Pin(tx, machine.Pin.OUT, machine.Pin.PULL_UP) if tx else None
 
-        rx = (
-            machine.Pin(rx, machine.Pin.IN, machine.Pin.PULL_UP)
-            if rx
-            else None
-        )
+        rx = machine.Pin(rx, machine.Pin.IN, machine.Pin.PULL_UP) if rx else None
 
         if rx and tx:
             self._uart.init(baudrate=baud_rate, rx=rx, tx=tx)
@@ -244,7 +239,7 @@ class BaseState:
             return
 
         for chart_type, historical_data in self.history.items():
-            self._ble.notify(BLE_HISTORY_UUID, historical_data.ble_update())
+            self._ble.notify(BLE_HISTORY_STATE_UUID, historical_data.ble_update())
 
     def build_history(self):
         """Create a snapshot for BLE current and historical state"""
@@ -269,5 +264,7 @@ class BaseState:
 
         for metric_name, data in self.history.items():
             chunks = data.ble_chunks()
+            if not chunks:
+                continue
             for chunk in chunks:
-                self._ble.notify(BLE_HISTORY_UUID, chunk)
+                self._ble.notify(BLE_HISTORY_STATE_UUID, chunk)

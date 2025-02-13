@@ -1,13 +1,10 @@
 import {
-    bmsUUID,
-    psuUUID,
-    espUUID,
-    inverterUUID,
-    historyUUID,
-    atsUUID,
-    setChargingUUID,
-    setDischargingUUID,
-    setCurrentUUID,
+    BLE_BMS_STATE_UUID,
+    BLE_PSU_STATE_UUID,
+    BLE_MCU_STATE_UUID,
+    BLE_INVERTER_STATE_UUID,
+    BLE_HISTORY_STATE_UUID,
+    BLE_ATS_STATE_UUID,
     HISTORY_BMS_SOC,
 } from "stores/uuids";
 
@@ -196,14 +193,14 @@ const onDischargingControl = (value) => {
 const onHistoryControl = (value) => {
     // generate bms level history
     if (value === 0) {
-        modifiers[historyUUID].callback(
+        modifiers[BLE_HISTORY_STATE_UUID].callback(
             genHistoryState(HISTORY_BMS_SOC, 0, 16, 0, 0, 0, 100),
         );
-        modifiers[historyUUID].callback(
+        modifiers[BLE_HISTORY_STATE_UUID].callback(
             genHistoryState(HISTORY_BMS_SOC, 64, 16, 0, 0, 0, 100),
         );
 
-        modifiers[historyUUID].callback(
+        modifiers[BLE_HISTORY_STATE_UUID].callback(
             genHistoryState(HISTORY_BMS_SOC, 100, 2, 0, 0, 0, 100),
         );
     }
@@ -270,12 +267,12 @@ const packHistoryHeader = (
 };
 
 const generators = {
-    [bmsUUID]: genBmsState,
-    [psuUUID]: genPsuState,
-    [espUUID]: genEspState,
-    [inverterUUID]: genInverterState,
-    [atsUUID]: genATSState,
-    [historyUUID]: genHistoryIncrement,
+    [BLE_BMS_STATE_UUID]: genBmsState,
+    [BLE_PSU_STATE_UUID]: genPsuState,
+    [BLE_MCU_STATE_UUID]: genEspState,
+    [BLE_INVERTER_STATE_UUID]: genInverterState,
+    [BLE_ATS_STATE_UUID]: genATSState,
+    [BLE_HISTORY_STATE_UUID]: genHistoryIncrement,
 };
 
 const fixed = {
@@ -294,7 +291,7 @@ const modifiers = {
         callback: null,
     },
 
-    [historyUUID]: {
+    [BLE_HISTORY_STATE_UUID]: {
         modifier: onHistoryControl,
         callback: null,
     },

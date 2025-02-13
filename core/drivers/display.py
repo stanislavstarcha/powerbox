@@ -87,13 +87,15 @@ class BaseScreen:
 
     def create_label(
         self,
-        col,
-        row,
+        col=None,
+        row=None,
         t="",
         col_span=1,
         row_span=1,
-        font_size=14,
+        font_size=12,
         color="white",
+        x=None,
+        y=None,
         is_hidden=True,
     ):
         label = lv.label(self._screen)
@@ -113,10 +115,24 @@ class BaseScreen:
         if font_size == 24:
             label.set_style_text_font(lv.font_roboto_24, 0)
 
+        if x is not None:
+            label.set_style_x(x, lv.PART.MAIN)
+
+        if y is not None:
+            label.set_style_y(y, lv.PART.MAIN)
+
         label.set_text(t)
-        label.set_grid_cell(
-            lv.GRID_ALIGN.CENTER, col, col_span, lv.GRID_ALIGN.CENTER, row, row_span
-        )
+
+        if col is not None and row is not None:
+            label.set_grid_cell(
+                lv.GRID_ALIGN.CENTER,
+                col,
+                col_span,
+                lv.GRID_ALIGN.CENTER,
+                row,
+                row_span,
+            )
+
         if is_hidden:
             self.hide_widget(label)
 
@@ -595,6 +611,7 @@ class SleepScreen(BaseScreen):
     progress_body = None
     left_eye = None
     right_eye = None
+    capacity = None
 
     def create_widgets(self):
 
@@ -604,6 +621,13 @@ class SleepScreen(BaseScreen):
         self._screen.set_style_margin_all(0, lv.PART.MAIN)
         self._screen.set_style_pad_gap(0, lv.PART.MAIN)
 
+        self.capacity = self.create_label(
+            None,
+            None,
+            is_hidden=False,
+            x=self.BASE_X + 45,
+            y=self.BASE_Y + 50,
+        )
         self.progress_body = self.create_arc(
             x=self.BASE_X,
             y=self.BASE_Y,
@@ -705,15 +729,16 @@ class SleepScreen(BaseScreen):
             self.left_eye.set_bg_end_angle(110)
             self.right_eye.set_bg_end_angle(110)
 
-    def set_progress(self, value):
+    def set_capacity(self, value):
         start_angle = self.progress_body.get_bg_angle_start()
         end_angle = self.progress_body.get_bg_angle_end()
         offset = int(value * (end_angle - start_angle) / 100)
         self.progress_body.set_angles(start_angle + offset, end_angle)
+        self.capacity.set_text(f"{value}%")
 
     def generate_random_state(self):
         self.set_eyes(random.randint(0, 1))
-        self.set_progress(random.randint(0, 100))
+        self.set_capacity(random.randint(0, 100))
 
 
 class DisplayController:
