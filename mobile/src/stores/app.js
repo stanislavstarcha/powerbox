@@ -9,7 +9,7 @@ import { useRouter } from "vue-router";
 import { useBMSStore } from "stores/bms";
 import { usePSUStore } from "stores/psu";
 import { useInverterStore } from "stores/inverter";
-import { useESPStore } from "stores/esp";
+import { useMCUStore } from "stores/esp";
 import { useATSStore } from "stores/ats";
 import { useHistoryStore } from "stores/history";
 
@@ -17,16 +17,18 @@ import { pack_bool } from "src/utils/ble.js";
 import { i18n } from "src/boot/i18n";
 
 import {
-    coreServiceUUID,
-    bmsUUID,
-    psuUUID,
-    espUUID,
-    inverterUUID,
-    atsUUID,
-    historyUUID,
-    setCommandUUID,
-    setATSUUID,
-    setCurrentUUID,
+    BLE_CORE_SERVICE_UUID,
+    BLE_BMS_STATE_UUID,
+    BLE_PSU_STATE_UUID,
+    BLE_MCU_STATE_UUID,
+    BLE_INVERTER_STATE_UUID,
+    BLE_ATS_STATE_UUID,
+    BLE_HISTORY_STATE_UUID,
+    BLE_RUN_COMMAND_UUID,
+    COMMAND_PULL_HISTORY,
+    COMMAND_PSU_CURRENT,
+    COMMAND_ATS_ENABLE,
+    COMMAND_ATS_DISABLE,
 } from "stores/uuids";
 
 const DEFAULT_LANGUAGE = "uk";
@@ -58,11 +60,11 @@ export const useAppStore = defineStore("app", {
 
     actions: {
         async bootstrap() {
-            this.bmsStore = useBMSStore();
-            this.espStore = useESPStore();
-            this.psuStore = usePSUStore();
-            this.inverterStore = useInverterStore();
             this.atsStore = useATSStore();
+            this.bmsStore = useBMSStore();
+            this.inverterStore = useInverterStore();
+            this.mcuStore = useMCUStore();
+            this.psuStore = usePSUStore();
             this.historyStore = useHistoryStore();
 
             await loadBluetoothModule();
@@ -81,9 +83,9 @@ export const useAppStore = defineStore("app", {
 
             return new Promise((resolve, reject) => {
                 try {
-                    console.log("Requesting BLE scan", coreServiceUUID);
+                    console.log("Requesting BLE scan", BLE_CORE_SERVICE_UUID);
                     BleClient.requestLEScan(
-                        { services: [coreServiceUUID] },
+                        { services: [BLE_CORE_SERVICE_UUID] },
                         (result) => {
                             this.addDevice(result.device);
                         },
@@ -134,63 +136,91 @@ export const useAppStore = defineStore("app", {
 
                 const [bmsState, psuState, inverterState, espState, atsState] =
                     await Promise.all([
-                        BleClient.read(deviceId, coreServiceUUID, bmsUUID),
-                        BleClient.read(deviceId, coreServiceUUID, psuUUID),
-                        BleClient.read(deviceId, coreServiceUUID, inverterUUID),
-                        BleClient.read(deviceId, coreServiceUUID, espUUID),
-                        BleClient.read(deviceId, coreServiceUUID, atsUUID),
+                        BleClient.read(
+                            deviceId,
+                            BLE_CORE_SERVICE_UUID,
+                            BLE_ATS_STATE_UUID,
+                        ),
+                        BleClient.read(
+                            deviceId,
+                            BLE_CORE_SERVICE_UUID,
+                            BLE_BMS_STATE_UUID,
+                        ),
+                        BleClient.read(
+                            deviceId,
+                            BLE_CORE_SERVICE_UUID,
+                            BLE_PSU_STATE_UUID,
+                        ),
+                        BleClient.read(
+                            deviceId,
+                            BLE_CORE_SERVICE_UUID,
+                            BLE_INVERTER_STATE_UUID,
+                        ),
+                        BleClient.read(
+                            deviceId,
+                            BLE_CORE_SERVICE_UUID,
+                            BLE_MCU_STATE_UUID,
+                        ),
                     ]);
 
                 await Promise.all([
                     BleClient.startNotifications(
                         deviceId,
-                        coreServiceUUID,
-                        bmsUUID,
-                        this.bmsStore.parseState,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_ATS_STATE_UUID,
+                        this.atsStore.parseState,
                     ),
+
                     BleClient.startNotifications(
                         deviceId,
-                        coreServiceUUID,
-                        psuUUID,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_BMS_STATE_UUID,
+                        this.bmsStore.parseState,
+                    ),
+
+                    BleClient.startNotifications(
+                        deviceId,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_PSU_STATE_UUID,
                         this.psuStore.parseState,
                     ),
 
                     BleClient.startNotifications(
                         deviceId,
-                        coreServiceUUID,
-                        inverterUUID,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_INVERTER_STATE_UUID,
                         this.inverterStore.parseState,
                     ),
 
                     BleClient.startNotifications(
                         deviceId,
-                        coreServiceUUID,
-                        espUUID,
-                        this.espStore.parseState,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_MCU_STATE_UUID,
+                        this.mcuStore.parseState,
                     ),
 
                     BleClient.startNotifications(
                         deviceId,
-                        coreServiceUUID,
-                        historyUUID,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_HISTORY_STATE_UUID,
                         this.historyStore.parseState,
                     ),
 
                     BleClient.startNotifications(
                         deviceId,
-                        coreServiceUUID,
-                        atsUUID,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_ATS_STATE_UUID,
                         this.atsStore.parseState,
                     ),
                 ]);
 
                 // request history
-                await this.writeState(setCommandUUID, 0x01);
+                await this.runBLECommand(COMMAND_PULL_HISTORY);
 
                 this.bmsStore.parseState(bmsState);
                 this.psuStore.parseState(psuState);
                 this.inverterStore.parseState(inverterState);
-                this.espStore.parseState(espState);
+                this.mcuStore.parseState(espState);
                 this.atsStore.parseState(atsState);
 
                 console.log("Connected to device:", deviceId);
@@ -207,12 +237,12 @@ export const useAppStore = defineStore("app", {
             }
         },
 
-        async writeState(stateUUID, data) {
+        async runBLECommand(commandId, data) {
             const view = numbersToDataView([data]);
             await BleClient.write(
                 this.deviceId,
-                coreServiceUUID,
-                stateUUID,
+                BLE_CORE_SERVICE_UUID,
+                BLE_RUN_COMMAND_UUID,
                 view,
             );
         },
@@ -246,7 +276,11 @@ export const useAppStore = defineStore("app", {
         setATS(value) {
             this.savePreference("ats", value).then(() => {
                 this.ats = value;
-                this.writeState(setATSUUID, pack_bool(value));
+                if (value) {
+                    this.runBLECommand(COMMAND_ATS_ENABLE);
+                } else {
+                    this.runBLECommand(COMMAND_ATS_DISABLE);
+                }
             });
         },
 
@@ -261,7 +295,7 @@ export const useAppStore = defineStore("app", {
         setCurrentLimit(value) {
             this.savePreference("current", value).then(() => {
                 this.currentLimit = value;
-                this.writeState(setCurrentUUID, value);
+                this.runBLECommand(COMMAND_PSU_CURRENT, value);
             });
         },
 

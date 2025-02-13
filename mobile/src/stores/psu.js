@@ -9,7 +9,9 @@ import {
 import {
     HISTORY_PSU_TEMPERATURE,
     HISTORY_PSU_VOLTAGE,
-    setChargingUUID,
+    COMMAND_PSU_ENABLE,
+    COMMAND_PSU_DISABLE,
+    COMMAND_PSU_CURRENT,
 } from "stores/uuids.js";
 import { useAppStore } from "stores/app.js";
 
@@ -54,7 +56,11 @@ export const usePSUStore = defineStore("psu", {
         setCharging(value) {
             this.active = value;
             const appStore = useAppStore();
-            appStore.writeState(setChargingUUID, pack_bool(value));
+            if (value) {
+                appStore.runBLECommand(COMMAND_PSU_ENABLE);
+            } else {
+                appStore.runBLECommand(COMMAND_PSU_DISABLE);
+            }
         },
     },
 });

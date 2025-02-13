@@ -1,17 +1,16 @@
-import asyncio
 import machine
 import struct
 
-import onewire, ds18x20
-from lib.ina219 import INA219
-
+from drivers import BaseState
 from drivers.button import ButtonController
-from drivers import BaseState, PowerCallbacksMixin
-from drivers.history import HistoricalData
+from lib.history import HistoricalData
 
-from drivers.const import BLE_PSU_UUID
+from const import BLE_PSU_STATE_UUID
 
-from drivers.const import (
+from lib.tachometer import Tachometer
+
+
+from const import (
     HISTORY_PSU_VOLTAGE,
     HISTORY_PSU_TEMPERATURE,
     DATA_TYPE_BYTE,
@@ -24,16 +23,32 @@ from logging import logger
 class PSUState(BaseState):
 
     NAME = "PSU"
-    BLE_STATE_UUID = BLE_PSU_UUID
+    STATE_FREQUENCY = 5
 
-    ERROR_TEMPERATURE_SENSOR = 4
-    ERROR_VOLTAGE_SENSOR = 5
+    BLE_STATE_UUID = BLE_PSU_STATE_UUID
     ERROR_PIN = 6
 
+    # on/off
     active = False
-    voltage = None
-    temperature = None
+
+    # current channel (0-3)
     current = 0
+
+    FRAME_SIZE = 22
+
+    # telemetry
+    power1 = None
+    power2 = None
+    ac = None
+    t1 = None
+    t2 = None
+    t3 = None
+    state = None
+    unknown = None
+    tachometer = None
+
+    _power_crc = None
+    _data_crc = None
 
     history = {
         HISTORY_PSU_VOLTAGE: HistoricalData(
@@ -46,42 +61,120 @@ class PSUState(BaseState):
         ),
     }
 
-    def __init__(self):
-        pass
-
     def clear(self):
-        self.voltage = None
-        self.temperature = None
         self.active = False
 
     def get_ble_state(self):
         return struct.pack(
             ">HBBBBB",
-            self._pack_voltage(self.voltage),
+            self._pack_voltage(0),
             self._pack_bool(self.active),
             self._pack(self.current),
-            self._pack(self.temperature),
+            self._pack(0),
             self._pack(self.external_errors),
             self._pack(self.internal_errors),
         )
 
     def build_history(self):
-        voltage = self._pack_voltage(self.voltage)
+        voltage = self._pack_voltage(0)
         self.history[HISTORY_PSU_VOLTAGE].push(voltage)
-        self.history[HISTORY_PSU_TEMPERATURE].push(self._pack(self.temperature))
+        self.history[HISTORY_PSU_TEMPERATURE].push(self._pack(0))
 
-    def set_display_metric(self, metric):
-        self.display_metric_glyph = "on" if self.active else "off"
+    def crc(self, data):
+        return sum(b for b in data) % 0xFF
 
-        if self.temperature:
-            self.display_metric_value = int(self.temperature)
-            self.display_metric_type = "c"
-        else:
-            self.display_metric_value = None
-            self.display_metric_type = None
+    def parse(self, frame):
+        offset = 0
+        header = struct.unpack_from(">BB", frame)
+        if header != (0x49, 0x34):
+            self.error = 101
+            print("bad frame header")
+            return
+        offset += 2
+
+        power1 = struct.unpack_from(">BB", frame, offset)
+        offset += 2
+
+        power2 = struct.unpack_from(">BB", frame, offset)
+        offset += 2
+
+        actual_crc = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        power_crc = self.crc(frame[2:6])
+        if power_crc != actual_crc:
+            self.error = 2
+            print("bad header crc", power_crc, actual_crc)
+            return
+
+        data_header = struct.unpack_from(">B", frame, offset)
+        offset += 1
+
+        state = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        unknown = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        ac = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        t1 = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        t2 = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        t3 = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        reserved = struct.unpack_from(">BBBBBBB", frame, offset)
+        offset += 7
+
+        actual_data_crc = struct.unpack_from(">B", frame, offset)[0]
+        offset += 1
+
+        data_crc = self.crc(frame[9:21]) - 3
+        if data_crc != actual_data_crc:
+            self.error = 3
+            print("bad data crc", data_crc, actual_data_crc)
+            return False
+
+        self.power1 = power1
+        self.power2 = power2
+        self.ac = ac
+        self.state = state
+        self.t1 = t1
+        self.t2 = t2
+        self.t3 = t3
+        print("PSU", self.ac, self.t1, self.t2, self.t3)
+
+    def parse_buffer(self, buffer):
+
+        if buffer is None:
+            return
+
+        frame_start = buffer.find(b"\x49\x34")
+        if frame_start < 0:
+            return
+
+        # incomplete buffer
+        if (frame_start + self.FRAME_SIZE) > len(buffer):
+            return
+
+        frame = buffer[frame_start : frame_start + self.FRAME_SIZE]
+        try:
+            print("Extracted frame")
+            error = self.parse(frame)
+            if not error:
+                return True
+
+            buffer = buffer[frame_start + self.FRAME_SIZE :]
+        except Exception as e:
+            print(e)
 
 
-class PowerSupplyController(PowerCallbacksMixin):
+class PowerSupplyController:
     """
     Controller listens for button pin pressed and turns on/off PSU
     via a MOSFET. The button pin is when connected gets 3.3V from
@@ -89,27 +182,13 @@ class PowerSupplyController(PowerCallbacksMixin):
 
     Current pins define corresponding CD4051B multiplexer A,B pins. C pin is grounded
     and not available in the controller.
-
-    Optionally control voltage and temperature of the PSU via
-    INA219 chip and DS18B20 sensor.
     """
-
-    ENABLE_DS18X20 = True
 
     # A pin to listen to
     POWER_BUTTON_PIN = None
 
     # A pin to turn on/off PSU via MOSFET
     POWER_GATE_PIN = None
-
-    # DS18B20 pin
-    TEMPERATURE_ENABLED = True
-    TEMPERATURE_PIN = None
-
-    # INA219 I2C pins
-    VOLTMETER_ENABLED = False
-    VOLTMETER_SCL_PIN = None
-    VOLTMETER_SDA_PIN = None
 
     # Current control pins
     # Two pins define 4 channels ranging from 0 (lowest) current to 3.
@@ -121,17 +200,15 @@ class PowerSupplyController(PowerCallbacksMixin):
     # PSU button controller
     _power_button = None
 
-    # INA219 driver instance
-    _ina219 = None
-
-    # DS18B20 driver instance
-    _ds18x20_driver = None
-
     # current pin instances
     _current_a_pin = None
     _current_b_pin = None
 
+    # fan tachometer
+    _tachometer = None
+
     _state = None
+
     _error = 0
 
     CURRENT_CHANNEL = 0
@@ -141,24 +218,32 @@ class PowerSupplyController(PowerCallbacksMixin):
     _turn_off_voltage = 3.5
     _turn_off_confirmations = 0
 
+    _buffer = None
+
     def __init__(
         self,
         power_button_pin=POWER_BUTTON_PIN,
         power_gate_pin=POWER_GATE_PIN,
-        temperature_pin=TEMPERATURE_PIN,
         current_a_pin=CURRENT_A_PIN,
         current_b_pin=CURRENT_B_PIN,
-        i2c=None,
+        fan_tachometer_pin=None,
+        uart=None,
+        uart_rx_pin=None,
         buzzer=None,
         turn_off_voltage=TURN_OFF_VOLTAGE,
         current_limit=CURRENT_CHANNEL,
-        temperature_enabled=TEMPERATURE_ENABLED,
-        voltmeter_enabled=VOLTMETER_ENABLED,
     ):
         self._state = PSUState()
+        self._uart = uart
+        self._uart_rx_pin = uart_rx_pin
         self._turn_off_voltage = turn_off_voltage
-        self._temperature_enabled = temperature_enabled
-        self._voltmeter_enabled = voltmeter_enabled
+
+        if fan_tachometer_pin:
+            self._tachometer = Tachometer(
+                pin=machine.Pin(fan_tachometer_pin, machine.Pin.IN),
+                period_ms=300,
+                done_callback=self.on_tachometer,
+            )
 
         try:
             self._power_button = ButtonController(
@@ -178,32 +263,6 @@ class PowerSupplyController(PowerCallbacksMixin):
         except Exception as e:
             self._state.set_error(self._state.ERROR_PIN)
             logger.error("PSU gate pin failed")
-
-        if voltmeter_enabled:
-            try:
-                self._ina219 = INA219(i2c=i2c)
-            except Exception as e:
-                self._state.set_error(self._state.ERROR_VOLTAGE_SENSOR)
-                logger.error("PSU voltage sensor failed")
-                logger.critical(e)
-
-        self._ds18x20_driver = None
-        if temperature_enabled:
-            try:
-                self._ds18x20_driver = ds18x20.DS18X20(
-                    onewire.OneWire(machine.Pin(temperature_pin))
-                )
-                self._temperature_sensors = self._ds18x20_driver.scan()
-                if not self._temperature_sensors:
-                    logger.warning("No PSU temperature sensors found")
-                else:
-                    logger.info(
-                        "PSU temperature sensors found", self._temperature_sensors
-                    )
-            except Exception as e:
-                self._state.set_error(self._state.ERROR_TEMPERATURE_SENSOR)
-                logger.error("PSU temperature sensor failed")
-                logger.critical(e)
 
         try:
             self._current_a_pin = machine.Pin(
@@ -229,8 +288,10 @@ class PowerSupplyController(PowerCallbacksMixin):
             self._state.set_error(self._state.ERROR_PIN)
             logger.error("PSU current pin failed")
 
-        PowerCallbacksMixin.__init__(self)
         logger.info("Initialized power supply controller")
+
+    def on_tachometer(self, frequency):
+        self._state.tachometer = frequency
 
     def on_bms_state(self, bms_state):
         triggered = False
@@ -255,22 +316,14 @@ class PowerSupplyController(PowerCallbacksMixin):
         self._current_b_pin.value((channel >> 1) & 0x01)  # MSB (B)
 
     def on(self):
-        if self.power_on_callbacks:
-            for cb in self.power_on_callbacks:
-                cb()
-
+        self._uart.init(rx=self._uart_rx_pin, baud_rate=4800)
         self._power_gate_pin.on()
-        self._state.active = True
-        self._state.notify()
+        self._state.on()
         logger.info("Power supply is on")
 
     def off(self):
-        if self.power_off_callbacks:
-            for cb in self.power_off_callbacks:
-                cb()
         self._power_gate_pin.off()
-        self._state.active = False
-        self._state.notify()
+        self._state.off()
         logger.info("Power supply is off")
 
     def on_power_trigger(self):
@@ -279,38 +332,13 @@ class PowerSupplyController(PowerCallbacksMixin):
         else:
             self.on()
 
-    async def read_temperature(self):
-        try:
-            self._ds18x20_driver.convert_temp()
-            for sensor in self._temperature_sensors:
-                temperature = self._ds18x20_driver.read_temp(sensor)
-                if temperature is not None:
-                    self._state.temperature = int(temperature)
-                    self._state.reset_error(self._state.ERROR_TEMPERATURE_SENSOR)
-                logger.debug("PSU Temperature", temperature)
-        except Exception as e:
-            self._state.set_error(self._state.ERROR_TEMPERATURE_SENSOR)
-
-    async def read_voltage(self):
-        try:
-            bus_voltage = self._ina219.read_shunt_voltage()
-            self._state.voltage = bus_voltage
-            self._state.reset_error(self._state.ERROR_VOLTAGE_SENSOR)
-            logger.debug("PSU Voltage", bus_voltage)
-        except Exception as e:
-            self._state.set_error(self._state.ERROR_VOLTAGE_SENSOR)
-
     async def run(self):
         logger.info("Running PSU...")
-
         while True:
-            if self._voltmeter_enabled and self._ina219:
-                await self.read_voltage()
-
-            if self._temperature_enabled and self._ds18x20_driver:
-                await self.read_temperature()
-
-            self._state.snapshot()
+            if self.state.active:
+                self._state.parse_buffer(self._uart.sample(timeout=500))
+                self._tachometer.measure()
+                self._state.snapshot()
             await self._state.sleep()
 
     @property

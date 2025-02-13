@@ -1,9 +1,12 @@
 import { acceptHMRUpdate, defineStore } from "pinia";
 import { unpack, unpack_bool } from "src/utils/ble.js";
 import {
-    setDischargingUUID,
     HISTORY_INVERTER_POWER,
     HISTORY_INVERTER_TEMPERATURE,
+    COMMAND_INVERTER_ENABLE,
+    COMMAND_INVERTER_DISABLE,
+    COMMAND_PSU_ENABLE,
+    COMMAND_PSU_DISABLE,
 } from "stores/uuids.js";
 import { useAppStore } from "stores/app.js";
 
@@ -49,7 +52,11 @@ export const useInverterStore = defineStore("inverter", {
         setDischarging(value) {
             this.active = value;
             const appStore = useAppStore();
-            appStore.writeState(setDischargingUUID, value);
+            if (value) {
+                appStore.runBLECommand(COMMAND_INVERTER_ENABLE);
+            } else {
+                appStore.runBLECommand(COMMAND_INVERTER_DISABLE);
+            }
         },
     },
 });

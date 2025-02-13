@@ -1,7 +1,7 @@
 import { acceptHMRUpdate, defineStore } from "pinia";
 import { unpack } from "src/utils/ble.js";
 
-export const useESPStore = defineStore("esp", {
+export const useMCUStore = defineStore("esp", {
     state: () => ({
         uptime: 0,
         temperature: null,
@@ -29,5 +29,5 @@ export const useESPStore = defineStore("esp", {
 });
 
 if (import.meta.hot) {
-    import.meta.hot.accept(acceptHMRUpdate(useESPStore, import.meta.hot));
+    import.meta.hot.accept(acceptHMRUpdate(useMCUStore, import.meta.hot));
 }

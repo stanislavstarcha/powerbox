@@ -3,17 +3,14 @@ from logging import logger
 import machine
 
 from drivers import BaseState
-from drivers.const import BLE_ATS_UUID
+from const import BLE_ATS_STATE_UUID, ATS_MODE_NONE, ATS_MODE_CITY, ATS_MODE_BATTERY
 
 
 class ATSState(BaseState):
     NAME = "ATS"
-    BLE_STATE_UUID = BLE_ATS_UUID
+    BLE_STATE_UUID = BLE_ATS_STATE_UUID
 
-    active = False
-
-    def set_display_metric(self, metric):
-        self.display_metric_glyph = "offgrid" if self.active else "ongrid"
+    mode = ATS_MODE_NONE
 
     def get_ble_state(self):
         logger.info(
@@ -40,12 +37,10 @@ class ATSController:
 
     _nc_pin = None
     _no_pin = None
+    _state = None
 
-    _state = False
-
-    def __init__(self, nc_pin=NC_PIN, no_pin=NO_PIN, on_change=None, **kwargs):
+    def __init__(self, nc_pin=NC_PIN, no_pin=NO_PIN):
         self._state = ATSState()
-        self._on_change = on_change
         self._nc_pin = machine.Pin(nc_pin, machine.Pin.IN, machine.Pin.PULL_DOWN)
         self._no_pin = machine.Pin(no_pin, machine.Pin.IN, machine.Pin.PULL_DOWN)
 
@@ -60,6 +55,8 @@ class ATSController:
                 trigger=machine.Pin.IRQ_RISING,
                 handler=self._check_state,
             )
+
+            # TODO get initial state, e.g. when it's already connected
 
             logger.info(
                 f"Initialized ATS controller nc: {self._nc_pin} no: {self._no_pin}"
@@ -76,21 +73,21 @@ class ATSController:
 
     def _check_state(self, pin):
 
-        is_active = None
         nc_state = self._nc_pin.value()
         no_state = self._no_pin.value()
 
-        if nc_state == 0 and no_state == 1:
-            is_active = True
+        mode = ATS_MODE_NONE
 
         if nc_state == 1 and no_state == 0:
-            is_active = False
+            mode = ATS_MODE_CITY
 
-        if is_active is not None and self._state.active != is_active:
-            self._state.active = is_active
-            logger.info(f"Changed ATS state to {self._state.active}")
-            if self._on_change:
-                self._on_change(is_active)
+        if nc_state == 0 and no_state == 1:
+            mode = ATS_MODE_BATTERY
+
+        if mode != self._state.mode:
+            logger.info(f"Changed ATS state to {self._state.mode}")
+            self._state.mode = mode
+            self._state.notify()
 
     async def run(self):
         logger.info("Running ATS controller")

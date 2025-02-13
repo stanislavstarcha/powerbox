@@ -1,3 +1,4 @@
+import esp32
 import machine
 import time
 
@@ -23,7 +24,11 @@ class ButtonController:
     _buzzer = None
 
     def __init__(
-        self, listen_pin=LISTEN_PIN, trigger_delay=DELAY, on_change=None, buzzer=None
+        self,
+        listen_pin=LISTEN_PIN,
+        trigger_delay=DELAY,
+        on_change=None,
+        buzzer=None,
     ):
         self._buzzer = buzzer
         self._on_change = on_change
@@ -32,6 +37,7 @@ class ButtonController:
         self._listen_pin = machine.Pin(
             listen_pin, machine.Pin.IN, machine.Pin.PULL_DOWN
         )
+
         self._listen_pin.irq(
             trigger=machine.Pin.IRQ_RISING | machine.Pin.IRQ_FALLING,
             handler=self._check_state,

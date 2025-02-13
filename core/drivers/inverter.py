@@ -1,15 +1,14 @@
-import asyncio
 import machine
 import struct
 
+from drivers import BaseState
 from drivers.button import ButtonController
-from drivers import BaseState, PowerCallbacksMixin
-from drivers.history import HistoricalData
+from lib.history import HistoricalData
 
 from logging import logger
-from drivers.const import BLE_INVERTER_UUID
+from const import BLE_INVERTER_STATE_UUID
 
-from drivers.const import (
+from const import (
     HISTORY_INVERTER_POWER,
     HISTORY_INVERTER_TEMPERATURE,
     DATA_TYPE_BYTE,
@@ -40,7 +39,7 @@ class InverterState(BaseState):
     """
 
     NAME = "INVERTER"
-    BLE_STATE_UUID = BLE_INVERTER_UUID
+    BLE_STATE_UUID = BLE_INVERTER_STATE_UUID
 
     # whether inverter is turned on
     active = False
@@ -59,6 +58,8 @@ class InverterState(BaseState):
 
     # battery level
     level = None
+
+    tachometer = None
 
     # if state is valid
     _valid = False
@@ -140,19 +141,19 @@ class InverterState(BaseState):
         actual_checksum = actual_checksum % 100
         self._valid = actual_checksum == checksum
 
+    def parse_buffer(self, buffer):
+        if 0xAE in buffer and 0xEE in buffer:
+            frame_start = buffer.find(b"\xae")
+            frame_end = buffer.find(b"\xee") + 1
+            self.parse(buffer[frame_start:frame_end])
+
+        if self.is_valid():
+            self.reset_error(self.ERROR_BAD_RESPONSE)
+        else:
+            self.set_error(self.ERROR_BAD_RESPONSE)
+
     def is_valid(self):
         return self._valid
-
-    def set_display_metric(self, metric):
-        self.display_metric_glyph = "on" if self.active else "off"
-
-        if metric == "power":
-            self.display_metric_value = self.power
-            self.display_metric_type = "w"
-
-        if metric == "temperature":
-            self.display_metric_value = self.temperature
-            self.display_metric_type = "c"
 
     def build_history(self):
         self.history[HISTORY_INVERTER_POWER].push(self._pack(self.power))
@@ -170,7 +171,7 @@ class InverterState(BaseState):
         )
 
 
-class InverterController(PowerCallbacksMixin):
+class InverterController:
 
     POWER_BUTTON_PIN = None
     POWER_GATE_PIN = None
@@ -180,9 +181,9 @@ class InverterController(PowerCallbacksMixin):
     UART_RX_PIN = None
     UART_TX_PIN = None
 
-    STATUS_REQUEST = b"\xAE\x01\x01\x03\x05\xEE"
-    SHUTDOWN_REQUEST = b"\xAE\x01\x02\x04\x01\x00\x08\xEE"
-    TURN_ON_REQUEST = b"\xAE\x01\x02\x04\x00\x00\x07\xEE"
+    STATUS_REQUEST = b"\xae\x01\x01\x03\x05\xee"
+    SHUTDOWN_REQUEST = b"\xae\x01\x02\x04\x01\x00\x08\xee"
+    TURN_ON_REQUEST = b"\xae\x01\x02\x04\x00\x00\x07\xee"
 
     TURN_OFF_VOLTAGE = 2.7
     TURN_OFF_MAX_CONFIRMATIONS = 3
@@ -202,7 +203,7 @@ class InverterController(PowerCallbacksMixin):
         self,
         power_button_pin=POWER_BUTTON_PIN,
         power_gate_pin=POWER_GATE_PIN,
-        uart_if=UART_IF,
+        uart=None,
         baud_rate=BAUD_RATE,
         uart_tx_pin=UART_TX_PIN,
         uart_rx_pin=UART_RX_PIN,
@@ -212,10 +213,10 @@ class InverterController(PowerCallbacksMixin):
         self._state = InverterState()
         self._turn_off_voltage = turn_off_voltage
 
-        if uart_if is not None:
-            tx = machine.Pin(uart_tx_pin, machine.Pin.OUT)
-            rx = machine.Pin(uart_rx_pin, machine.Pin.IN)
-            self._uart = machine.UART(uart_if, baudrate=baud_rate, tx=tx, rx=rx)
+        self._uart = uart
+        self._tx_pin = uart_tx_pin
+        self._rx_pin = uart_rx_pin
+        self._baud_rate = baud_rate
 
         self._power_button = ButtonController(
             listen_pin=power_button_pin,
@@ -224,11 +225,11 @@ class InverterController(PowerCallbacksMixin):
         )
 
         self._power_gate_pin = machine.Pin(
-            power_gate_pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
+            power_gate_pin,
+            machine.Pin.OUT,
+            machine.Pin.PULL_DOWN,
         )
         self._power_gate_pin.off()
-
-        PowerCallbacksMixin.__init__(self)
         logger.info(f"Initialized inverter")
 
     def on_bms_state(self, bms_state):
@@ -250,23 +251,14 @@ class InverterController(PowerCallbacksMixin):
             self._turn_off_confirmations = 0
 
     def on(self):
-        if self.power_on_callbacks:
-            for cb in self.power_on_callbacks:
-                cb()
-
+        self._uart.init(rx=self._rx_pin, tx=self._tx_pin, baud_rate=self._baud_rate)
         self._power_gate_pin.on()
-        self._state.active = True
-        self._state.notify()
+        self._state.on()
         logger.info("Inverter is on")
 
     def off(self):
-        if self.power_off_callbacks:
-            for cb in self.power_off_callbacks:
-                cb()
-
         self._power_gate_pin.off()
-        self._state.active = False
-        self._state.notify()
+        self._state.off()
         logger.info("Inverter is off")
 
     def on_power_trigger(self):
@@ -277,77 +269,28 @@ class InverterController(PowerCallbacksMixin):
 
     async def run(self):
         logger.info("Running inverter controller...")
-        asyncio.create_task(self.read_status())
         while True:
-
             if self._state.active:
                 try:
-                    logger.debug("Requesting inverter status")
-                    self._uart.write(self.STATUS_REQUEST)
+                    self.read_status()
                 except Exception as e:
                     logger.error("Failed request to inverter")
                     logger.critical(e)
+                self._state.snapshot()
 
-            self._state.snapshot()
             await self._state.sleep()
 
-    def _mock_uart_read(self):
-        return b"\xae\x01\x12\x83\x022\x00\x00\x01\x08\x00\x17\x00\x00\x037\xee"
+    def read_status(self):
+        data = self._uart.query(self.STATUS_REQUEST, delay=50)
+        if data:
+            self._state.parse_buffer(data)
 
-    def _mock_uart_any(self):
-        return True
-
-    async def read_status(self):
-
-        if not self._uart:
-            return
-
-        buffer = b""
-        logger.debug("Running inverter status reader")
-
-        while True:
-
-            if not self._state.active:
-                await asyncio.sleep(5)
-                continue
-
-            if self._uart.any():
-                # if self._mock_uart_any():
-                data = self._uart.read()
-                # data = self._mock_uart_read()
-                if data:
-                    logger.debug(f"Inverter received data: {data}")
-                    buffer += data
-                    if 0xAE in buffer and 0xEE in buffer:
-                        frame_start = buffer.find(b"\xAE")
-                        frame_end = buffer.find(b"\xEE") + 1
-                        self.process_frame(buffer[frame_start:frame_end])
-                        buffer = buffer[frame_end:]
-
-                    # prevent OOM in case some garbage comes into the buffer
-                    if len(buffer) > 1024:
-                        logger.error("Inverter buffer has no frames")
-                        buffer = b""
-
-            # unblock other coroutines
-            # await asyncio.sleep_ms(100)
-            await asyncio.sleep_ms(1000)
-
-    def process_frame(self, frame):
-        try:
-            self._state.parse(frame)
-        except Exception as e:
-            logger.critical(e)
-            return
-
-        if self._state.is_valid():
-            logger.debug(
-                f"AC: {self._state.ac}, Temperature: {self._state.temperature} DC: {self._state.dc} ERR: {self._state.external_errors}"
-            )
-            self._state.reset_error(self._state.ERROR_BAD_RESPONSE)
-        else:
-            self._state.set_error(self._state.ERROR_BAD_RESPONSE)
-            logger.warning("Inverter state is not valid")
+            if self._state.is_valid():
+                logger.debug(
+                    f"AC: {self._state.ac}, Temperature: {self._state.temperature} DC: {self._state.dc} ERR: {self._state.external_errors}"
+                )
+            else:
+                logger.warning("Inverter state is not valid")
 
     @staticmethod
     def as_hex(data):

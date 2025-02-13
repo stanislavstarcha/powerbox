@@ -1,19 +1,28 @@
 import { numberToUUID } from "@capacitor-community/bluetooth-le";
 
-const coreServiceUUID = numberToUUID(0x180f);
-const bmsUUID = "549fa451-cf65-4ea1-a462-9527d8d06440";
-const psuUUID = "bd9e30e5-3e45-4660-8a1f-2a4f12bfaa5e";
-const espUUID = "a61dc670-fb5c-4f8c-afa8-7bcd088dc146";
-const inverterUUID = "226396fe-22a8-48ce-aa95-188899618fd9";
-const atsUUID = "c56dc4f9-9b70-4c42-8044-e62f7e4a8894";
+const BLE_CORE_SERVICE_UUID = numberToUUID(0x180f);
+const BLE_BMS_STATE_UUID = "549fa451-cf65-4ea1-a462-9527d8d06440";
+const BLE_PSU_STATE_UUID = "bd9e30e5-3e45-4660-8a1f-2a4f12bfaa5e";
+const BLE_MCU_STATE_UUID = "a61dc670-fb5c-4f8c-afa8-7bcd088dc146";
+const BLE_INVERTER_STATE_UUID = "226396fe-22a8-48ce-aa95-188899618fd9";
+const BLE_ATS_STATE_UUID = "c56dc4f9-9b70-4c42-8044-e62f7e4a8894";
 
-const historyUUID = "b1e71c63-5154-4bc5-bad6-4dc170b926d4";
-const setCommandUUID = "eb47891b-c111-463b-8f39-4a5115c352bd";
+const BLE_HISTORY_STATE_UUID = "b1e71c63-5154-4bc5-bad6-4dc170b926d4";
+const BLE_RUN_COMMAND_UUID = "eb47891b-c111-463b-8f39-4a5115c352bd";
 
-const setChargingUUID = "3719b9de-d6ff-4170-bdb0-b9e7ade6a56e";
-const setDischargingUUID = "ed071461-02ae-4c54-a4d9-944cfd46b19d";
-const setCurrentUUID = "945fb6ac-a80a-4c9d-af17-36e83521e2ce";
-const setATSUUID = "8c6f915b-7459-4627-95ee-feb1ea52b202";
+const COMMAND_PULL_HISTORY = 0x01;
+const COMMAND_PSU_ENABLE = 0x10;
+const COMMAND_PSU_DISABLE = 0x11;
+const COMMAND_PSU_CURRENT = 0x12;
+
+const COMMAND_INVERTER_ENABLE = 0x20;
+const COMMAND_INVERTER_DISABLE = 0x21;
+
+const COMMAND_ATS_ENABLE = 0x30;
+const COMMAND_ATS_DISABLE = 0x31;
+
+const COMMAND_CONF_SET_KEY = 0x40;
+const COMMAND_CONF_PROFILE = 0x41;
 
 const HISTORY_LENGTH = 180;
 
@@ -33,18 +42,14 @@ const DATA_TYPE_BYTE = 0;
 const DATA_TYPE_WORD = 1;
 
 export {
-    coreServiceUUID,
-    bmsUUID,
-    psuUUID,
-    espUUID,
-    inverterUUID,
-    atsUUID,
-    historyUUID,
-    setCommandUUID,
-    setChargingUUID,
-    setDischargingUUID,
-    setCurrentUUID,
-    setATSUUID,
+    BLE_CORE_SERVICE_UUID,
+    BLE_BMS_STATE_UUID,
+    BLE_PSU_STATE_UUID,
+    BLE_MCU_STATE_UUID,
+    BLE_INVERTER_STATE_UUID,
+    BLE_ATS_STATE_UUID,
+    BLE_HISTORY_STATE_UUID,
+    BLE_RUN_COMMAND_UUID,
     HISTORY_LENGTH,
     HISTORY_BMS_SOC,
     HISTORY_BMS_CURRENT,
@@ -58,4 +63,14 @@ export {
     HISTORY_INVERTER_TEMPERATURE,
     DATA_TYPE_BYTE,
     DATA_TYPE_WORD,
+    COMMAND_PULL_HISTORY,
+    COMMAND_PSU_ENABLE,
+    COMMAND_PSU_DISABLE,
+    COMMAND_PSU_CURRENT,
+    COMMAND_INVERTER_ENABLE,
+    COMMAND_INVERTER_DISABLE,
+    COMMAND_ATS_ENABLE,
+    COMMAND_ATS_DISABLE,
+    COMMAND_CONF_SET_KEY,
+    COMMAND_CONF_PROFILE,
 };

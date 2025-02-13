@@ -1,10 +1,7 @@
 import machine
 import time
-import socket
 import uio
 import sys
-
-import conf
 
 
 class LogLevels:
@@ -75,69 +72,6 @@ class UARTLoggerTransport(BaseLoggerTransport):
         self._uart.write(message + "\n")
 
 
-class WIFILoggerTransport(BaseLoggerTransport):
-    HOST = None
-    PORT = None
-
-    _wifi = None
-    _sock = None
-    _active = None
-
-    def __init__(self, wifi=None, host=HOST, port=PORT):
-        self._wifi = wifi
-        self._host = host
-        self._port = port
-        self.connect()
-
-    def connect(self):
-
-        if not self._wifi._station:
-            return
-
-        if not self._wifi._station.isconnected():
-            return
-
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sockaddr = socket.getaddrinfo(self._host, self._port)[0][-1]
-        self._sock.connect(sockaddr)
-        self._active = True
-
-    def send(self, message):
-
-        if not self._wifi.connected():
-            return super().send(message)
-
-        if not self._active:
-            return super().send(message)
-
-        try:
-            self._sock.sendall(message.encode())
-        except Exception as e:
-            self._active = False
-            logger.critical(e)
-            self.connect()
-
-        debug = True
-        if debug:
-            super().send(message)
-
-
-class SDCardTransport(BaseLoggerTransport):
-
-    _fd = None
-
-    def __init__(self, sd):
-        self._sd = sd
-        self.open()
-
-    def open(self):
-        filename = "/logs"
-        self._fd = open(filename, "rb")
-
-    def send(self, message):
-        pass
-
-
 class Logger:
 
     _transport = None
@@ -148,20 +82,6 @@ class Logger:
 
     def setup(self, transport=None, level=None, wifi=None):
         self._level = level
-        if transport == "wifi":
-            self._transport = WIFILoggerTransport(
-                wifi=wifi,
-                host=CONF.WIFILogger.HOST,
-                port=CONF.WIFILogger.PORT,
-            )
-
-        if transport == "uart":
-            self._transport = UARTLoggerTransport(
-                uart_if=CONF.UARTLogger.UART_IF,
-                baud_rate=CONF.UARTLogger.BAUD_RATE,
-                uart_rx_pin=CONF.UARTLogger.UART_RX_PIN,
-                uart_tx_pin=CONF.UARTLogger.UART_TX_PIN,
-            )
 
     def debug(self, *messages):
         self._log(LogLevels.DEBUG, *messages)

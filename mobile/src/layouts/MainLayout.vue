@@ -40,7 +40,7 @@
                     >
                 </q-route-tab>
                 <q-route-tab name="esp" to="/esp" icon="flaticon-cpu">
-                    <q-badge v-if="espStore.hasErrors()" color="red" floating
+                    <q-badge v-if="mcuStore.hasErrors()" color="red" floating
                         >!</q-badge
                     >
                 </q-route-tab>
@@ -59,11 +59,11 @@ import { useAppStore } from "stores/app";
 import { useBMSStore } from "stores/bms";
 import { usePSUStore } from "stores/psu";
 import { useInverterStore } from "stores/inverter";
-import { useESPStore } from "stores/esp";
+import { useMCUStore } from "stores/esp";
 
 const appStore = useAppStore();
 const bmsStore = useBMSStore();
-const espStore = useESPStore();
+const mcuStore = useMCUStore();
 const psuStore = usePSUStore();
 const inverterStore = useInverterStore();
 
