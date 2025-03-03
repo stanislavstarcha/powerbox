@@ -163,9 +163,6 @@ class BMSState(BaseState):
         self.balancing_pressure_difference = None
 
     def parse(self, response):
-
-        logger.debug("BMS response", response)
-
         _, size = struct.unpack_from(">HH", response)
 
         offset = response.find(b"\x79")
@@ -420,13 +417,16 @@ class BMSController:
         data = self._uart.query(self.STATUS_REQUEST, delay=delay)
         if data:
             try:
+                logger.debug("BMS response", data)
                 self.state.parse(data)
                 self.state.reset_error(self._state.ERROR_NO_RESPONSE)
-                logger.debug(
+                logger.info(
                     "BMS Voltage",
                     self.state.voltage,
                     "Temperature: ",
                     self.state.mos_temperature,
+                    "Current: ",
+                    self.state.current,
                 )
                 return True
             except Exception as e:

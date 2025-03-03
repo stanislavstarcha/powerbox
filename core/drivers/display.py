@@ -282,21 +282,31 @@ class ActiveScreen(BaseScreen):
         self.version.set_text(version)
 
     def set_capacity(self, value):
-        self.capacity.set_text(f"{value}%")
-        self.capacity_bar.set_value(value, lv.ANIM.OFF)
+        if value is not None:
+            self.capacity.set_text(f"{value}%")
+            self.capacity_bar.set_value(value, lv.ANIM.OFF)
 
     def set_psu_state(self, t1, t2, ac_voltage, tachometer):
-        self.psu_temperature.set_text(f"{t1}°С / {t2}°С")
-        self.psu_ac_voltage.set_text(f"{ac_voltage}В")
-        self.psu_tachometer.set_text(f"{tachometer} об/хв")
+        if t1 and t2:
+            self.psu_temperature.set_text(f"{t1}°С / {t2}°С")
+        if ac_voltage:
+            self.psu_ac_voltage.set_text(f"{ac_voltage}В")
+        if tachometer:
+            self.psu_tachometer.set_text(f"{tachometer} об/хв")
 
     def set_inverter_state(self, temperature, ac_voltage, tachometer):
-        self.inverter_temperature.set_text(f"{temperature}°С")
-        self.inverter_ac_voltage.set_text(f"{ac_voltage}В")
-        self.inverter_tachometer.set_text(f"{tachometer} об/хв")
+        if temperature:
+            self.inverter_temperature.set_text(f"{temperature}°С")
+        if ac_voltage:
+            self.inverter_ac_voltage.set_text(f"{ac_voltage}В")
+        if tachometer:
+            self.inverter_tachometer.set_text(f"{tachometer} об/хв")
 
     def set_power_consumption(self, direction, power, seconds):
-        self.power.set_text(f"{power} Вт")
+
+        if power:
+            self.power.set_text(f"{power} Вт")
+
         if direction:
             self.power_timer.set_text(f"До повного розряду {seconds}")
         else:
@@ -373,16 +383,16 @@ class ActiveScreen(BaseScreen):
             codes = []
 
             if self.errors[DEVICE_BMS]:
-                codes.append(f"В{self.errors[DEVICE_BMS]}")
+                codes.append(f"1{self.errors[DEVICE_BMS]}")
 
             if self.errors[DEVICE_PSU]:
-                codes.append(f"Р{self.errors[DEVICE_PSU]}")
+                codes.append(f"2{self.errors[DEVICE_PSU]}")
 
             if self.errors[DEVICE_INVERTER]:
-                codes.append(f"І{self.errors[DEVICE_INVERTER]}")
+                codes.append(f"3{self.errors[DEVICE_INVERTER]}")
 
             if self.errors[DEVICE_MCU]:
-                codes.append(f"М{self.errors[DEVICE_MCU]}")
+                codes.append(f"4{self.errors[DEVICE_MCU]}")
 
             self.error.set_text(" ".join(codes))
             self.show_error_state()
@@ -799,22 +809,17 @@ class DisplayController:
         self.sleep_screen = SleepScreen()
         self.active_screen.create_widgets()
         self.sleep_screen.create_widgets()
-        self.on_sleep()
+        self.on_wake()
 
     async def run(self):
         logger.info("Running Display...")
-
-        self.active_screen.show_bms_state()
-        self.active_screen.show_inverter_state()
-        self.active_screen.show_psu_state()
-
         counter = 0
         start_time = time.time_ns()
         while True:
             counter += 1
             time_passed = time.time_ns() - start_time
-            self.active_screen._generata_random_state()
-            self.sleep_screen.generate_random_state()
+            # self.active_screen._generate_random_state()
+            # self.sleep_screen.generate_random_state()
 
             # Update LVGL internal time
             tick = int(time_passed / 1000000)
@@ -866,14 +871,20 @@ class DisplayController:
             self.active_screen.set_error(DEVICE_PSU, state.internal_errors)
             return
 
+        if state.external_errors:
+            self.active_screen.set_error(DEVICE_PSU, state.external_errors)
+            return
+
         self.active_screen.reset_error(DEVICE_PSU)
-        average_temperature = int((state.t1 + state.t2) / 2)
-        self.active_screen.set_psu_state(
-            t1=average_temperature,
-            t2=state.t2,
-            ac_voltage=state.ac,
-            tachometer=state.tachometer,
-        )
+
+        if state.t1 and state.t2:
+            average_temperature = int((state.t1 + state.t2) / 2)
+            self.active_screen.set_psu_state(
+                t1=average_temperature,
+                t2=state.t2,
+                ac_voltage=state.ac,
+                tachometer=state.tachometer,
+            )
 
     def on_inverter_state(self, state):
         if state.internal_errors:

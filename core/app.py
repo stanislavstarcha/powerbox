@@ -1,4 +1,3 @@
-import machine
 import micropython
 
 import asyncio
@@ -32,7 +31,7 @@ def disable_keyboard_interrupt():
 
 
 async def main():
-    # disable_keyboard_interrupt()
+    disable_keyboard_interrupt()
     logger.info("Bootstrapping app ver: ", conf.BLE_FIRMWARE)
 
     buzzer = BuzzerController(signal_pin=conf.BUZZER_SIGNAL_PIN)
@@ -112,16 +111,28 @@ async def main():
             frequency=conf.DISPLAY_FREQ,
         )
 
-        # mcu.state.add_callback(EVENT_STATE_CHANGE, display.on_mcu_state)
-        # bms.state.add_callback(EVENT_STATE_CHANGE, display.on_bms_state)
-        # ats.state.add_callback(EVENT_STATE_CHANGE, display.on_ats_state)
-        # psu.state.add_callback(EVENT_STATE_CHANGE, display.on_psu_state)
-        # inverter.state.add_callback(EVENT_STATE_CHANGE, display.on_inverter_state)
+        mcu.state.add_callback(EVENT_STATE_CHANGE, display.on_mcu_state)
+        bms.state.add_callback(EVENT_STATE_CHANGE, display.on_bms_state)
+        ats.state.add_callback(EVENT_STATE_CHANGE, display.on_ats_state)
+        psu.state.add_callback(EVENT_STATE_CHANGE, display.on_psu_state)
+        inverter.state.add_callback(EVENT_STATE_CHANGE, display.on_inverter_state)
 
-        # psu.state.add_callback(EVENT_STATE_ON, display.show_psu_state)
-        # psu.state.add_callback(EVENT_STATE_OFF, display.hide_psu_state)
-        # inverter.state.add_callback(EVENT_STATE_ON, display.show_inverter_state)
-        # inverter.state.add_callback(EVENT_STATE_OFF, display.hide_inverter_state)
+        psu.state.add_callback(
+            EVENT_STATE_ON,
+            display.active_screen.show_psu_state,
+        )
+        psu.state.add_callback(
+            EVENT_STATE_OFF,
+            display.active_screen.hide_psu_state,
+        )
+        inverter.state.add_callback(
+            EVENT_STATE_ON,
+            display.active_screen.show_inverter_state,
+        )
+        inverter.state.add_callback(
+            EVENT_STATE_OFF,
+            display.active_screen.hide_inverter_state,
+        )
 
     bms.state.add_callback(EVENT_STATE_CHANGE, inverter.on_bms_state)
     bms.state.add_callback(EVENT_STATE_CHANGE, psu.on_bms_state)
@@ -133,6 +144,10 @@ async def main():
     inverter.state.add_callback(EVENT_STATE_ON, psu.off)
     inverter.state.add_callback(EVENT_STATE_ON, bms.enable_discharge)
     inverter.state.add_callback(EVENT_STATE_OFF, bms.disable_discharge)
+
+    display.active_screen.hide_psu_state()
+    display.active_screen.hide_inverter_state()
+    display.active_screen.show_bms_state()
 
     coroutines = []
 

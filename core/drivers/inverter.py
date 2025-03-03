@@ -142,6 +142,13 @@ class InverterState(BaseState):
         self._valid = actual_checksum == checksum
 
     def parse_buffer(self, buffer):
+        if not buffer:
+            self.set_error(self.ERROR_NO_RESPONSE)
+            self.reset_error(self.ERROR_BAD_RESPONSE)
+            return False
+
+        self.reset_error(self.ERROR_NO_RESPONSE)
+
         if 0xAE in buffer and 0xEE in buffer:
             frame_start = buffer.find(b"\xae")
             frame_end = buffer.find(b"\xee") + 1
@@ -149,6 +156,10 @@ class InverterState(BaseState):
 
         if self.is_valid():
             self.reset_error(self.ERROR_BAD_RESPONSE)
+            if self.external_errors:
+                self.set_error(self.ERROR_EXTERNAL)
+            else:
+                self.reset_error(self.ERROR_EXTERNAL)
         else:
             self.set_error(self.ERROR_BAD_RESPONSE)
 
@@ -259,6 +270,7 @@ class InverterController:
     def off(self):
         self._power_gate_pin.off()
         self._state.off()
+        self.state.clear_internal_errors()
         logger.info("Inverter is off")
 
     def on_power_trigger(self):
@@ -278,19 +290,20 @@ class InverterController:
                     logger.critical(e)
                 self._state.snapshot()
 
+                if self._state.is_valid():
+                    logger.debug(
+                        f"Inverter AC: {self._state.ac}, Temperature: {self._state.temperature} DC: {self._state.dc} ERR: {self._state.internal_errors} ({self._state.external_errors})"
+                    )
+                else:
+                    logger.error(
+                        f"Inverter ERR: {self._state.internal_errors} ({self._state.external_errors})"
+                    )
+
             await self._state.sleep()
 
     def read_status(self):
         data = self._uart.query(self.STATUS_REQUEST, delay=50)
-        if data:
-            self._state.parse_buffer(data)
-
-            if self._state.is_valid():
-                logger.debug(
-                    f"AC: {self._state.ac}, Temperature: {self._state.temperature} DC: {self._state.dc} ERR: {self._state.external_errors}"
-                )
-            else:
-                logger.warning("Inverter state is not valid")
+        self._state.parse_buffer(data)
 
     @staticmethod
     def as_hex(data):

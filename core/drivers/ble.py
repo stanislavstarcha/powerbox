@@ -47,6 +47,7 @@ COMMAND_ATS_DISABLE = const(0x31)
 
 COMMAND_CONF_SET_KEY = const(0x40)
 COMMAND_CONF_PROFILE = const(0x41)
+COMMAND_UPDATE_FIRMWARE = const(0x50)
 
 
 class BLEState(BaseState):
@@ -237,19 +238,19 @@ class BLEServerController:
 
         if handle == self.HANDLE[BLE_INVERTER_STATE_UUID]:
             state = self._inverter.state.get_ble_state()
-            logger.info("BLE reading inverter state", state, len(state))
+            logger.debug("BLE reading inverter state", state, len(state))
             self._ble_write(handle, state)
             return
 
         if handle == self.HANDLE[BLE_PSU_STATE_UUID]:
             state = self._psu.state.get_ble_state()
-            logger.info("BLE reading PSU state", state, len(state))
+            logger.debug("BLE reading PSU state", state, len(state))
             self._ble_write(handle, state)
             return
 
         if handle == self.HANDLE[BLE_MCU_STATE_UUID]:
             state = self._mcu.state.get_ble_state()
-            logger.info("BLE reading ESP state", state, len(state))
+            logger.debug("BLE reading ESP state", state, len(state))
             self._ble_write(handle, state)
             return
 
@@ -306,6 +307,9 @@ class BLEServerController:
 
             if subcommand == COMMAND_CONF_PROFILE:
                 logger.debug("Set profile via BLE command")
+
+            if subcommand == COMMAND_UPDATE_FIRMWARE:
+                logger.debug("Update firmware via BLE command")
 
     def notify(self, uuid, state):
         if not self._ble or self._connection is None:

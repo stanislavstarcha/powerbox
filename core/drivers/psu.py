@@ -87,8 +87,7 @@ class PSUState(BaseState):
         offset = 0
         header = struct.unpack_from(">BB", frame)
         if header != (0x49, 0x34):
-            self.error = 101
-            print("bad frame header")
+            self.set_error(self.ERROR_BAD_RESPONSE)
             return
         offset += 2
 
@@ -103,8 +102,7 @@ class PSUState(BaseState):
 
         power_crc = self.crc(frame[2:6])
         if power_crc != actual_crc:
-            self.error = 2
-            print("bad header crc", power_crc, actual_crc)
+            self.set_error(self.ERROR_BAD_RESPONSE)
             return
 
         data_header = struct.unpack_from(">B", frame, offset)
@@ -135,11 +133,13 @@ class PSUState(BaseState):
         offset += 1
 
         data_crc = self.crc(frame[9:21]) - 3
-        if data_crc != actual_data_crc:
-            self.error = 3
-            print("bad data crc", data_crc, actual_data_crc)
-            return False
+        crc_diff = abs(data_crc - actual_data_crc)
 
+        if data_crc != actual_data_crc and crc_diff != 1:
+            self.set_error(self.ERROR_BAD_RESPONSE)
+            return
+
+        self.reset_error(self.ERROR_BAD_RESPONSE)
         self.power1 = power1
         self.power2 = power2
         self.ac = ac
@@ -147,7 +147,10 @@ class PSUState(BaseState):
         self.t1 = t1
         self.t2 = t2
         self.t3 = t3
-        print("PSU", self.ac, self.t1, self.t2, self.t3)
+        logger.debug(f"PSU AC: {self.ac} t1: {self.t1} t2: {self.t2} t3: {self.t3}")
+        logger.info(
+            f"PSU AC: {self.ac} t1: {self.t1} t2: {self.t2} t3: {self.t3} p1: {self.power1} p2: {self.power2}"
+        )
 
     def parse_buffer(self, buffer):
 
@@ -163,8 +166,9 @@ class PSUState(BaseState):
             return
 
         frame = buffer[frame_start : frame_start + self.FRAME_SIZE]
+        logger.debug("PSU frame", frame)
+
         try:
-            print("Extracted frame")
             error = self.parse(frame)
             if not error:
                 return True
@@ -290,8 +294,9 @@ class PowerSupplyController:
 
         logger.info("Initialized power supply controller")
 
-    def on_tachometer(self, frequency):
-        self._state.tachometer = frequency
+    def on_tachometer(self, rpm):
+        self._state.tachometer = rpm
+        logger.debug(f"PSU FAN RPM: {rpm}")
 
     def on_bms_state(self, bms_state):
         triggered = False

@@ -37,12 +37,12 @@ class Tachometer:
         )
 
     def finish(self, t):
-        print("total pulses", self._total_pulses)
         factor = 1000000 / time.ticks_diff(time.ticks_us(), self._started_us)
         self._pin.irq(handler=None)
         self._timer.deinit()
         frequency = int(factor * self._total_pulses)
-        self._done_callback(frequency)
+        rpm = round(60 / (1 / (frequency * 2)))
+        self._done_callback(rpm)
 
     def callback(self, pin):
         if self._pin.value():

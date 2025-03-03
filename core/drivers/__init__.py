@@ -26,9 +26,7 @@ class UART:
         self._uart = machine.UART(self._interface)
 
     def init(self, rx=None, tx=None, baud_rate=9600):
-
         tx = machine.Pin(tx, machine.Pin.OUT, machine.Pin.PULL_UP) if tx else None
-
         rx = machine.Pin(rx, machine.Pin.IN, machine.Pin.PULL_UP) if rx else None
 
         if rx and tx:
@@ -86,6 +84,9 @@ class BaseState:
 
     # invalid response from external device
     ERROR_BAD_RESPONSE = 3
+
+    # error from the external device
+    ERROR_EXTERNAL = 4
 
     _ble = None
 
@@ -151,14 +152,26 @@ class BaseState:
 
     def set_error(self, b):
         """turn on a given bit"""
-        self.internal_errors = self.internal_errors | (1 << b)
+        new_state = self.internal_errors | (1 << b)
+        if new_state != self.internal_errors:
+            self.internal_errors = new_state
+            self.notify()
+            logger.error(f"{self.NAME} SET ERROR {b}")
 
     def reset_error(self, b):
         """turn on a given bit"""
-        self.internal_errors = self.internal_errors & ~(1 << b)
+        new_state = self.internal_errors & ~(1 << b)
+        if new_state != self.internal_errors:
+            self.internal_errors = new_state
+            self.notify()
+            logger.info(f"{self.NAME} RESET ERROR {b}")
 
-    def clear_errors(self):
+    def clear_internal_errors(self):
+        if self.internal_errors == 0:
+            return
+
         self.internal_errors = 0
+        self.notify()
 
     def check_health(self):
         """check whether the loop runs normally"""

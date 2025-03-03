@@ -13,15 +13,7 @@ class ATSState(BaseState):
     mode = ATS_MODE_NONE
 
     def get_ble_state(self):
-        logger.info(
-            "Getting ble state",
-            struct.pack(
-                ">BB",
-                self._pack_bool(self.active),
-                self._pack(self.internal_errors),
-            ),
-        )
-
+        logger.debug("Getting ble state")
         return struct.pack(
             ">BB",
             self._pack_bool(self.active),
