@@ -1,3 +1,4 @@
+import asyncio
 import machine
 import struct
 
@@ -84,6 +85,7 @@ class InverterState(BaseState):
         self.dc = None
         self.temperature = None
         self.level = None
+        self.external_errors = 0
 
     def parse(self, frame):
 
@@ -115,9 +117,15 @@ class InverterState(BaseState):
         self.power = int(f"{power1:x}") * 100 + int(f"{power2:x}")
         self.dc = int(f"{dc1:x}") * 10 + int(f"{dc2:x}") / 10
         self.temperature = int(f"{temperature1:x}") * 100 + int(f"{temperature2:x}")
-        # inverter error status
-        # 10 - under voltage protection
-        # 20 - over voltage protection
+        """
+        # inverter device errors
+        0x02 Overload timing
+        0x04 Overload protection
+        0x08 Overtemperature protection
+        0x10 Undervoltage protection
+        0x20 Overvoltage protection
+        0x40 Fan rotation flag
+        """
         self.external_errors = int(f"{device_error:x}")
         self.level = int(level)
 
@@ -201,6 +209,10 @@ class InverterController:
     _turn_off_voltage = 2.7
     _turn_off_confirmations = 0
 
+    # whether inverter is in bootstrapping mode
+    _bootstrapping = False
+    # time in seconds before reading inverter status
+    _bootstrapping_delay = 3
     _uart = None
 
     # state of the power
@@ -213,6 +225,7 @@ class InverterController:
     def __init__(
         self,
         power_button_pin=POWER_BUTTON_PIN,
+        power_button_timer=-1,
         power_gate_pin=POWER_GATE_PIN,
         uart=None,
         baud_rate=BAUD_RATE,
@@ -233,6 +246,7 @@ class InverterController:
             listen_pin=power_button_pin,
             on_change=self.on_power_trigger,
             buzzer=buzzer,
+            timer_id=power_button_timer,
         )
 
         self._power_gate_pin = machine.Pin(
@@ -262,15 +276,18 @@ class InverterController:
             self._turn_off_confirmations = 0
 
     def on(self):
+        self._bootstrapping = True
         self._uart.init(rx=self._rx_pin, tx=self._tx_pin, baud_rate=self._baud_rate)
         self._power_gate_pin.on()
         self._state.on()
         logger.info("Inverter is on")
 
     def off(self):
+        self._bootstrapping = False
         self._power_gate_pin.off()
         self._state.off()
         self.state.clear_internal_errors()
+        self.state.clear()
         logger.info("Inverter is off")
 
     def on_power_trigger(self):
@@ -283,6 +300,12 @@ class InverterController:
         logger.info("Running inverter controller...")
         while True:
             if self._state.active:
+
+                # one-off sleep before reading inverter status
+                if self._bootstrapping:
+                    await asyncio.sleep(self._bootstrapping_delay)
+                    self._bootstrapping = False
+
                 try:
                     self.read_status()
                 except Exception as e:
@@ -292,7 +315,7 @@ class InverterController:
 
                 if self._state.is_valid():
                     logger.debug(
-                        f"Inverter AC: {self._state.ac}, Temperature: {self._state.temperature} DC: {self._state.dc} ERR: {self._state.internal_errors} ({self._state.external_errors})"
+                        f"Inverter AC: {self._state.ac}, Temperature: {self._state.temperature} DC: {self._state.dc} POWER: {self._state.power} ERR: {self._state.internal_errors} ({self._state.external_errors})"
                     )
                 else:
                     logger.error(
@@ -303,12 +326,8 @@ class InverterController:
 
     def read_status(self):
         data = self._uart.query(self.STATUS_REQUEST, delay=50)
+        logger.debug("Inverter response", self.state.as_hex(data))
         self._state.parse_buffer(data)
-
-    @staticmethod
-    def as_hex(data):
-        # Convert each byte of the binary data to a 2-digit hex value and print it
-        return " ".join(f"{byte:02X}" for byte in data)
 
     @property
     def state(self):

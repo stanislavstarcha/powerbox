@@ -23,7 +23,6 @@ from logging import logger
 class PSUState(BaseState):
 
     NAME = "PSU"
-    STATE_FREQUENCY = 5
 
     BLE_STATE_UUID = BLE_PSU_STATE_UUID
     ERROR_PIN = 6
@@ -63,6 +62,14 @@ class PSUState(BaseState):
 
     def clear(self):
         self.active = False
+        self.power1 = None
+        self.power2 = None
+        self.ac = None
+        self.t1 = None
+        self.t2 = None
+        self.t3 = None
+        self.state = None
+        self.external_errors = None
 
     def get_ble_state(self):
         return struct.pack(
@@ -81,13 +88,14 @@ class PSUState(BaseState):
         self.history[HISTORY_PSU_TEMPERATURE].push(self._pack(0))
 
     def crc(self, data):
-        return sum(b for b in data) % 0xFF
+        return sum(b for b in data) % 0x100
 
     def parse(self, frame):
         offset = 0
         header = struct.unpack_from(">BB", frame)
         if header != (0x49, 0x34):
             self.set_error(self.ERROR_BAD_RESPONSE)
+            logger.error("PSU bad header")
             return
         offset += 2
 
@@ -97,12 +105,17 @@ class PSUState(BaseState):
         power2 = struct.unpack_from(">BB", frame, offset)
         offset += 2
 
-        actual_crc = struct.unpack_from(">B", frame, offset)[0]
+        actual_power_crc = struct.unpack_from(">B", frame, offset)[0]
         offset += 1
 
         power_crc = self.crc(frame[2:6])
-        if power_crc != actual_crc:
+        power_crc_diff = abs(power_crc - actual_power_crc)
+
+        if power_crc != actual_power_crc:
             self.set_error(self.ERROR_BAD_RESPONSE)
+            logger.error(
+                "PSU bad power CRC", power_crc, actual_power_crc, power_crc_diff
+            )
             return
 
         data_header = struct.unpack_from(">B", frame, offset)
@@ -132,11 +145,12 @@ class PSUState(BaseState):
         actual_data_crc = struct.unpack_from(">B", frame, offset)[0]
         offset += 1
 
-        data_crc = self.crc(frame[9:21]) - 3
+        data_crc = self.crc(frame[9:21])
         crc_diff = abs(data_crc - actual_data_crc)
 
-        if data_crc != actual_data_crc and crc_diff != 1:
+        if data_crc != actual_data_crc:
             self.set_error(self.ERROR_BAD_RESPONSE)
+            logger.error("PSU bad CRC", data_crc, actual_data_crc, crc_diff)
             return
 
         self.reset_error(self.ERROR_BAD_RESPONSE)
@@ -166,7 +180,7 @@ class PSUState(BaseState):
             return
 
         frame = buffer[frame_start : frame_start + self.FRAME_SIZE]
-        logger.debug("PSU frame", frame)
+        logger.debug("PSU frame", self.as_hex(frame))
 
         try:
             error = self.parse(frame)
@@ -227,15 +241,17 @@ class PowerSupplyController:
     def __init__(
         self,
         power_button_pin=POWER_BUTTON_PIN,
+        power_button_timer=-1,
         power_gate_pin=POWER_GATE_PIN,
         current_a_pin=CURRENT_A_PIN,
         current_b_pin=CURRENT_B_PIN,
         fan_tachometer_pin=None,
+        fan_tachometer_timer=-1,
         uart=None,
         uart_rx_pin=None,
         buzzer=None,
         turn_off_voltage=TURN_OFF_VOLTAGE,
-        current_limit=CURRENT_CHANNEL,
+        current_channel=CURRENT_CHANNEL,
     ):
         self._state = PSUState()
         self._uart = uart
@@ -245,8 +261,9 @@ class PowerSupplyController:
         if fan_tachometer_pin:
             self._tachometer = Tachometer(
                 pin=machine.Pin(fan_tachometer_pin, machine.Pin.IN),
-                period_ms=300,
+                period_ms=200,
                 done_callback=self.on_tachometer,
+                timer_id=fan_tachometer_timer,
             )
 
         try:
@@ -254,6 +271,7 @@ class PowerSupplyController:
                 listen_pin=power_button_pin,
                 on_change=self.on_power_trigger,
                 buzzer=buzzer,
+                timer_id=power_button_timer,
             )
         except Exception as e:
             self._state.set_error(self._state.ERROR_PIN)
@@ -275,22 +293,10 @@ class PowerSupplyController:
             self._current_b_pin = machine.Pin(
                 current_b_pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
             )
-            self.set_current(current_limit)
+            self.set_current(current_channel)
         except Exception as e:
             self._state.set_error(self._state.ERROR_PIN)
             logger.critical(e)
-
-        try:
-            self._current_a_pin = machine.Pin(
-                current_a_pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
-            )
-            self._current_b_pin = machine.Pin(
-                current_b_pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
-            )
-            self.set_current(current_limit)
-        except Exception as e:
-            self._state.set_error(self._state.ERROR_PIN)
-            logger.error("PSU current pin failed")
 
         logger.info("Initialized power supply controller")
 
@@ -317,8 +323,13 @@ class PowerSupplyController:
 
     def set_current(self, channel):
         self._state.current = channel
-        self._current_a_pin.value(channel & 0x01)  # LSB (A)
-        self._current_b_pin.value((channel >> 1) & 0x01)  # MSB (B)
+        channel_a = channel & 0x01
+        channel_b = (channel >> 1) & 0x01
+        self._current_a_pin.value(channel_a)  # LSB (A)
+        self._current_b_pin.value(channel_b)  # MSB (B)
+        logger.debug(
+            f"Set PSU current channel: {channel} A: {channel_a} B: {channel_b} "
+        )
 
     def on(self):
         self._uart.init(rx=self._uart_rx_pin, baud_rate=4800)
@@ -329,6 +340,7 @@ class PowerSupplyController:
     def off(self):
         self._power_gate_pin.off()
         self._state.off()
+        self._state.clear()
         logger.info("Power supply is off")
 
     def on_power_trigger(self):

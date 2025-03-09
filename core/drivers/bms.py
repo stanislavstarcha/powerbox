@@ -365,6 +365,16 @@ class BMSState(BaseState):
             self._pack(self.internal_errors),
         )
 
+    def get_direction(self):
+        return self.current & (1 << 15)
+
+    def get_power(self):
+        if not self.current or not self.voltage:
+            return 0
+
+        current = (self.current & (0xFFFF >> 1)) / 100
+        return int(current * self.voltage / 100)
+
 
 class BMSController:
 
@@ -413,7 +423,7 @@ class BMSController:
             self._state.snapshot()
             await self._state.sleep()
 
-    def request_status(self, delay=50):
+    def request_status(self, delay=100):
         data = self._uart.query(self.STATUS_REQUEST, delay=delay)
         if data:
             try:
@@ -425,8 +435,8 @@ class BMSController:
                     self.state.voltage,
                     "Temperature: ",
                     self.state.mos_temperature,
-                    "Current: ",
-                    self.state.current,
+                    "Power: ",
+                    self.state.get_power(),
                 )
                 return True
             except Exception as e:

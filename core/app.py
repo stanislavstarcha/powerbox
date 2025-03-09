@@ -61,6 +61,7 @@ async def main():
 
     inverter = InverterController(
         power_button_pin=conf.INVERTER_POWER_BUTTON_PIN,
+        power_button_timer=conf.INVERTER_POWER_BUTTON_TIMER,
         power_gate_pin=conf.INVERTER_POWER_GATE_PIN,
         uart=uart,
         uart_rx_pin=conf.INVERTER_UART_RX_PIN,
@@ -71,14 +72,16 @@ async def main():
 
     psu = PowerSupplyController(
         power_button_pin=conf.PSU_POWER_BUTTON_PIN,
+        power_button_timer=conf.PSU_POWER_BUTTON_TIMER,
         power_gate_pin=conf.PSU_POWER_GATE_PIN,
         current_a_pin=conf.PSU_CURRENT_A_PIN,
         current_b_pin=conf.PSU_CURRENT_B_PIN,
         turn_off_voltage=conf.PSU_MAX_CELL_VOLTAGE,
         fan_tachometer_pin=conf.PSU_FAN_TACHOMETER_PIN,
+        fan_tachometer_timer=conf.PSU_FAN_TACHOMETER_TIMER,
         uart=uart,
         uart_rx_pin=conf.PSU_UART_RX_PIN,
-        current_limit=conf.PSU_CURRENT_CHANNEL,
+        current_channel=conf.PSU_CURRENT_CHANNEL,
         buzzer=buzzer,
     )
 
@@ -134,6 +137,10 @@ async def main():
             display.active_screen.hide_inverter_state,
         )
 
+        display.active_screen.hide_psu_state()
+        display.active_screen.hide_inverter_state()
+        display.active_screen.show_bms_state()
+
     bms.state.add_callback(EVENT_STATE_CHANGE, inverter.on_bms_state)
     bms.state.add_callback(EVENT_STATE_CHANGE, psu.on_bms_state)
 
@@ -144,10 +151,6 @@ async def main():
     inverter.state.add_callback(EVENT_STATE_ON, psu.off)
     inverter.state.add_callback(EVENT_STATE_ON, bms.enable_discharge)
     inverter.state.add_callback(EVENT_STATE_OFF, bms.disable_discharge)
-
-    display.active_screen.hide_psu_state()
-    display.active_screen.hide_inverter_state()
-    display.active_screen.show_bms_state()
 
     coroutines = []
 

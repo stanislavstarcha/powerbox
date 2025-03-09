@@ -15,16 +15,17 @@ class Tachometer:
 
     _total_pulses = None
 
-    def __init__(self, pin, period_ms, max_pulses=None, done_callback=None):
+    def __init__(self, pin, period_ms, done_callback=None, timer_id=-1):
         self._pin = pin
         self._period_ms = period_ms
-        self._max_pulses = max_pulses
         self._done_callback = done_callback
-        self._timer = machine.Timer(-1)
+        self._timer = machine.Timer(timer_id)
 
     def measure(self):
+        print("START FAN MEASURE")
         self._started_us = time.ticks_us()
         self._total_pulses = 0
+        self._timer.deinit()
         self._timer.init(
             period=self._period_ms,
             mode=machine.Timer.ONE_SHOT,
@@ -32,20 +33,21 @@ class Tachometer:
         )
 
         self._pin.irq(
-            trigger=machine.Pin.IRQ_RISING | machine.Pin.IRQ_FALLING,
-            handler=self.callback,
+            trigger=machine.Pin.IRQ_RISING,
+            handler=self.on_raise,
         )
 
     def finish(self, t):
-        factor = 1000000 / time.ticks_diff(time.ticks_us(), self._started_us)
+        print("======== FINISH MEASURE")
+        t.deinit()
+        factor = int(1000 / self._period_ms)
         self._pin.irq(handler=None)
-        self._timer.deinit()
         frequency = int(factor * self._total_pulses)
+        if frequency < 1:
+            return self._done_callback(0)
+
         rpm = round(60 / (1 / (frequency * 2)))
         self._done_callback(rpm)
 
-    def callback(self, pin):
-        if self._pin.value():
-            self._total_pulses += 1
-            if self._max_pulses and self._total_pulses >= self._max_pulses:
-                self.finish(self._timer)
+    def on_raise(self, pin):
+        self._total_pulses += 1

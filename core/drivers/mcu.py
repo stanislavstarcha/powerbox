@@ -13,7 +13,6 @@ class MCUState(BaseState):
     NAME = "MCU"
     BLE_STATE_UUID = BLE_MCU_STATE_UUID
 
-    STATE_FREQUENCY = 1
     GC_FREQUENCY = 5
 
     memory = 0

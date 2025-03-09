@@ -64,7 +64,7 @@ class UART:
             if diff > timeout:
                 break
 
-        return buffer
+        return bytes(buffer)
 
 
 class BaseState:
@@ -111,7 +111,7 @@ class BaseState:
     history = None
 
     # how often to update display and BLE state
-    STATE_FREQUENCY = 5
+    STATE_FREQUENCY = 2
 
     # how often to record and update historical BLE state
     HISTORY_FREQUENCY = 5
@@ -281,3 +281,8 @@ class BaseState:
                 continue
             for chunk in chunks:
                 self._ble.notify(BLE_HISTORY_STATE_UUID, chunk)
+
+    @staticmethod
+    def as_hex(data):
+        # Convert each byte of the binary data to a 2-digit hex value and print it
+        return " ".join(f"{byte:02X}" for byte in data)

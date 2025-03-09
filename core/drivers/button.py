@@ -27,27 +27,25 @@ class ButtonController:
         self,
         listen_pin=LISTEN_PIN,
         trigger_delay=DELAY,
+        timer_id=-1,
         on_change=None,
         buzzer=None,
     ):
         self._buzzer = buzzer
         self._on_change = on_change
         self._trigger_delay = trigger_delay
-        self._trigger_timer = machine.Timer(-1)
+        self._trigger_timer = machine.Timer(timer_id)
         self._listen_pin = machine.Pin(
             listen_pin, machine.Pin.IN, machine.Pin.PULL_DOWN
         )
 
         self._listen_pin.irq(
-            trigger=machine.Pin.IRQ_RISING | machine.Pin.IRQ_FALLING,
+            trigger=machine.Pin.IRQ_RISING,
             handler=self._check_state,
         )
         logger.info(f"Button {self._listen_pin} state", self._listen_pin.value())
 
     def _check_state(self, pin):
-        if pin.value() == 0:
-            return
-
         current_ms = time.ticks_ms()
         # jitter is needed to avoid flickering effect
         # when a button state generates dozens of on/off
