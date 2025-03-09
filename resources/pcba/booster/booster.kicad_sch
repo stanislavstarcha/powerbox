@@ -1,0 +1,207 @@
+(kicad_sch
+	(version 20241209)
+	(generator "eeschema")
+	(generator_version "9.0")
+	(uuid "e8dd55a7-7ee1-45dc-91f9-54d483bd49e9")
+	(paper "A3")
+	(lib_symbols)
+	(wire
+		(pts
+			(xy 204.47 85.09) (xy 207.01 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0039bbc5-f989-4ee4-b7d0-09f9918b1639")
+	)
+	(wire
+		(pts
+			(xy 204.47 81.28) (xy 207.01 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "38df5a06-1d42-4289-b19c-64b78d317aab")
+	)
+	(wire
+		(pts
+			(xy 204.47 73.66) (xy 207.01 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "486508ca-00d2-4564-9ce3-abac8fa11d33")
+	)
+	(wire
+		(pts
+			(xy 204.47 88.9) (xy 207.01 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8883dd59-49e1-4d92-86f7-3501591ccb4f")
+	)
+	(wire
+		(pts
+			(xy 204.47 77.47) (xy 207.01 77.47)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e8a3e3c5-5a3f-4bd6-8476-828008641d9d")
+	)
+	(label "PSU Current A"
+		(at 204.47 73.66 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "0122912c-2bc7-42f4-b84a-1e19879646b1")
+	)
+	(label "PSU A TX"
+		(at 204.47 88.9 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "256480c2-4a3d-42c0-a179-4cc9ea15dd28")
+	)
+	(label "PSU A TACHOMETER"
+		(at 204.47 85.09 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "8270a65d-6c18-4043-af0b-53ca920f27c1")
+	)
+	(label "PSU Current B"
+		(at 204.47 77.47 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "8a9c54c3-0954-4c8d-ad6f-6bee6994913d")
+	)
+	(label "PSU Power Gate"
+		(at 204.47 81.28 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "ad649e21-e877-474a-bd41-206b6a8f6cc4")
+	)
+	(sheet
+		(at 207.01 62.23)
+		(size 25.4 34.29)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "333a3d34-0dd6-46af-8519-55609c44d66f")
+		(property "Sheetname" "PSU"
+			(at 214.63 68.58 0)
+			(effects
+				(font
+					(size 3 3)
+					(bold yes)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "psu.kicad_sch"
+			(at 207.01 114.0384 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+				(hide yes)
+			)
+		)
+		(pin "PSU Current B" input
+			(at 207.01 77.47 180)
+			(uuid "7337391f-1d52-413e-a65d-07d9d901ebd4")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "PSU Power Gate" input
+			(at 207.01 81.28 180)
+			(uuid "3c33cd72-f6a9-40b0-98b5-0cfe0cff3636")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "PSU Current A" input
+			(at 207.01 73.66 180)
+			(uuid "2a006a3a-b3cc-4cd7-90dd-85ad143185bd")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "PSU UART" input
+			(at 207.01 88.9 180)
+			(uuid "95601f39-baa6-4313-b259-efe49ac17788")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "PSU FAN" input
+			(at 207.01 85.09 180)
+			(uuid "b524dece-c2a1-480d-94f0-62d5dbc3da9b")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(instances
+			(project "booster"
+				(path "/e8dd55a7-7ee1-45dc-91f9-54d483bd49e9"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)

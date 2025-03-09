@@ -1,0 +1,8 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "HCPL2630")(type "KiCad")(uri "/Users/stasstarcha/Documents/dobrotvir/symbols/HCPL2630.kicad_sym")(options "")(descr ""))
+  (lib (name "HCPL2631")(type "KiCad")(uri "/Users/stasstarcha/Documents/dobrotvir/symbols/HCPL2631.kicad_sym")(options "")(descr ""))
+  (lib (name "VOM1271T")(type "KiCad")(uri "/Users/stasstarcha/Documents/dobrotvir/symbols/VOM1271T.kicad_sym")(options "")(descr ""))
+  (lib (name "B0505S-2W")(type "KiCad")(uri "/Users/stasstarcha/Documents/dobrotvir/symbols/B0505s.kicad_sym")(options "")(descr ""))
+  (lib (name "TLP2361-TPL")(type "KiCad")(uri "/Users/stasstarcha/Documents/dobrotvir/symbols/TLP2361-TPL-E.kicad_sym")(options "")(descr ""))
+)
