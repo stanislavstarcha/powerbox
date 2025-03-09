@@ -10,14 +10,14 @@
 	(layers
 		(0 "F.Cu" signal)
 		(2 "B.Cu" signal)
-		(5 "F.SilkS" user)
-		(7 "B.SilkS" user)
+		(5 "F.SilkS" user "F.Silkscreen")
+		(7 "B.SilkS" user "B.Silkscreen")
 		(1 "F.Mask" user)
 		(3 "B.Mask" user)
 		(25 "Edge.Cuts" user)
 		(27 "Margin" user)
-		(31 "F.CrtYd" user)
-		(29 "B.CrtYd" user)
+		(31 "F.CrtYd" user "F.Courtyard")
+		(29 "B.CrtYd" user "B.Courtyard")
 	)
 	(setup
 		(stackup
@@ -171,7 +171,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "d43c0b6c-e6cd-4bad-af21-20ef757b183e")
+			(uuid "6995f2e4-09f8-4bc1-816f-bebff03a8f6e")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -272,7 +272,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/9d037eb3-ccd0-44e1-9edc-cd93b02e14f7")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -449,7 +449,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "c884dda2-76ae-4936-9a7c-ed29fd5a5704")
+			(uuid "a66dbc14-1122-4939-bc54-32319d26b113")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -550,7 +550,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/f0135971-9d9d-4b7b-bc2f-0116b5812d64")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -727,7 +727,7 @@
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "6609ecb2-8eab-4d99-b462-d22593719473")
+			(uuid "87df1caa-e866-4088-996c-072cc51d96b7")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -867,7 +867,7 @@
 		)
 		(property ki_fp_filters "SOT?23*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/1db728e1-1623-4a24-9b1f-08eae7e36714")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -1098,7 +1098,7 @@
 			(at 0 0 -90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "cb49f08a-6325-48d3-94ae-9cdea15790c3")
+			(uuid "7d1219a3-dca3-4f6c-849e-9b2075dc5eb9")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1225,7 +1225,7 @@
 		)
 		(property ki_fp_filters "D*DO?41*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/f36ae2ce-c277-4cb7-bc17-e10d9f335728")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -1474,7 +1474,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "c203756c-6917-4158-926d-483236588b92")
+			(uuid "0d159c2a-f5f8-4d8f-aa2e-89d420b6dce4")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1575,7 +1575,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/ad99ae54-5318-40f3-a451-4bbf60f6ff20")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -1752,7 +1752,7 @@
 			(at 0 0 -90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "c0c76f33-22d8-4587-90f7-a0a3ac0602c5")
+			(uuid "fe955ee1-a380-4309-b8f7-9ec48397cd79")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1892,7 +1892,7 @@
 		)
 		(property ki_fp_filters "SOT?23*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/468c0d47-8b57-45ac-857e-0c828abc9dca")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -2123,7 +2123,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "75379d24-a42a-44f6-a001-39e5e42be69f")
+			(uuid "eef9e67f-47ab-4884-bd18-bfaa5e3e4463")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2224,7 +2224,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/6e18dd55-4a02-4ee6-ac24-90317b9fc414")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -2401,7 +2401,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "05c803bb-3cfb-4ad7-84a9-86bfe48bfc0f")
+			(uuid "69a3a3a8-eb5c-4c6f-bbed-6037957758eb")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2502,7 +2502,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/cdb04638-7334-47f6-be54-9ea292d4f023")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -2679,7 +2679,7 @@
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "da95f2c6-940b-4116-8e1d-86b52dd6d4da")
+			(uuid "6d8b1da8-406c-48e1-8399-95d6f234e0f8")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2793,7 +2793,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/c67d0bf0-bb21-4a46-a6ed-ac7734615de6")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -2970,7 +2970,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "ba7d2b01-e984-4dfc-a097-95944d863150")
+			(uuid "bf8f138c-2294-4b8e-bcb9-2a6259551b7b")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3084,7 +3084,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/c0d2d1b3-dff9-4819-8a15-3921b24e460a")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -3261,7 +3261,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "4cc9e2ab-c5ff-4b91-979c-d51233e90066")
+			(uuid "824eac51-6f6d-4d44-a6a8-ecfcdd034177")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3362,7 +3362,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/dc170996-f453-425f-978a-b7fb181332b9")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -3540,7 +3540,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "9f5f6116-19e6-4c03-a7fa-449904f080c8")
+			(uuid "5c1a6b7c-39fe-4e54-9ae6-b701d37d0a00")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3641,7 +3641,7 @@
 		)
 		(property ki_fp_filters "Connector*:*_1x??_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/930a83e4-b94c-40e1-b5d6-b2ab64f210ec")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr through_hole)
 		(fp_line
@@ -4379,7 +4379,7 @@
 			(at 0 0 -90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "748bdd03-3931-4d08-b3a9-326857af4237")
+			(uuid "e17575b8-c967-416c-8cad-400307a08486")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4480,7 +4480,7 @@
 		)
 		(property ki_fp_filters "SOT?89*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/cf7cd51e-9f13-4726-bfb3-3961265ee243")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -4726,7 +4726,7 @@
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "1d5de713-f4fd-4e37-96e0-bf72fd74d2c6")
+			(uuid "60c7b337-a419-4777-bf70-77d710c99005")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4827,7 +4827,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/3f8f0929-a92e-4ee5-979b-8040ec65a01e")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -5004,7 +5004,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "22b15353-34e1-4e4f-91b4-ec0594de098e")
+			(uuid "4d15f6eb-2f16-4377-b83f-9d7284a7d3c5")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5105,7 +5105,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/d840bf98-be80-46a1-851e-960839252b69")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -5282,7 +5282,7 @@
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "4a316aa6-2ac5-4319-9518-3926f1f3233d")
+			(uuid "2e72d486-7f6d-4fca-a02d-3f51e9be68a4")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5383,7 +5383,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/fbd7e185-14de-4ab6-a27b-6852375380cd")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -5528,7 +5528,7 @@
 			)
 		)
 	)
-	(footprint "VOM1271T:SOP-4_VIS"
+	(footprint "trypillia:VOM1271T"
 		(layer "F.Cu")
 		(uuid "60406e78-84fc-4fc7-b8c2-1203c467819a")
 		(at 95.13 101.55 90)
@@ -5562,7 +5562,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "66642bad-8a68-4c6f-81c5-7e14c2384a37")
+			(uuid "10cb78fe-f373-4209-9a5a-d291b03c8214")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5599,7 +5599,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "d520256f-409a-4e0b-a46f-66cf51082ff2")
+			(uuid "7208e32e-1342-411f-acfe-b3d499fb53d6")
 			(effects
 				(font
 					(size 1 1)
@@ -5612,7 +5612,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "8aae09d6-9df4-4b7d-aec8-c50e925d7e72")
+			(uuid "71709bf9-bc03-4f81-9f44-06b21ca15509")
 			(effects
 				(font
 					(size 1 1)
@@ -5625,7 +5625,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "d2e322b8-5128-4380-a70d-77e871bb4e5b")
+			(uuid "51fca655-d1c6-4a72-b34e-e98bad993cc6")
 			(effects
 				(font
 					(size 1 1)
@@ -5638,7 +5638,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "f2fc2db1-8eae-429d-8c1c-61f928903d09")
+			(uuid "b4bebfc6-e8e2-46d9-85d7-f691d2103d1d")
 			(effects
 				(font
 					(size 1 1)
@@ -5651,7 +5651,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "ec5e549f-3897-44bf-9b15-bead0ea7471b")
+			(uuid "cd301343-fcdf-4412-aed8-597dff4e2d11")
 			(effects
 				(font
 					(size 1 1)
@@ -5661,7 +5661,7 @@
 		)
 		(property ki_fp_filters "SOP-4_VIS SOP-4_VIS-M SOP-4_VIS-L")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/9d2b0614-f059-4e87-84aa-567eabfcb469")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -5672,7 +5672,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "abbed1c6-9388-4006-af94-cc6217c25673")
+			(uuid "d0c48c58-1f53-4232-8ddc-f98b464259b8")
 		)
 		(fp_line
 			(start -2.54 -2.5908)
@@ -5682,7 +5682,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "75f77513-9e88-4fae-bac4-95603a2bb82c")
+			(uuid "e3d9c13e-cd92-4f98-a010-fd3446ebc932")
 		)
 		(fp_line
 			(start 2.54 -1.879952)
@@ -5692,7 +5692,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "21fabafe-e7cd-4852-b99e-0e30a4bfd395")
+			(uuid "7f1e464c-ae6d-4c3d-8d19-644794d431e8")
 		)
 		(fp_line
 			(start -2.54 -0.660048)
@@ -5702,7 +5702,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "40c383b3-699e-4ba7-84b2-1556e2508e5d")
+			(uuid "83cd7099-c416-4479-a6a7-a45e0af47d85")
 		)
 		(fp_line
 			(start 2.54 0.660048)
@@ -5712,7 +5712,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "6b4974c3-12a4-4932-bb0e-9da181e6b4c2")
+			(uuid "e92466ca-ebf5-4d5e-b9d1-7ae1333a4069")
 		)
 		(fp_line
 			(start -2.54 1.879952)
@@ -5722,7 +5722,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "50b4fba9-1295-4291-9d38-4bb484b6ed2e")
+			(uuid "c07b0871-0372-4b52-8988-1e191729b65a")
 		)
 		(fp_line
 			(start 2.54 2.5908)
@@ -5732,7 +5732,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "d5ee4d8e-cff0-4d65-8ef9-25adca76486e")
+			(uuid "753210c8-75d7-477f-a95f-8f475e7e723b")
 		)
 		(fp_line
 			(start -2.54 2.5908)
@@ -5742,7 +5742,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "65847a9e-d21e-4284-9ab7-3c49ec843e08")
+			(uuid "0942facc-2c45-4e74-a98a-c958ec091be1")
 		)
 		(fp_line
 			(start 2.667 -2.7178)
@@ -5752,7 +5752,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "9245d6d3-5b24-4300-8013-6c10b59255e1")
+			(uuid "5517c8bb-5210-4479-b6a0-0ea82e8322ea")
 		)
 		(fp_line
 			(start -2.667 -2.7178)
@@ -5762,7 +5762,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "f252df77-d34c-42f8-9c87-6a5f34cbbedd")
+			(uuid "e4ae213c-1759-43be-9e31-feb121db1905")
 		)
 		(fp_line
 			(start 4.2037 -1.8034)
@@ -5772,7 +5772,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "aa3160b0-9759-4fde-a9ce-f257dde238e5")
+			(uuid "b3c533dc-33b7-42c8-aea4-87138843da31")
 		)
 		(fp_line
 			(start 4.2037 -1.8034)
@@ -5782,7 +5782,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "229a6cda-7646-465e-b80d-bb476fb59b27")
+			(uuid "9127a3a6-4239-4b65-837b-a0323faafe9d")
 		)
 		(fp_line
 			(start -2.667 -1.8034)
@@ -5792,7 +5792,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "3bdd5798-d798-4ea6-8c55-6fceb688e778")
+			(uuid "7909317a-3710-44aa-a07b-edc5b0b62483")
 		)
 		(fp_line
 			(start -4.2037 -1.8034)
@@ -5802,7 +5802,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "e878c8ba-2c93-4925-a870-d33cd6e46fad")
+			(uuid "4abaf3c7-a71b-4f53-8331-230bbea4d0da")
 		)
 		(fp_line
 			(start 4.2037 1.8034)
@@ -5812,7 +5812,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "4b05afd9-bd4c-4fb4-b2d4-0e0e00733310")
+			(uuid "bcc062c8-eab2-42ca-911e-a12cf0cd77bd")
 		)
 		(fp_line
 			(start 2.667 1.8034)
@@ -5822,7 +5822,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "810a650c-10af-4e8e-95d1-8be79b3160a0")
+			(uuid "592aef9d-154c-4553-a703-248472da9742")
 		)
 		(fp_line
 			(start -4.2037 1.8034)
@@ -5832,7 +5832,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "74568054-816a-4aea-bb3f-d5a093221f16")
+			(uuid "bc3f7986-b867-411e-a018-c371ae17e7bf")
 		)
 		(fp_line
 			(start -4.2037 1.8034)
@@ -5842,7 +5842,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "d92b5980-0e06-41e9-9daa-311ebef8dc0a")
+			(uuid "299f49d5-7ea4-417d-a160-fd49370123e5")
 		)
 		(fp_line
 			(start 2.667 2.7178)
@@ -5852,7 +5852,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "251fd3ee-8ccf-4133-aef4-5973f021cb6f")
+			(uuid "eb9bc64e-9215-406a-9e53-f639084119af")
 		)
 		(fp_line
 			(start -2.667 2.7178)
@@ -5862,7 +5862,7 @@
 				(type solid)
 			)
 			(layer "F.CrtYd")
-			(uuid "cbe32466-f60b-43cf-8b81-a92e9facbff6")
+			(uuid "f51785aa-b38d-4a01-9968-595699ccd70a")
 		)
 		(fp_line
 			(start 2.413 -2.4638)
@@ -5872,7 +5872,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "b4bff971-ac7f-4149-96d5-31f1c9122fa7")
+			(uuid "860cfeab-7880-4a8d-aa80-befabc7c5134")
 		)
 		(fp_line
 			(start -2.413 -2.4638)
@@ -5882,7 +5882,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "7fa7dbd9-0c71-4b2d-96db-d9d9729de163")
+			(uuid "fbb15dc3-e8c6-4e1c-ba04-9dbb668c8f34")
 		)
 		(fp_line
 			(start 3.5941 -1.524)
@@ -5892,7 +5892,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "e2e31eec-f7f2-4395-9587-34a39709a745")
+			(uuid "d9084613-cf05-4e15-be29-1a8a9a2a3d6e")
 		)
 		(fp_line
 			(start 2.413 -1.524)
@@ -5902,7 +5902,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "efadd784-a61a-4b9c-89d5-bdc162095833")
+			(uuid "febfafa2-4fe6-43bf-8bb9-5a07e0004816")
 		)
 		(fp_line
 			(start -2.413 -1.524)
@@ -5912,7 +5912,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "2a7afe77-44df-4d0a-a640-a966d24c97ef")
+			(uuid "e99f452c-55f9-4909-b54f-bb79c139e785")
 		)
 		(fp_line
 			(start -3.5941 -1.524)
@@ -5922,7 +5922,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "3c24cd15-0985-41ec-ba3f-7efc7ed00793")
+			(uuid "4871612a-c4fb-4b1d-bfe9-3cd14019d9bc")
 		)
 		(fp_line
 			(start 3.5941 -1.016)
@@ -5932,7 +5932,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "32f48500-2be6-410f-a8f1-9b2c3c196fb5")
+			(uuid "2a62baa1-7a42-446c-815f-92f00b11a687")
 		)
 		(fp_line
 			(start 2.413 -1.016)
@@ -5942,7 +5942,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "61a4dd5e-4203-4a33-a2db-27ff6d77f1b3")
+			(uuid "0fb18179-d467-4934-8f35-e3911813a0a9")
 		)
 		(fp_line
 			(start -2.413 -1.016)
@@ -5952,7 +5952,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "60573d05-72ad-4461-a9c6-343b1bcdb53a")
+			(uuid "28c1d272-19d7-47c5-9810-958729cb06b6")
 		)
 		(fp_line
 			(start -3.5941 -1.016)
@@ -5962,7 +5962,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "00fc1a01-51dd-4630-8ccc-47ed8c0232c7")
+			(uuid "1eb37adc-4bc3-473c-96ef-406128e6ce9c")
 		)
 		(fp_line
 			(start 3.5941 1.016)
@@ -5972,7 +5972,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "b68fb9ae-f2bd-4555-b1ac-d2ae0405b466")
+			(uuid "ba34e16f-15a0-4132-b62b-c3538532af8b")
 		)
 		(fp_line
 			(start 2.413 1.016)
@@ -5982,7 +5982,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "90fb6713-07c2-4e0b-8af5-b0d770633b3e")
+			(uuid "aad70cdf-db94-4c17-86aa-60076fe51ff8")
 		)
 		(fp_line
 			(start -2.413 1.016)
@@ -5992,7 +5992,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "745fe830-84a3-4d3a-b94c-4c5571e9a0d0")
+			(uuid "69b31f66-d664-49c7-a485-3e994e6f5514")
 		)
 		(fp_line
 			(start -3.5941 1.016)
@@ -6002,7 +6002,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "02672616-6d8b-49c8-96cb-cd5f54e159a0")
+			(uuid "310526d0-6ab1-4188-bca9-e60c50d0a914")
 		)
 		(fp_line
 			(start 3.5941 1.524)
@@ -6012,7 +6012,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "7083bfae-b1a6-494d-b6e7-f06623ab69b6")
+			(uuid "1e700d5b-a96f-4619-a1de-3ceb77cd6a13")
 		)
 		(fp_line
 			(start 2.413 1.524)
@@ -6022,7 +6022,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "06874142-e8ab-4437-bc4a-9f48143b95c0")
+			(uuid "ac1f4752-62bd-4535-b927-990035480cad")
 		)
 		(fp_line
 			(start -2.413 1.524)
@@ -6032,7 +6032,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "f350e604-67ae-4d3c-a450-e4df7ad36e96")
+			(uuid "76c09e7b-1812-454b-92d5-dd2f714722ff")
 		)
 		(fp_line
 			(start -3.5941 1.524)
@@ -6042,7 +6042,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "08a03362-3fcd-44a5-8bcb-03b694cceecc")
+			(uuid "874ea6fa-e172-4656-861b-42e63a322a52")
 		)
 		(fp_line
 			(start 2.413 2.4638)
@@ -6052,7 +6052,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "f2775e5e-ed2b-4806-bf93-19a9dff7c224")
+			(uuid "ce134e60-7b16-4cb4-adf7-8a9a70562d3c")
 		)
 		(fp_line
 			(start -2.413 2.4638)
@@ -6062,7 +6062,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "b741df4c-85c2-4576-a00e-50f5f8773ce1")
+			(uuid "bf348c17-a16f-4e82-ad7b-b3e80490f29c")
 		)
 		(fp_arc
 			(start 0.3048 -2.4638)
@@ -6073,7 +6073,7 @@
 				(type solid)
 			)
 			(layer "F.Fab")
-			(uuid "f67c5a01-4ab4-4bfc-9486-863f2e8c8a9d")
+			(uuid "a2486d17-6111-477c-98de-9e1cf95aac95")
 		)
 		(fp_text user "*"
 			(at -3.5 -2.5 90)
@@ -6136,7 +6136,7 @@
 			(uuid "59b3726c-eefe-4df8-9c06-78f9eab99511")
 		)
 		(embedded_fonts no)
-		(model "/Users/stasstarcha/Documents/dobrotvir/3dmodels/VOM1271T/SOP-4V2.step"
+		(model "${KIPRJMOD}/lib/3dmodels/VOM1271-SOP-4.step"
 			(offset
 				(xyz 0 0 1.1)
 			)
@@ -6180,7 +6180,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "9cc9f22d-e130-4079-9511-e1f2e74967f3")
+			(uuid "2c428e65-e4d7-4034-9418-b647adb67484")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6281,7 +6281,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/1a1aa294-c5e6-448d-8092-4017b7838890")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -6458,7 +6458,7 @@
 			(at 0 0 -90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "038bdb0a-84ae-460f-8209-ca596725eb98")
+			(uuid "7317a445-f040-4e18-8dfb-ad55a980bb92")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6559,7 +6559,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/1d298b4b-f089-4d7e-a4f4-8afe54d0dd6a")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -6736,7 +6736,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "b44e8d3e-85b9-45b3-8dc3-2b052a699f3b")
+			(uuid "c554b656-9ca5-4ea8-a522-ede763ef503f")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6837,7 +6837,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/8a39a987-49a7-4f1d-8931-2c8053f13837")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -7014,7 +7014,7 @@
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "4635a779-07c5-4cf1-bc6d-417d810b80f7")
+			(uuid "8a661402-d27c-4cbd-ac85-5a634f134064")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7128,7 +7128,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/cb6d69d7-0684-46a2-93a7-47fe12cfdd29")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -7305,7 +7305,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "75dafda5-6b22-428f-95a9-ef4a3df87092")
+			(uuid "b1f5e46d-08f9-434b-b5f6-d21760cb6d54")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7406,7 +7406,7 @@
 		)
 		(property ki_fp_filters "C_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/bfb8b62d-6b4d-4a01-ba2a-9524e5688832")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -7583,7 +7583,7 @@
 			(at 0 0 -90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "071115eb-6437-461f-8a6a-07aa60abea26")
+			(uuid "f2fb12b1-22a2-4f03-b1d4-a3e97e3fb956")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7684,7 +7684,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/3fdf32b4-dc63-4b19-8de9-15bb3ab7d13d")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -7861,7 +7861,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "25b20b6d-7af6-41d3-9fba-3eea8885f21d")
+			(uuid "cabe2c7b-0281-48e2-8df0-0d36d49f559f")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7962,7 +7962,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/78c2931d-85b6-47d0-a19b-f8f091659728")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -8139,7 +8139,7 @@
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "66a39836-0a61-4af0-b1f9-639ee033b79a")
+			(uuid "c1e677e0-2ecb-4646-8ca2-0f0c4b5e4365")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8240,7 +8240,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/3126e949-d339-4478-96c9-1724eb2e67dd")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -8417,7 +8417,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "eca5a4c2-e9dc-42a4-ba02-85738efb513b")
+			(uuid "1a1f9eaa-092d-48d2-97b3-01ef9e44722c")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8518,7 +8518,7 @@
 		)
 		(property ki_fp_filters "TSSOP*4.4x5mm*P0.65mm* DIP*W7.62* SOIC*3.9x9.9mm*P1.27mm* SO*5.3x10.2mm*P1.27mm*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/e80587d0-daa1-4b2d-9909-b2613e468504")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -8879,7 +8879,7 @@
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "bf4416a5-04f1-4cdc-92b5-e3b24367ef63")
+			(uuid "4bd1e4e9-d236-43d7-b5ab-84c3b795f978")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9019,7 +9019,7 @@
 		)
 		(property ki_fp_filters "SOT?23*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/4b518a3a-324f-4f75-94ed-3affdf0fd96f")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -9251,7 +9251,7 @@
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "af7b036b-0e2f-435b-a1c8-fcefdc9f3109")
+			(uuid "a378308a-5048-4254-8225-2fbc575b71e7")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9352,7 +9352,7 @@
 		)
 		(property ki_fp_filters "Connector*:*_1x??_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/23ca1acf-415a-46be-b823-9dcf1e0af208")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr through_hole)
 		(fp_line
@@ -10039,7 +10039,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "628ee849-13cd-439d-af11-4f5f1eea101c")
+			(uuid "1b89304d-82ef-484b-bfd8-aaee3b6e3974")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10140,7 +10140,7 @@
 		)
 		(property ki_fp_filters "C_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/26bead26-05de-47fe-8567-428bf9f8ce00")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -10317,7 +10317,7 @@
 			(at 0 0 -90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "8cabaa18-997a-4898-baff-b82766f8a1d0")
+			(uuid "33a07638-a77b-426e-bbaf-1e125daed8bc")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10418,7 +10418,7 @@
 		)
 		(property ki_fp_filters "SOIC*3.9x4.9mm*P1.27mm*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/984ee1ea-cdc1-44da-85ff-b50f7173ee41")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -10699,7 +10699,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e525f35d-9636-4244-ab48-97c76f2f63ce")
+			(uuid "bebadf42-5bd8-438b-9b70-7a34e58b46a7")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10800,7 +10800,7 @@
 		)
 		(property ki_fp_filters "C_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/dd30ec7a-2fae-4e7c-9ae8-35971b7d3fa8")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -10977,7 +10977,7 @@
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "509c5b7b-91d1-4687-9232-c15ff00c6b84")
+			(uuid "897fcbf4-6883-4ba0-aaaa-3382397e4cdb")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11078,7 +11078,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/2df505e0-cfb1-473d-9182-2b520b48b4d0")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -11255,7 +11255,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "d5ef4b4a-5fe4-4e4a-ac0a-95162fe3d823")
+			(uuid "e94df613-7d91-4fcd-b954-3cd134a3ed74")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11356,7 +11356,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/92f360cd-d2b7-4a67-8b5c-950834f747c4")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -11533,7 +11533,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "43044527-e52b-4b9e-9a4d-c8f234a83cd6")
+			(uuid "8b180591-2695-41d5-a6c8-aed10a6e7388")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11634,7 +11634,7 @@
 		)
 		(property ki_fp_filters "SOIC*3.9x4.9mm*P1.27mm*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/177b02fe-5ac3-458c-962a-73507a850bb1")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -11916,7 +11916,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "6b624aea-87fa-466e-8c91-fac78859d8d7")
+			(uuid "e28079fe-7460-4c22-9b8a-4a597d238acc")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12017,7 +12017,7 @@
 		)
 		(property ki_fp_filters "Connector*:*_1x??_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/cc016149-e695-4bad-9f92-9c8bc7c0335d")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr through_hole)
 		(fp_line
@@ -12449,7 +12449,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "3ef6a441-76e7-4553-838e-36f5daf7c4d8")
+			(uuid "96063721-8876-4b36-80a5-5bae4290030d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12550,7 +12550,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/afda5a3c-313e-4387-888b-3a0d2012b08f")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -12727,7 +12727,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "b1e2d2d6-5e76-4848-9d1b-b2101f2d760e")
+			(uuid "2194c148-dcfc-420e-a1a6-bdfb2a624e1d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12828,7 +12828,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/2db1e2f2-1225-453d-8554-2c649556d601")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -13005,7 +13005,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "31f7dea3-b48c-4ae0-8642-20304ef96b54")
+			(uuid "4c829544-b31f-4edf-a229-4989c26edc96")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13106,7 +13106,7 @@
 		)
 		(property ki_fp_filters "C_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/7e7e11d1-55b1-4b9f-8471-31a41cb970b5")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -13283,7 +13283,7 @@
 			(at 0 0 -90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "807903f3-b686-4b74-bf4f-f646e922164b")
+			(uuid "c61399cb-4353-44d6-bb2a-2bb8a8ec916d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13384,7 +13384,7 @@
 		)
 		(property ki_fp_filters "SOT?23*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/2e940179-a962-4c88-8168-da3162a19f75")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(clearance 0.1)
 		(attr smd)
@@ -13635,7 +13635,7 @@
 			(at 0 0 -90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "7d6a5e77-f335-49eb-9c78-7b6973663893")
+			(uuid "13b2585b-3c5d-4164-b598-8910eed5e66d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13736,7 +13736,7 @@
 		)
 		(property ki_fp_filters "R_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/207a9f88-d90e-4c2a-b67c-91e7a340615a")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -13913,7 +13913,7 @@
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "147d8e4e-321e-407f-bdf5-681d36d3f82e")
+			(uuid "f8814b04-da06-49fa-ade1-aa8f0061f6f9")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14014,7 +14014,7 @@
 		)
 		(property ki_fp_filters "C_*")
 		(path "/333a3d34-0dd6-46af-8519-55609c44d66f/5f3f4a16-7086-43d8-ad2d-4c2d57a7918f")
-		(sheetname "PSU")
+		(sheetname "/PSU/")
 		(sheetfile "psu.kicad_sch")
 		(attr smd)
 		(fp_line

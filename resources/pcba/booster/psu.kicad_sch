@@ -3652,7 +3652,7 @@
 				)
 				(polyline
 					(pts
-						(xy 15.24 -2.032) (xy 16.002 -0.508)
+						(xy 15.24 -2.032) (xy 15.24 -5.08)
 					)
 					(stroke
 						(width 0.127)
@@ -3664,7 +3664,7 @@
 				)
 				(polyline
 					(pts
-						(xy 15.24 -2.032) (xy 15.24 -5.08)
+						(xy 15.24 -2.032) (xy 16.002 -0.508)
 					)
 					(stroke
 						(width 0.127)
@@ -3712,18 +3712,6 @@
 				)
 				(polyline
 					(pts
-						(xy 18.542 -1.016) (xy 18.288 -0.762)
-					)
-					(stroke
-						(width 0.127)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
 						(xy 18.542 -1.016) (xy 18.288 -1.27)
 					)
 					(stroke
@@ -3736,7 +3724,7 @@
 				)
 				(polyline
 					(pts
-						(xy 18.542 -1.778) (xy 18.288 -1.524)
+						(xy 18.542 -1.016) (xy 18.288 -0.762)
 					)
 					(stroke
 						(width 0.127)
@@ -3749,6 +3737,18 @@
 				(polyline
 					(pts
 						(xy 18.542 -1.778) (xy 18.288 -2.032)
+					)
+					(stroke
+						(width 0.127)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 18.542 -1.778) (xy 18.288 -1.524)
 					)
 					(stroke
 						(width 0.127)
@@ -3868,18 +3868,6 @@
 				)
 				(polyline
 					(pts
-						(xy 20.32 -2.032) (xy 20.32 -3.048)
-					)
-					(stroke
-						(width 0.127)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
 						(xy 20.32 -2.032) (xy 21.082 -0.508)
 					)
 					(stroke
@@ -3892,7 +3880,7 @@
 				)
 				(polyline
 					(pts
-						(xy 20.32 -4.572) (xy 20.32 -5.08)
+						(xy 20.32 -2.032) (xy 20.32 -3.048)
 					)
 					(stroke
 						(width 0.127)
@@ -3905,6 +3893,18 @@
 				(polyline
 					(pts
 						(xy 20.32 -4.572) (xy 21.082 -3.048)
+					)
+					(stroke
+						(width 0.127)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 20.32 -4.572) (xy 20.32 -5.08)
 					)
 					(stroke
 						(width 0.127)
@@ -10231,7 +10231,7 @@
 				)
 			)
 		)
-		(property "Footprint" "SOP-4_VIS"
+		(property "Footprint" "trypillia:VOM1271T"
 			(at 45.72 172.72 0)
 			(effects
 				(font

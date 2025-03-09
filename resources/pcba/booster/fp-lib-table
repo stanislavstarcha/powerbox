@@ -1,6 +1,4 @@
 (fp_lib_table
   (version 7)
-  (lib (name "VOM1271T")(type "KiCad")(uri "/Users/stasstarcha/Documents/dobrotvir/footprints/VOM1271T")(options "")(descr ""))
-  (lib (name "B0505S-2W")(type "KiCad")(uri "/Users/stasstarcha/Documents/dobrotvir/footprints/B0505S-2W")(options "")(descr ""))
-  (lib (name "TLP2361-TPL")(type "KiCad")(uri "/Users/stasstarcha/Documents/dobrotvir/footprints/TLP2361-TPL")(options "")(descr ""))
+  (lib (name "trypillia")(type "KiCad")(uri "${KIPRJMOD}/lib/footprints")(options "")(descr ""))
 )
