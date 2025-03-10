@@ -57,8 +57,10 @@ export const usePSUStore = defineStore("psu", {
             this.active = value;
             const appStore = useAppStore();
             if (value) {
+                console.log("Enabling PSU");
                 appStore.runBLECommand(COMMAND_PSU_ENABLE);
             } else {
+                console.log("Disabling PSU");
                 appStore.runBLECommand(COMMAND_PSU_DISABLE);
             }
         },

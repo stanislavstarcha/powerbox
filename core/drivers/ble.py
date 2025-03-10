@@ -209,12 +209,14 @@ class BLEServerController:
     def on_ble_irq(self, event, data):
 
         if event == _IRQ_CENTRAL_CONNECT:
+            logger.info("BLE client connected")
             connection, addr_type, addr = data
             self._connection = connection
             self._state.active = True
             return self.stop_advertising()
 
         if event == _IRQ_CENTRAL_DISCONNECT:
+            logger.info("BLE client disconnected")
             connection, _, _ = data
             self._connection = None
             self._state.active = False
@@ -230,15 +232,21 @@ class BLEServerController:
 
     def on_read_state(self, connection, handle):
 
+        if handle == self.HANDLE[BLE_ATS_STATE_UUID]:
+            state = self._ats.state.get_ble_state()
+            logger.info("BLE reading ATS state", state, len(state))
+            self._ble_write(handle, state)
+            return
+
         if handle == self.HANDLE[BLE_BMS_STATE_UUID]:
             state = self._bms.state.get_ble_state()
-            logger.info("BLE reading bms state", state, len(state))
+            logger.info("BLE reading BMS state", state, len(state))
             self._ble_write(handle, state)
             return
 
         if handle == self.HANDLE[BLE_INVERTER_STATE_UUID]:
             state = self._inverter.state.get_ble_state()
-            logger.debug("BLE reading inverter state", state, len(state))
+            logger.debug("BLE reading Inverter state", state, len(state))
             self._ble_write(handle, state)
             return
 
@@ -250,7 +258,7 @@ class BLEServerController:
 
         if handle == self.HANDLE[BLE_MCU_STATE_UUID]:
             state = self._mcu.state.get_ble_state()
-            logger.debug("BLE reading ESP state", state, len(state))
+            logger.debug("BLE reading MCU state", state, len(state))
             self._ble_write(handle, state)
             return
 
@@ -260,56 +268,61 @@ class BLEServerController:
 
         data = self._ble.gatts_read(handle)
         if data is None:
+            logger.warning("BLE received no data")
             return
 
         logger.info("BLE received data", data.hex())
-        subcommand = struct.unpack_from(">B", data, 0)
+        if handle != self.HANDLE[BLE_RUN_COMMAND_UUID]:
+            logger.warning("BLE not a run command")
+            return
 
-        if handle == self.HANDLE[BLE_RUN_COMMAND_UUID]:
-            if subcommand == COMMAND_PULL_HISTORY:
-                logger.debug("Pulling history via BLE command")
-                self._instructions.add(self._inverter.state.pull_history)
-                self._instructions.add(self._bms.state.pull_history)
-                self._instructions.add(self._psu.state.pull_history)
+        subcommand = struct.unpack_from(">B", data, 0)[0]
+        logger.info("BLE subcommand", subcommand)
 
-            if subcommand == COMMAND_PSU_ENABLE:
-                logger.debug("Turn on PSU via BLE command")
-                self._instructions.add(self._psu.on)
+        if subcommand == COMMAND_PULL_HISTORY:
+            logger.debug("Pulling history via BLE command")
+            self._instructions.add(self._inverter.state.pull_history)
+            self._instructions.add(self._bms.state.pull_history)
+            self._instructions.add(self._psu.state.pull_history)
 
-            if subcommand == COMMAND_PSU_DISABLE:
-                logger.debug("Turn off PSU via BLE command")
-                self._instructions.add(self._psu.off)
+        if subcommand == COMMAND_PSU_ENABLE:
+            logger.debug("Turn on PSU via BLE command")
+            self._instructions.add(self._psu.on)
 
-            if subcommand == COMMAND_PSU_CURRENT:
-                logger.debug("Set PSU current via BLE command")
-                level = struct.unpack_from(">B", data, 1)
-                self._instructions.add(self._psu.set_current, level)
+        if subcommand == COMMAND_PSU_DISABLE:
+            logger.debug("Turn off PSU via BLE command")
+            self._instructions.add(self._psu.off)
 
-            if subcommand == COMMAND_INVERTER_ENABLE:
-                logger.debug("Turn on INVERTER via BLE command")
-                self._instructions.add(self._inverter.on)
+        if subcommand == COMMAND_PSU_CURRENT:
+            logger.debug("Set PSU current via BLE command")
+            level = struct.unpack_from(">B", data, 1)[0]
+            self._instructions.add(self._psu.set_current, level)
 
-            if subcommand == COMMAND_INVERTER_DISABLE:
-                logger.debug("Turn off INVERTER via BLE command")
-                self._instructions.add(self._inverter.off)
+        if subcommand == COMMAND_INVERTER_ENABLE:
+            logger.debug("Turn on INVERTER via BLE command")
+            self._instructions.add(self._inverter.on)
 
-            if subcommand == COMMAND_ATS_ENABLE:
-                logger.debug("Turn on ATS via BLE command")
-                self._instructions.add(self._ats.enable)
+        if subcommand == COMMAND_INVERTER_DISABLE:
+            logger.debug("Turn off INVERTER via BLE command")
+            self._instructions.add(self._inverter.off)
 
-            if subcommand == COMMAND_ATS_DISABLE:
-                logger.debug("Turn off ATS via BLE command")
-                self._instructions.add(self._ats.disable)
+        if subcommand == COMMAND_ATS_ENABLE:
+            logger.debug("Turn on ATS via BLE command")
+            self._instructions.add(self._ats.enable)
 
-            if subcommand == COMMAND_CONF_SET_KEY:
-                key = struct.unpack_from(">B", data, 1)
-                logger.debug("Set config key via BLE command")
+        if subcommand == COMMAND_ATS_DISABLE:
+            logger.debug("Turn off ATS via BLE command")
+            self._instructions.add(self._ats.disable)
 
-            if subcommand == COMMAND_CONF_PROFILE:
-                logger.debug("Set profile via BLE command")
+        if subcommand == COMMAND_CONF_SET_KEY:
+            key = struct.unpack_from(">B", data, 1)
+            logger.debug("Set config key via BLE command")
 
-            if subcommand == COMMAND_UPDATE_FIRMWARE:
-                logger.debug("Update firmware via BLE command")
+        if subcommand == COMMAND_CONF_PROFILE:
+            logger.debug("Set profile via BLE command")
+
+        if subcommand == COMMAND_UPDATE_FIRMWARE:
+            logger.debug("Update firmware via BLE command")
 
     def notify(self, uuid, state):
         if not self._ble or self._connection is None:

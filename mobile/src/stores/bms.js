@@ -7,6 +7,8 @@ import {
     unpack_current,
 } from "src/utils/ble.js";
 
+import { dataViewToHexDump } from "src/utils";
+
 import {
     HISTORY_BMS_SOC,
     HISTORY_BMS_CURRENT,
@@ -46,6 +48,7 @@ export const useBMSStore = defineStore("bms", {
     actions: {
         parseState(view) {
             let offset = 0;
+            console.log("BMS state", dataViewToHexDump(view));
 
             // voltage
             this.voltage = unpack_voltage(view.getUint16(offset));

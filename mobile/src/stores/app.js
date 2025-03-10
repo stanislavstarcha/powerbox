@@ -6,11 +6,11 @@ import { Preferences } from "@capacitor/preferences";
 import { numbersToDataView } from "@capacitor-community/bluetooth-le";
 
 import { useRouter } from "vue-router";
+import { useATSStore } from "stores/ats";
 import { useBMSStore } from "stores/bms";
 import { usePSUStore } from "stores/psu";
 import { useInverterStore } from "stores/inverter";
 import { useMCUStore } from "stores/esp";
-import { useATSStore } from "stores/ats";
 import { useHistoryStore } from "stores/history";
 
 import { pack_bool } from "src/utils/ble.js";
@@ -30,6 +30,7 @@ import {
     COMMAND_ATS_ENABLE,
     COMMAND_ATS_DISABLE,
 } from "stores/uuids";
+import { dataViewToHexDump } from "src/utils/index.js";
 
 const DEFAULT_LANGUAGE = "uk";
 
@@ -119,22 +120,21 @@ export const useAppStore = defineStore("app", {
                     message: "connectingToDevice",
                     spinner: QSpinnerGears,
                 });
+                console.log("Connecting to device", deviceId);
 
                 this.deviceId = deviceId;
                 this.bmsStore.initialiseChartData();
                 this.psuStore.initialiseChartData();
                 this.inverterStore.initialiseChartData();
+                console.log("Initialised controllers data");
 
                 await BleClient.connect(deviceId, (deviceId) => {
-                    this.deviceId = null;
-                    this.devices = [];
-                    const router = useRouter();
-                    router.push({ name: "Discover" });
+                    this.onDisconnect(deviceId);
                 });
 
                 await this.loadDevicePreferences();
 
-                const [bmsState, psuState, inverterState, espState, atsState] =
+                const [atsState, bmsState, psuState, inverterState, mcuState] =
                     await Promise.all([
                         BleClient.read(
                             deviceId,
@@ -217,10 +217,26 @@ export const useAppStore = defineStore("app", {
                 // request history
                 await this.runBLECommand(COMMAND_PULL_HISTORY);
 
+                console.log("ATS initial state", dataViewToHexDump(atsState));
+                this.atsStore.parseState(atsState);
+
+                console.log("BMS initial state", dataViewToHexDump(bmsState));
                 this.bmsStore.parseState(bmsState);
+
+                console.log("PSU initial state", dataViewToHexDump(psuState));
                 this.psuStore.parseState(psuState);
+
+                console.log(
+                    "Inverter initial state",
+                    dataViewToHexDump(inverterState),
+                );
                 this.inverterStore.parseState(inverterState);
-                this.mcuStore.parseState(espState);
+
+                console.log(
+                    "MCU initial state",
+                    dataViewToHexDump(inverterState),
+                );
+                this.mcuStore.parseState(mcuState);
                 this.atsStore.parseState(atsState);
 
                 console.log("Connected to device:", deviceId);
@@ -237,8 +253,21 @@ export const useAppStore = defineStore("app", {
             }
         },
 
-        async runBLECommand(commandId, data) {
-            const view = numbersToDataView([data]);
+        async runBLECommand(commandId, data = null) {
+            const view =
+                data === null
+                    ? numbersToDataView([commandId])
+                    : numbersToDataView([commandId, data]);
+
+            console.log(
+                "Run BLE command:",
+                BleClient,
+                commandId,
+                this.deviceId,
+                BLE_CORE_SERVICE_UUID,
+                BLE_RUN_COMMAND_UUID,
+                dataViewToHexDump(view),
+            );
             await BleClient.write(
                 this.deviceId,
                 BLE_CORE_SERVICE_UUID,
@@ -249,7 +278,15 @@ export const useAppStore = defineStore("app", {
 
         async disconnect(deviceId) {
             await BleClient.disconnect(deviceId);
+            this.onDisconnect(deviceId);
+        },
+
+        onDisconnect(deviceId) {
             console.log("Disconnected from device", deviceId);
+            this.deviceId = null;
+            this.devices = [];
+            const router = useRouter();
+            router.push({ name: "Discover" });
         },
 
         async loadAppPreferences() {
