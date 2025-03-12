@@ -42,6 +42,7 @@ import { useInverterStore } from "stores/inverter";
 import {
     HISTORY_INVERTER_POWER,
     HISTORY_INVERTER_TEMPERATURE,
+    HISTORY_INVERTER_RPM,
 } from "stores/uuids.js";
 import { useI18n } from "vue-i18n";
 
@@ -127,6 +128,22 @@ const chartOptions = ref({
             gridLineWidth: 0,
             lineWidth: 0,
         },
+        {
+            opposite: true,
+            max: 25000,
+            title: { text: null },
+            visible: true,
+            tickPositions: [0],
+            labels: {
+                style: { fontSize: "9px" },
+                format: "{value}",
+                align: "left",
+                x: -25,
+                y: 10,
+            },
+            gridLineWidth: 0,
+            lineWidth: 0,
+        },
     ],
     legend: {
         enabled: false, // Hides the legend
@@ -158,6 +175,13 @@ const chartOptions = ref({
             lineWidth: 1,
             lineColor: "green",
             yAxis: 1,
+            animation: false,
+        },
+        {
+            data: inverterStore.chartData[HISTORY_INVERTER_RPM],
+            lineWidth: 1,
+            lineColor: "blue",
+            yAxis: 2,
             animation: false,
         },
     ],

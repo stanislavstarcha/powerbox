@@ -13,10 +13,14 @@ import {
     HISTORY_BMS_CELL2_VOLTAGE,
     HISTORY_BMS_CELL3_VOLTAGE,
     HISTORY_BMS_CELL4_VOLTAGE,
-    HISTORY_PSU_VOLTAGE,
     HISTORY_INVERTER_POWER,
     HISTORY_INVERTER_TEMPERATURE,
-    HISTORY_PSU_TEMPERATURE,
+    HISTORY_INVERTER_RPM,
+    HISTORY_PSU_RPM,
+    HISTORY_PSU_TEMPERATURE_1,
+    HISTORY_PSU_TEMPERATURE_2,
+    HISTORY_PSU_POWER_1,
+    HISTORY_PSU_POWER_2,
 } from "stores/uuids";
 
 export const useHistoryStore = defineStore("history", {
@@ -37,10 +41,14 @@ export const useHistoryStore = defineStore("history", {
                 [HISTORY_BMS_CELL2_VOLTAGE]: bmsStore,
                 [HISTORY_BMS_CELL3_VOLTAGE]: bmsStore,
                 [HISTORY_BMS_CELL4_VOLTAGE]: bmsStore,
-                [HISTORY_PSU_TEMPERATURE]: psuStore,
-                [HISTORY_PSU_VOLTAGE]: psuStore,
+                [HISTORY_PSU_TEMPERATURE_1]: psuStore,
+                [HISTORY_PSU_TEMPERATURE_1]: psuStore,
+                [HISTORY_PSU_POWER_1]: psuStore,
+                [HISTORY_PSU_POWER_2]: psuStore,
+                [HISTORY_PSU_RPM]: psuStore,
                 [HISTORY_INVERTER_POWER]: inverterStore,
                 [HISTORY_INVERTER_TEMPERATURE]: inverterStore,
+                [HISTORY_INVERTER_RPM]: inverterStore,
             };
         },
 

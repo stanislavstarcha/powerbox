@@ -11,8 +11,11 @@ from lib.tachometer import Tachometer
 
 
 from const import (
-    HISTORY_PSU_VOLTAGE,
-    HISTORY_PSU_TEMPERATURE,
+    HISTORY_PSU_RPM,
+    HISTORY_PSU_TEMPERATURE_1,
+    HISTORY_PSU_TEMPERATURE_2,
+    HISTORY_PSU_POWER_1,
+    HISTORY_PSU_POWER_2,
     DATA_TYPE_BYTE,
     DATA_TYPE_WORD,
 )
@@ -36,6 +39,7 @@ class PSUState(BaseState):
     FRAME_SIZE = 22
 
     # telemetry
+    rpm = None
     power1 = None
     power2 = None
     ac = None
@@ -44,23 +48,35 @@ class PSUState(BaseState):
     t3 = None
     state = None
     unknown = None
-    tachometer = None
 
     _power_crc = None
     _data_crc = None
 
     history = {
-        HISTORY_PSU_VOLTAGE: HistoricalData(
-            chart_type=HISTORY_PSU_VOLTAGE,
+        HISTORY_PSU_RPM: HistoricalData(
+            chart_type=HISTORY_PSU_RPM,
             data_type=DATA_TYPE_WORD,
         ),
-        HISTORY_PSU_TEMPERATURE: HistoricalData(
-            chart_type=HISTORY_PSU_TEMPERATURE,
+        HISTORY_PSU_POWER_1: HistoricalData(
+            chart_type=HISTORY_PSU_POWER_1,
+            data_type=DATA_TYPE_WORD,
+        ),
+        HISTORY_PSU_POWER_2: HistoricalData(
+            chart_type=HISTORY_PSU_POWER_2,
+            data_type=DATA_TYPE_WORD,
+        ),
+        HISTORY_PSU_TEMPERATURE_1: HistoricalData(
+            chart_type=HISTORY_PSU_TEMPERATURE_1,
+            data_type=DATA_TYPE_BYTE,
+        ),
+        HISTORY_PSU_TEMPERATURE_2: HistoricalData(
+            chart_type=HISTORY_PSU_TEMPERATURE_2,
             data_type=DATA_TYPE_BYTE,
         ),
     }
 
     def clear(self):
+        self.rpm = None
         self.active = False
         self.power1 = None
         self.power2 = None
@@ -70,22 +86,35 @@ class PSUState(BaseState):
         self.t3 = None
         self.state = None
         self.external_errors = None
+        self.notify()
+
+    def get_avg_temperature(self):
+        if self.t1 and self.t2:
+            return int((self.t1 + self.t2) / 2)
 
     def get_ble_state(self):
+        t1 = self.get_avg_temperature()
         return struct.pack(
-            ">HBBBBB",
-            self._pack_voltage(0),
+            ">HHHBBBBBBB",
+            self._pack(self.rpm),
+            self._pack(self.power1),
+            self._pack(self.power2),
+            self._pack(self.ac),
+            self._pack(t1),
+            self._pack(self.t3),
+            self._pack(self.current_channel),
             self._pack_bool(self.active),
-            self._pack(self.current),
-            self._pack(0),
             self._pack(self.external_errors),
             self._pack(self.internal_errors),
         )
 
     def build_history(self):
-        voltage = self._pack_voltage(0)
-        self.history[HISTORY_PSU_VOLTAGE].push(voltage)
-        self.history[HISTORY_PSU_TEMPERATURE].push(self._pack(0))
+        t1 = self.get_avg_temperature()
+        self.history[HISTORY_PSU_RPM].push(self._pack(self.rpm))
+        self.history[HISTORY_PSU_POWER_1].push(self._pack(self.power1))
+        self.history[HISTORY_PSU_POWER_2].push(self._pack(self.power2))
+        self.history[HISTORY_PSU_TEMPERATURE_1].push(self._pack(t1))
+        self.history[HISTORY_PSU_TEMPERATURE_2].push(self._pack(self.t3))
 
     def crc(self, data):
         return sum(b for b in data) % 0x100
@@ -99,10 +128,10 @@ class PSUState(BaseState):
             return
         offset += 2
 
-        power1 = struct.unpack_from(">BB", frame, offset)
+        power1 = struct.unpack_from(">H", frame, offset)[0]
         offset += 2
 
-        power2 = struct.unpack_from(">BB", frame, offset)
+        power2 = struct.unpack_from(">H", frame, offset)[0]
         offset += 2
 
         actual_power_crc = struct.unpack_from(">B", frame, offset)[0]
@@ -161,7 +190,6 @@ class PSUState(BaseState):
         self.t1 = t1
         self.t2 = t2
         self.t3 = t3
-        logger.debug(f"PSU AC: {self.ac} t1: {self.t1} t2: {self.t2} t3: {self.t3}")
         logger.info(
             f"PSU AC: {self.ac} t1: {self.t1} t2: {self.t2} t3: {self.t3} p1: {self.power1} p2: {self.power2}"
         )
@@ -301,7 +329,7 @@ class PowerSupplyController:
         logger.info("Initialized power supply controller")
 
     def on_tachometer(self, rpm):
-        self._state.tachometer = rpm
+        self._state.rpm = rpm
         logger.debug(f"PSU FAN RPM: {rpm}")
 
     def on_bms_state(self, bms_state):
@@ -322,7 +350,7 @@ class PowerSupplyController:
             self._turn_off_confirmations = 0
 
     def set_current(self, channel):
-        self._state.current = channel
+        self._state.current_channel = channel
         channel_a = channel & 0x01
         channel_b = (channel >> 1) & 0x01
         self._current_a_pin.value(channel_a)  # LSB (A)

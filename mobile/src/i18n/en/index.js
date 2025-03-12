@@ -14,9 +14,9 @@ export default {
     connectingToDevice: "Connecting ot the station...",
 
     voltage: "Voltage",
-    maxChargingCurrent: "Mac charging current.",
+    maxChargingCurrent: "Max charging current",
     startInverterAC: "Click to generate 230V",
-    batteryLevel: "Заряд",
+    batteryLevel: "Level",
     batteryVoltage: "Battery voltage",
     cellVoltage: "Cell voltage",
     mosTemperature: "BMS temperature",
@@ -34,6 +34,7 @@ export default {
     version: "Version",
     startPSU: "Click to charge the battery",
     acVoltage: "AC voltage",
+    rpm: "Fan speed",
 
     inverterErrorTimeout: "Inverter controller is not alive",
     inverterErrorException: "Unexpected inverter error",

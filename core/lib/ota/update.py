@@ -9,8 +9,8 @@ import io
 
 from esp32 import Partition
 
-from .blockdev_writer import BlockDevWriter
-from .status import ota_reboot
+from lib.ota.blockdev_writer import BlockDevWriter
+from lib.ota.status import ota_reboot
 
 
 # Micropython sockets don't have context manager methods. This wrapper provides

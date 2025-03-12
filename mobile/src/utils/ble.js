@@ -3,6 +3,12 @@ function unpack(value) {
     return value - 1;
 }
 
+function unpack_version(value) {
+    const major = value & 128;
+    const minor = value & 127;
+    return major + "." + minor + ".0";
+}
+
 function unpack_bool(value) {
     if (value === 0) return null;
     if (value === 1) return false;
@@ -55,6 +61,7 @@ export {
     unpack_voltage,
     unpack_cell_voltage,
     unpack_current,
+    unpack_version,
     pack_bool,
     to_hex,
 };

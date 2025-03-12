@@ -53,12 +53,12 @@ class ActiveScreen(BaseScreen):
     psu_label = None
     psu_temperature = None
     psu_ac_voltage = None
-    psu_tachometer = None
+    psu_rpm = None
 
     inverter_label = None
     inverter_temperature = None
     inverter_ac_voltage = None
-    inverter_tachometer = None
+    inverter_rpm = None
 
     power_label = None
     power = None
@@ -112,21 +112,21 @@ class ActiveScreen(BaseScreen):
             self.capacity.set_text(f"{value}%")
             self.capacity_bar.set_value(value, lv.ANIM.OFF)
 
-    def set_psu_state(self, t1, t2, ac_voltage, tachometer):
+    def set_psu_state(self, t1, t2, ac_voltage, rpm):
         if t1 and t2:
             self.psu_temperature.set_text(f"{t1}°С / {t2}°С")
         if ac_voltage:
             self.psu_ac_voltage.set_text(f"{ac_voltage}В")
-        if tachometer:
-            self.psu_tachometer.set_text(f"{tachometer} об/хв")
+        if rpm:
+            self.psu_rpm.set_text(f"{rpm} об/хв")
 
-    def set_inverter_state(self, temperature, ac_voltage, tachometer):
+    def set_inverter_state(self, temperature, ac_voltage, rpm):
         if temperature:
             self.inverter_temperature.set_text(f"{temperature}°С")
         if ac_voltage:
             self.inverter_ac_voltage.set_text(f"{ac_voltage}В")
-        if tachometer:
-            self.inverter_tachometer.set_text(f"{tachometer} об/хв")
+        if rpm:
+            self.inverter_rpm.set_text(f"{rpm} об/хв")
 
     def set_power_consumption(self, direction, power, seconds):
 
@@ -170,7 +170,7 @@ class ActiveScreen(BaseScreen):
     def show_psu_state(self):
         self.show_widget(self.psu_label)
         self.show_widget(self.psu_temperature)
-        self.show_widget(self.psu_tachometer)
+        self.show_widget(self.psu_rpm)
         self.show_widget(self.psu_ac_voltage)
         self.show_widget(self.power_in_glyph_a)
         self.show_widget(self.power_in_glyph_b)
@@ -179,7 +179,7 @@ class ActiveScreen(BaseScreen):
     def hide_psu_state(self):
         self.hide_widget(self.psu_label)
         self.hide_widget(self.psu_temperature)
-        self.hide_widget(self.psu_tachometer)
+        self.hide_widget(self.psu_rpm)
         self.hide_widget(self.psu_ac_voltage)
         self.hide_widget(self.power_in_glyph_a)
         self.hide_widget(self.power_in_glyph_b)
@@ -188,7 +188,7 @@ class ActiveScreen(BaseScreen):
     def show_inverter_state(self):
         self.show_widget(self.inverter_label)
         self.show_widget(self.inverter_temperature)
-        self.show_widget(self.inverter_tachometer)
+        self.show_widget(self.inverter_rpm)
         self.show_widget(self.inverter_ac_voltage)
         self.show_widget(self.power_out_glyph_a)
         self.show_widget(self.power_out_glyph_b)
@@ -197,7 +197,7 @@ class ActiveScreen(BaseScreen):
     def hide_inverter_state(self):
         self.hide_widget(self.inverter_label)
         self.hide_widget(self.inverter_temperature)
-        self.hide_widget(self.inverter_tachometer)
+        self.hide_widget(self.inverter_rpm)
         self.hide_widget(self.inverter_ac_voltage)
         self.hide_widget(self.power_out_glyph_a)
         self.hide_widget(self.power_out_glyph_b)
@@ -344,7 +344,7 @@ class ActiveScreen(BaseScreen):
         self.psu_ac_voltage = self.create_label(
             0, 10, col_span=3, row_span=2, font_size=24
         )
-        self.psu_tachometer = self.create_label(0, 12, col_span=3, font_size=12)
+        self.psu_rpm = self.create_label(0, 12, col_span=3, font_size=12)
 
         # capacity
         self.capacity = self.create_label(3, 2, col_span=6, row_span=5, font_size=120)
@@ -358,7 +358,7 @@ class ActiveScreen(BaseScreen):
         self.inverter_ac_voltage = self.create_label(
             9, 10, col_span=3, row_span=2, font_size=24
         )
-        self.inverter_tachometer = self.create_label(9, 12, col_span=3, font_size=12)
+        self.inverter_rpm = self.create_label(9, 12, col_span=3, font_size=12)
 
         # power stats
         self.power_label = self.create_label(
@@ -398,7 +398,7 @@ class ActiveScreen(BaseScreen):
                 t1=random.randint(16, 42),
                 t2=random.randint(16, 42),
                 ac_voltage=random.randint(207, 230),
-                tachometer=random.randint(
+                rpm=random.randint(
                     1000,
                     10000,
                 ),
@@ -415,7 +415,7 @@ class ActiveScreen(BaseScreen):
             self.set_inverter_state(
                 temperature=random.randint(16, 42),
                 ac_voltage=random.randint(207, 230),
-                tachometer=random.randint(
+                rpm=random.randint(
                     1000,
                     4500,
                 ),
@@ -482,7 +482,7 @@ class ActiveScreen(BaseScreen):
                 t1=average_temperature,
                 t2=state.t3,
                 ac_voltage=state.ac,
-                tachometer=state.tachometer,
+                rpm=state.rpm,
             )
 
     def on_inverter_state(self, state):
@@ -494,7 +494,7 @@ class ActiveScreen(BaseScreen):
         self.set_inverter_state(
             temperature=state.temperature,
             ac_voltage=state.ac,
-            tachometer=state.tachometer,
+            rpm=state.rpm,
         )
 
     def on_mcu_state(self, state):

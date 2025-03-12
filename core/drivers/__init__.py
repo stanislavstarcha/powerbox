@@ -218,6 +218,11 @@ class BaseState:
             return 0x02
 
     @staticmethod
+    def _pack_version(value):
+        major, minor, patch = value.split(".")
+        return ((int(major) & 0b1) << 7) | (int(minor) & 0b1111111)
+
+    @staticmethod
     def _pack_bms_temperature(value):
         if value is None:
             return 0

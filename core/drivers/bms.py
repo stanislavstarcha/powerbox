@@ -51,7 +51,7 @@ class BMSState(BaseState):
 
     ERROR_NO_MODIFY_RESPONSE = 2
 
-    # per cell charge
+    # per cell voltage
     cells = [None, None, None, None]
 
     mos_temperature = None
@@ -117,10 +117,6 @@ class BMSState(BaseState):
             data_type=DATA_TYPE_BYTE,
         ),
     }
-
-    DISPLAY_METRICS = ["mos", "soc"]
-
-    counter = 100
 
     def clear(self):
         self.cells = [None, None, None, None]
@@ -320,6 +316,11 @@ class BMSState(BaseState):
         )
         assert descriptor == 0x9C
         offset += 3
+
+        if self.external_errors:
+            self.set_error(self.ERROR_EXTERNAL)
+        else:
+            self.reset_error(self.ERROR_EXTERNAL)
 
     @staticmethod
     def crc(frame):

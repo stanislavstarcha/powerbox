@@ -12,6 +12,7 @@ from const import BLE_INVERTER_STATE_UUID
 from const import (
     HISTORY_INVERTER_POWER,
     HISTORY_INVERTER_TEMPERATURE,
+    HISTORY_INVERTER_RPM,
     DATA_TYPE_BYTE,
     DATA_TYPE_WORD,
 )
@@ -60,7 +61,8 @@ class InverterState(BaseState):
     # battery level
     level = None
 
-    tachometer = None
+    # fan speed
+    rpm = None
 
     # if state is valid
     _valid = False
@@ -70,13 +72,15 @@ class InverterState(BaseState):
             chart_type=HISTORY_INVERTER_POWER,
             data_type=DATA_TYPE_WORD,
         ),
+        HISTORY_INVERTER_RPM: HistoricalData(
+            chart_type=HISTORY_INVERTER_RPM,
+            data_type=DATA_TYPE_WORD,
+        ),
         HISTORY_INVERTER_TEMPERATURE: HistoricalData(
             chart_type=HISTORY_INVERTER_TEMPERATURE,
             data_type=DATA_TYPE_BYTE,
         ),
     }
-
-    DISPLAY_METRICS = ["temperature", "power"]
 
     def clear(self):
         self.active = False
@@ -85,7 +89,9 @@ class InverterState(BaseState):
         self.dc = None
         self.temperature = None
         self.level = None
+        self.rpm = None
         self.external_errors = 0
+        self.notify()
 
     def parse(self, frame):
 
@@ -177,11 +183,13 @@ class InverterState(BaseState):
     def build_history(self):
         self.history[HISTORY_INVERTER_POWER].push(self._pack(self.power))
         self.history[HISTORY_INVERTER_TEMPERATURE].push(self._pack(self.temperature))
+        self.history[HISTORY_INVERTER_RPM].push(self._pack(self.rpm))
 
     def get_ble_state(self):
         return struct.pack(
-            ">HBBBBB",
+            ">HHBBBBB",
             self._pack(self.power),
+            self._pack(self.rpm),
             self._pack_bool(self.active),
             self._pack(self.ac),
             self._pack(self.temperature),

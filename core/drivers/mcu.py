@@ -5,6 +5,7 @@ import time
 
 from drivers import BaseState
 from const import BLE_MCU_STATE_UUID
+from conf import VERSION
 
 from logging import logger
 
@@ -15,11 +16,10 @@ class MCUState(BaseState):
 
     GC_FREQUENCY = 5
 
+    version = None
     memory = 0
     temperature = 0
     heartbeat = True
-
-    DISPLAY_METRICS = ["temperature", "memory"]
 
     def clear(self):
         self.memory = None
@@ -28,8 +28,9 @@ class MCUState(BaseState):
     def get_ble_state(self):
         uptime = int(time.time())
         return struct.pack(
-            ">IBBB",
+            ">IBBBB",
             self._pack(uptime),
+            self._pack_version(VERSION),
             self._pack(self.temperature),
             self._pack(self.memory),
             self._pack(self.internal_errors),
@@ -40,8 +41,9 @@ class MCUController:
 
     _state = None
 
-    def __init__(self):
+    def __init__(self, led=None):
         self._state = MCUState()
+        self._led = led
 
     async def run(self):
         gc_counter = 0
@@ -51,9 +53,10 @@ class MCUController:
             used_mem = gc.mem_alloc()
             total_mem = free_mem + used_mem
             self._state.memory = int((used_mem / total_mem) * 100)
+            self._state.temperature = esp32.mcu_temperature()
 
-            # self._state.temperature = int((esp32.raw_temperature() - 32) / 1.8)
-            self._state.temperature = 0
+            if self._led:
+                self._led.pulse((0, 0, 100), 50)
 
             gc_counter += 1
             if gc_counter >= self._state.GC_FREQUENCY:

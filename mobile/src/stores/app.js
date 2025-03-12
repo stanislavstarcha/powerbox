@@ -10,7 +10,7 @@ import { useATSStore } from "stores/ats";
 import { useBMSStore } from "stores/bms";
 import { usePSUStore } from "stores/psu";
 import { useInverterStore } from "stores/inverter";
-import { useMCUStore } from "stores/esp";
+import { useMCUStore } from "stores/mcu";
 import { useHistoryStore } from "stores/history";
 
 import { pack_bool } from "src/utils/ble.js";

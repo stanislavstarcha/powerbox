@@ -7,6 +7,7 @@ from logging import logger
 
 from drivers import UART
 from drivers.ats import ATSController
+from drivers.led import LedController
 from drivers.ble import BLEServerController
 from drivers.inverter import InverterController
 from drivers.psu import PowerSupplyController
@@ -25,20 +26,24 @@ from const import (
 
 import conf
 
+led = LedController(pin=conf.LED_PIN)
+led.on()
+
 
 def disable_keyboard_interrupt():
     micropython.kbd_intr(-1)
 
 
 async def main():
+
     disable_keyboard_interrupt()
-    logger.info("Bootstrapping app ver: ", conf.BLE_FIRMWARE)
+    logger.info("Bootstrapping app ver: ", conf.VERSION)
 
     buzzer = BuzzerController(signal_pin=conf.BUZZER_SIGNAL_PIN)
     buzzer.boot()
 
     instructions = InstructionsQueue()
-    mcu = MCUController()
+    mcu = MCUController(led=led)
 
     logger.setup(
         transport=conf.LOGGER_TRANSPORT,
@@ -90,7 +95,7 @@ async def main():
             gap_name=conf.BLE_GAP_NAME,
             manufacturer=conf.BLE_MANUFACTURER,
             model=conf.BLE_MODEL,
-            firmware=conf.BLE_FIRMWARE,
+            firmware=conf.VERSION,
             instructions=instructions,
             ats=ats,
             bms=bms,
@@ -113,6 +118,8 @@ async def main():
             reset_pin=conf.DISPLAY_RESET_PIN,
             frequency=conf.DISPLAY_FREQ,
         )
+
+        display.active_screen.set_version(conf.VERSION)
 
         mcu.state.add_callback(EVENT_STATE_CHANGE, display.on_mcu_state)
         bms.state.add_callback(EVENT_STATE_CHANGE, display.on_bms_state)
@@ -182,4 +189,5 @@ while True:
         asyncio.run(main())
     except Exception as e:
         logger.critical(e)
+        led.pulse(color=(255, 0, 0), duration=50, n=20)
         time.sleep(5)

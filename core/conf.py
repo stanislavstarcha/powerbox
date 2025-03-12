@@ -1,15 +1,17 @@
 from micropython import const
 
+VERSION = "0.10.3"
+
 BLE_ENABLED = True
-BLE_GAP_NAME = "Tripillia"
+BLE_GAP_NAME = "Trypillia"
 BLE_MANUFACTURER = "egg17"
-BLE_MODEL = "Tripillia-4K12"
-BLE_FIRMWARE = "0.10.2"
+BLE_MODEL = "Trypillia-4K12"
 
 LOGGER_TRANSPORT = const(0)
 LOGGER_LEVEL = const(4)
 
-WIFI_ENABLED = const(False)
+LED_PIN = const(8)
+
 UART_IF = const(2)
 
 BMS_BAUD_RATE = const(115200)

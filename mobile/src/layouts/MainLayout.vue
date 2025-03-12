@@ -59,7 +59,7 @@ import { useAppStore } from "stores/app";
 import { useBMSStore } from "stores/bms";
 import { usePSUStore } from "stores/psu";
 import { useInverterStore } from "stores/inverter";
-import { useMCUStore } from "stores/esp";
+import { useMCUStore } from "stores/mcu";
 
 const appStore = useAppStore();
 const bmsStore = useBMSStore();

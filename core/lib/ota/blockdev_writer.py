@@ -47,7 +47,7 @@ class Blockdev(io.IOBase):
         return data_len
 
     # Read data from the block device.
-    def readinto(self, data: bytearray | memoryview):
+    def readinto(self, data: bytearray):
         size = min(len(data), self.end - self.pos)
         block, remainder = divmod(self.pos, self.blocksize)
         self.device.readblocks(block, memoryview(data)[:size], remainder)
@@ -112,7 +112,7 @@ class BlockDevWriter:
                 print(f" + {remainder} bytes")
 
     # Append data to the block device
-    def write(self, data: bytearray | bytes | memoryview) -> int:
+    def write(self, data: bytearray) -> int:
         self._sha.update(data)
         n = self.writer.write(data)
         self.print_progress()

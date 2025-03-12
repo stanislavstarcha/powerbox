@@ -41,7 +41,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useAppStore } from "stores/app";
-import { useMCUStore } from "stores/esp";
+import { useMCUStore } from "stores/mcu";
 import { useATSStore } from "stores/ats";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();

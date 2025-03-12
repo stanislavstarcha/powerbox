@@ -1,9 +1,10 @@
 import { acceptHMRUpdate, defineStore } from "pinia";
-import { unpack } from "src/utils/ble.js";
+import { unpack, unpack_version } from "src/utils/ble.js";
 
 export const useMCUStore = defineStore("esp", {
     state: () => ({
         uptime: 0,
+        version: null,
         temperature: null,
         memory: null,
         internalErrors: null,
@@ -15,6 +16,9 @@ export const useMCUStore = defineStore("esp", {
 
             this.uptime = unpack(view.getUint32(offset));
             offset += 4;
+
+            this.version = unpack_version(view.getUint8(offset));
+            offset += 1;
 
             this.temperature = unpack(view.getUint8(offset));
             offset += 1;

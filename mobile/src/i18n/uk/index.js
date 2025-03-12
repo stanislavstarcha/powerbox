@@ -9,8 +9,9 @@ export default {
     searchingForDevices: "Шукаємо пристрої...",
     connectingToDevice: "Зʼєднуємось зі станцієй...",
 
+    rpm: "Швидкість вентилятора",
     voltage: "Напруга",
-    maxChargingCurrent: "Максимальний струм заряду.",
+    maxChargingCurrent: "Максимальний струм заряду",
     startInverterAC: "Натисніть для генерації 230В",
     batteryLevel: "Заряд",
     batteryVoltage: "Напруга батареї",
