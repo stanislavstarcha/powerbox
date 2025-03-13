@@ -1,5 +1,8 @@
 import { store } from "quasar/wrappers";
 import { createPinia } from "pinia";
+import { markRaw } from "vue";
+import { route } from "quasar/wrappers";
+
 import _ from "lodash";
 
 import { HISTORY_LENGTH } from "stores/uuids";
@@ -37,11 +40,13 @@ function DeviceStorePlugin({ app, options, store }) {
     };
 
     store.patchChartData = (chartType, offset, data) => {
+        console.log("Patching started");
         store.$state.chartData[chartType].splice(
             offset,
             data.length,
             ...store.adjustChartData(chartType, data),
         );
+        console.log("Patching finished");
     };
 
     store.pushChartData = (chartType, offset, data) => {
@@ -54,9 +59,8 @@ function DeviceStorePlugin({ app, options, store }) {
 
 export default store((/* { ssrContext } */) => {
     const pinia = createPinia();
-
+    store.router = markRaw(route);
     // You can add Pinia plugins here
     pinia.use(DeviceStorePlugin);
-
     return pinia;
 });

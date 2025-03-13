@@ -35,7 +35,6 @@ def disable_keyboard_interrupt():
 
 
 async def main():
-
     disable_keyboard_interrupt()
     logger.info("Bootstrapping app ver: ", conf.VERSION)
 
@@ -126,6 +125,7 @@ async def main():
         ats.state.add_callback(EVENT_STATE_CHANGE, display.on_ats_state)
         psu.state.add_callback(EVENT_STATE_CHANGE, display.on_psu_state)
         inverter.state.add_callback(EVENT_STATE_CHANGE, display.on_inverter_state)
+        ble.state.add_callback(EVENT_STATE_CHANGE, display.on_ble_state)
 
         psu.state.add_callback(
             EVENT_STATE_ON,

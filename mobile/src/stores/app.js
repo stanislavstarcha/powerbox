@@ -13,7 +13,6 @@ import { useInverterStore } from "stores/inverter";
 import { useMCUStore } from "stores/mcu";
 import { useHistoryStore } from "stores/history";
 
-import { pack_bool } from "src/utils/ble.js";
 import { i18n } from "src/boot/i18n";
 
 import {
@@ -217,25 +216,10 @@ export const useAppStore = defineStore("app", {
                 // request history
                 await this.runBLECommand(COMMAND_PULL_HISTORY);
 
-                console.log("ATS initial state", dataViewToHexDump(atsState));
                 this.atsStore.parseState(atsState);
-
-                console.log("BMS initial state", dataViewToHexDump(bmsState));
                 this.bmsStore.parseState(bmsState);
-
-                console.log("PSU initial state", dataViewToHexDump(psuState));
                 this.psuStore.parseState(psuState);
-
-                console.log(
-                    "Inverter initial state",
-                    dataViewToHexDump(inverterState),
-                );
                 this.inverterStore.parseState(inverterState);
-
-                console.log(
-                    "MCU initial state",
-                    dataViewToHexDump(inverterState),
-                );
                 this.mcuStore.parseState(mcuState);
                 this.atsStore.parseState(atsState);
 
@@ -276,17 +260,15 @@ export const useAppStore = defineStore("app", {
             );
         },
 
-        async disconnect(deviceId) {
-            await BleClient.disconnect(deviceId);
-            this.onDisconnect(deviceId);
+        async disconnect() {
+            await BleClient.disconnect(this.deviceId);
         },
 
         onDisconnect(deviceId) {
             console.log("Disconnected from device", deviceId);
             this.deviceId = null;
             this.devices = [];
-            const router = useRouter();
-            router.push({ name: "Discover" });
+            this.router.push({ name: "Discover" });
         },
 
         async loadAppPreferences() {

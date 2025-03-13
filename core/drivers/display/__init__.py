@@ -137,3 +137,6 @@ class DisplayController:
 
     def on_mcu_state(self, state):
         self.active_screen.on_mcu_state(state)
+
+    def on_ble_state(self, state):
+        self.active_screen.on_ble_state(state)

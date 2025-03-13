@@ -1,5 +1,6 @@
 import { acceptHMRUpdate, defineStore } from "pinia";
 import { unpack, unpack_version } from "src/utils/ble.js";
+import { dataViewToHexDump } from "src/utils/index.js";
 
 export const useMCUStore = defineStore("esp", {
     state: () => ({
@@ -13,6 +14,7 @@ export const useMCUStore = defineStore("esp", {
     actions: {
         parseState(view) {
             let offset = 0;
+            console.log("MCU state", dataViewToHexDump(view));
 
             this.uptime = unpack(view.getUint32(offset));
             offset += 4;

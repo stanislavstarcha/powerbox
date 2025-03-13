@@ -18,7 +18,7 @@
                 {{ $t("power") }}
             </div>
             <div class="col-auto q-ml-xs q-mr-lg">
-                {{ inverterStore.power }} {{ $t("watt") }}
+                {{ power.toFixed(0) }} {{ $t("watt") }}
             </div>
             <div class="col-auto text-caption text-grey-7 q-ml-xs">
                 {{ $t("voltage") }}
@@ -57,6 +57,14 @@
                     :min="0"
                     :max="3"
                 />
+                <div class="row">
+                    <div class="col-6 text-left text-caption text-grey-5">
+                        {{ $t("quiet") }}
+                    </div>
+                    <div class="col-6 text-right text-caption text-grey-5">
+                        {{ $t("loud") }}
+                    </div>
+                </div>
             </div>
             <div class="col-6 text-center">
                 <div class="text-h5 text-weight-bold">{{ $t("inverter") }}</div>
@@ -90,11 +98,15 @@ const appStore = useAppStore();
 
 const { t } = useI18n();
 
+const power = computed(() => {
+    return bmsStore.voltage * bmsStore.current;
+});
+
 const currentLimitLabels = ref({
-    0: "25A",
-    1: "50A",
-    2: "75A",
-    3: "100A",
+    0: "25%",
+    1: "50%",
+    2: "75%",
+    3: "100%",
 });
 
 const charging = computed({
@@ -148,6 +160,7 @@ const chartOptions = ref({
         visible: false,
     },
     yAxis: {
+        opposite: true,
         max: 105,
         title: { text: null },
         visible: true,
@@ -156,8 +169,8 @@ const chartOptions = ref({
             style: { fontSize: "9px" },
             format: "{value}%",
             align: "left",
-            x: 5,
-            y: 10,
+            x: -25,
+            y: 0,
         },
         gridLineWidth: 0,
         lineWidth: 0,
@@ -178,13 +191,25 @@ const chartOptions = ref({
             },
             animation: false,
             clip: false,
-            lineWidth: 4,
+            lineWidth: 6,
         },
     },
     series: [
         {
             data: bmsStore.chartData[HISTORY_BMS_SOC],
             connectNulls: false,
+            zones: [
+                { value: 10, color: "#b30707" }, // Red
+                { value: 20, color: "#c02f0b" },
+                { value: 30, color: "#cb570f" },
+                { value: 40, color: "#d47b0e" },
+                { value: 50, color: "#d68d0f" }, // Orange
+                { value: 60, color: "#b6a421" },
+                { value: 70, color: "#8fb533" },
+                { value: 80, color: "#74bf39" },
+                { value: 90, color: "#6dcc3d" },
+                { color: "#6dcc3d" }, // Green (100)
+            ],
         },
     ],
 });

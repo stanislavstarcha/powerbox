@@ -128,10 +128,10 @@ class PSUState(BaseState):
             return
         offset += 2
 
-        power1 = struct.unpack_from(">H", frame, offset)[0]
+        power1 = struct.unpack_from("<H", frame, offset)[0]
         offset += 2
 
-        power2 = struct.unpack_from(">H", frame, offset)[0]
+        power2 = struct.unpack_from("<H", frame, offset)[0]
         offset += 2
 
         actual_power_crc = struct.unpack_from(">B", frame, offset)[0]

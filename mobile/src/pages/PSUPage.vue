@@ -1,50 +1,82 @@
 <template>
     <q-page class="">
         <highcharts :options="chartOptions"></highcharts>
+
         <div class="text-h5 q-mt-lg text-bold">{{ $t("psu") }}</div>
-        <div v-if="psuStore.hasErrors()">
-            <div v-for="error in errors" :key="error" class="error-message">
-                {{ error }}
+        <div class="q-mt-md error-message" v-for="error in errors" :key="error">
+            {{ error }}
+        </div>
+
+        <div class="row q-mt-md">
+            <div class="col-9"><span>■</span> {{ $t("acVoltage") }}</div>
+            <div class="col text-right" v-if="psuStore.ac">
+                {{ psuStore.ac }}{{ $t("volt") }}
+            </div>
+            <div class="col text-right text-grey-5" v-if="!psuStore.ac">
+                &mdash;
             </div>
         </div>
-        <div class="row q-mt-md">
-            <div class="col-10">{{ $t("acVoltage") }}</div>
-            <div class="col-2" v-if="psuStore.ac">{{ psuStore.ac }} В</div>
-            <div class="col-2 text-grey-5" v-if="!psuStore.ac">&mdash;</div>
-        </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">{{ $t("temperature") }} #1</div>
-            <div class="col-2" v-if="psuStore.t1">{{ psuStore.t1 }} ℃</div>
-            <div class="col-2 text-grey-5" v-if="!psuStore.t1">&mdash;</div>
-        </div>
-
-        <div class="row q-mt-md">
-            <div class="col-10">{{ $t("temperature") }} #2</div>
-            <div class="col-2" v-if="psuStore.t2">{{ psuStore.t2 }} ℃</div>
-            <div class="col-2 text-grey-5" v-if="!psuStore.t2">&mdash;</div>
-        </div>
-
-        <div class="row q-mt-md">
-            <div class="col-10">{{ $t("rpm") }}</div>
-            <div class="col-2" v-if="psuStore.t2">{{ psuStore.rpm }} ℃</div>
-            <div class="col-2 text-grey-5" v-if="!psuStore.rpm">&mdash;</div>
-        </div>
-
-        <div class="row q-mt-md">
-            <div class="col-10">{{ $t("power") }}</div>
-            <div class="col-2" v-if="psuStore.power1">
-                {{ psuStore.power1 }} ℃
+            <div class="col-9">
+                <span :style="{ color: TEMPERATURE_COLOR }">■</span>
+                {{ $t("temperature") }} #1
             </div>
-            <div class="col-2 text-grey-5" v-if="!psuStore.power1">&mdash;</div>
+            <div class="col text-right" v-if="psuStore.t1">
+                {{ psuStore.t1 }}℃
+            </div>
+            <div class="col text-right text-grey-5" v-if="!psuStore.t1">
+                &mdash;
+            </div>
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">{{ $t("maxChargingCurrent") }}</div>
-            <div class="col-2" v-if="psuStore.currentChannel">
-                {{ (psuStore.currentChannel + 1) * 25 }}%
+            <div class="col-9">
+                <span :style="{ color: TEMPERATURE_COLOR }">■</span>
+                {{ $t("temperature") }} #2
             </div>
-            <div class="col-2 text-grey-5" v-if="!psuStore.currentChannel">
+            <div class="col text-right" v-if="psuStore.t2">
+                {{ psuStore.t2 }}℃
+            </div>
+            <div class="col text-right text-grey-5" v-if="!psuStore.t2">
+                &mdash;
+            </div>
+        </div>
+
+        <div class="row q-mt-md">
+            <div class="col-9">
+                <span :style="{ color: FAN_COLOR }">■</span>
+                {{ $t("fan_speed") }}
+            </div>
+            <div class="col text-right" v-if="psuStore.t2">
+                {{ psuStore.rpm }} {{ $t("rpm") }}
+            </div>
+            <div class="col text-right text-grey-5" v-if="!psuStore.rpm">
+                &mdash;
+            </div>
+        </div>
+
+        <div class="row q-mt-md">
+            <div class="col-9">
+                <span :style="{ color: POWER_COLOR }">■</span> {{ $t("power") }}
+            </div>
+            <div class="col text-right" v-if="psuStore.power2">
+                {{ psuStore.power2 }}{{ $t("watt") }}
+            </div>
+            <div class="col text-right text-grey-5" v-if="!psuStore.power2">
+                &mdash;
+            </div>
+        </div>
+
+        <div class="row q-mt-md">
+            <div class="col-9">■ {{ $t("maxChargingCurrent") }}</div>
+            <div class="col text-right" v-if="appStore.currentLimit">
+                {{ (appStore.currentLimit + 1) * 25 }}%
+            </div>
+            <div
+                class="col text-right text-grey-5"
+                v-if="!appStore.currentLimit"
+            >
                 &mdash;
             </div>
         </div>
@@ -54,44 +86,32 @@
 <script setup>
 import { computed, ref } from "vue";
 import { usePSUStore } from "stores/psu";
+import { useAppStore } from "stores/app.js";
 import {
     HISTORY_PSU_RPM,
     HISTORY_PSU_POWER_1,
     HISTORY_PSU_POWER_2,
     HISTORY_PSU_TEMPERATURE_1,
     HISTORY_PSU_TEMPERATURE_2,
+    FAN_COLOR,
+    TEMPERATURE_COLOR,
+    POWER_COLOR,
 } from "stores/uuids.js";
 import { useI18n } from "vue-i18n";
+import { getErrors } from "src/utils/index.js";
 
+const appStore = useAppStore();
 const psuStore = usePSUStore();
+
 const { t } = useI18n();
 
 const errors = computed(() => {
-    if (!psuStore.internalErrors) return [];
-
-    const results = [];
-
-    if (psuStore.internalErrors & (1 << 0)) {
-        results.push(t("psuErrorTimeout"));
-    }
-
-    if (psuStore.internalErrors & (1 << 1)) {
-        results.push(t("psuErrorException"));
-    }
-
-    if (psuStore.internalErrors & (1 << 4)) {
-        results.push(t("psuErrorTemperatureSensor"));
-    }
-
-    if (psuStore.internalErrors & (1 << 5)) {
-        results.push(t("psuErrorVoltageSensor"));
-    }
-
-    if (psuStore.internalErrors & (1 << 6)) {
-        results.push(t("psuErrorPin"));
-    }
-
-    return results;
+    return getErrors(
+        "psu",
+        psuStore.internalErrors ?? 0,
+        psuStore.externalErrors ?? 0,
+        t,
+    );
 });
 
 const chartOptions = ref({
@@ -113,11 +133,11 @@ const chartOptions = ref({
             opposite: false,
             title: { text: null },
             visible: true,
-            max: 15,
-            tickPositions: [0, 12, 15],
+            max: 100,
+            tickPositions: [0, 50, 100],
             labels: {
-                style: { fontSize: "9px" },
-                format: "{value}}℃",
+                style: { color: TEMPERATURE_COLOR, fontSize: "9px" },
+                format: "{value}℃",
                 align: "left",
                 x: 5,
                 y: 10,
@@ -127,15 +147,15 @@ const chartOptions = ref({
         },
         {
             opposite: true,
-            max: 100,
+            max: 50000,
             title: { text: null },
             visible: true,
-            tickPositions: [0, 50, 100],
+            tickPositions: [0, 20000, 50000],
             labels: {
-                style: { fontSize: "9px" },
-                format: "{value}",
+                style: { color: FAN_COLOR, fontSize: "9px" },
+                format: "{value} " + t("rpm"),
                 align: "left",
-                x: -25,
+                x: -55,
                 y: 10,
             },
             gridLineWidth: 0,
@@ -143,15 +163,15 @@ const chartOptions = ref({
         },
         {
             opposite: true,
-            max: 42000,
+            max: 1500,
             title: { text: null },
             visible: true,
-            tickPositions: [0, 25, 75],
+            tickPositions: [0, 600, 1400],
             labels: {
-                style: { fontSize: "9px" },
-                format: "{value}",
+                style: { color: POWER_COLOR, fontSize: "9px" },
+                format: "{value}" + t("watt"),
                 align: "left",
-                x: -25,
+                x: -90,
                 y: 10,
             },
             gridLineWidth: 0,
@@ -181,23 +201,31 @@ const chartOptions = ref({
     series: [
         {
             data: psuStore.chartData[HISTORY_PSU_TEMPERATURE_1],
+            lineWidth: 2,
+            lineColor: TEMPERATURE_COLOR,
             yAxis: 0,
+            connectNulls: false,
         },
         {
             data: psuStore.chartData[HISTORY_PSU_TEMPERATURE_2],
+            lineWidth: 2,
+            lineColor: TEMPERATURE_COLOR,
             yAxis: 0,
-        },
-        {
-            data: psuStore.chartData[HISTORY_PSU_POWER_1],
-            yAxis: 1,
-        },
-        {
-            data: psuStore.chartData[HISTORY_PSU_POWER_2],
-            yAxis: 1,
+            connectNulls: false,
         },
         {
             data: psuStore.chartData[HISTORY_PSU_RPM],
+            lineWidth: 2,
+            lineColor: FAN_COLOR,
             yAxis: 1,
+            connectNulls: false,
+        },
+        {
+            data: psuStore.chartData[HISTORY_PSU_POWER_2],
+            lineWidth: 2,
+            lineColor: POWER_COLOR,
+            yAxis: 2,
+            connectNulls: false,
         },
     ],
 });

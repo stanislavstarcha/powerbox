@@ -1,7 +1,7 @@
 export default {
     inverter: "Інвертор",
     power: "Потужність",
-    psu: "Блок живлення",
+    psu: "Зарядка",
     current: "Струм",
     bms: "Контролер батареї",
     mainController: "Головний контролер",
@@ -9,7 +9,11 @@ export default {
     searchingForDevices: "Шукаємо пристрої...",
     connectingToDevice: "Зʼєднуємось зі станцієй...",
 
-    rpm: "Швидкість вентилятора",
+    fan_speed: "Швидкість вентилятора",
+    rpm: "Об/хв",
+    quiet: "Тихо",
+    loud: "Гучно",
+
     voltage: "Напруга",
     maxChargingCurrent: "Максимальний струм заряду",
     startInverterAC: "Натисніть для генерації 230В",
@@ -26,7 +30,7 @@ export default {
     ampere: "А",
     consumption: "Споживання",
     uptime: "Час роботи",
-    memory: "Памʼять",
+    memory: "Вільна памʼять",
     temperature: "Температура",
     version: "Версія",
     startPSU: "Натисніть щоб почати заряджати батарею",
@@ -36,12 +40,19 @@ export default {
     noStationsFound:
         "Не знайдено жодної станції. Переконайтесь що вона ввімкнена та знаходиться поблизу.",
 
-    inverterErrorTimeout: "Контролер інвертора не відповідає",
-    inverterErrorException: "Непередбачена помилка інвертора",
-    inverterErrorNoResponse: "Інвертер не відповідає",
-    inverterErrorBadResponse: "Помилка при отриманні відповіді від інвертора",
-    inverterErrorUnderVoltage: "Низька напруга батареї",
-    inverterErrorOverVoltage: "Висока напруга батареї",
+    inverterInternalError0: "Контролер інвертора не відповідає",
+    inverterInternalError1: "Непередбачена помилка інвертора",
+    inverterInternalError2: "Інвертер не відповідає",
+    inverterInternalError3: "Помилка при отриманні відповіді від інвертора",
+    inverterInternalError4: "Помилка інвертора",
+
+    inverterExternalError0: "Невідома помилка",
+    inverterExternalError1: "Перебільшено час пікового навантаження",
+    inverterExternalError2: "Перебільшено допустиме навантаження",
+    inverterExternalError3: "Пристрій перегрівся",
+    inverterExternalError4: "Низька напруга батареї",
+    inverterExternalError5: "Висока напруга батареї",
+    inverterExternalError6: "Проблема з вентиляторами",
 
     bmsErrorTimeout: "Контролер BMS не відповідає",
     bmsErrorException: "Непередбачена помилка BMS",

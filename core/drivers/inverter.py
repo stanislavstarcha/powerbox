@@ -132,7 +132,7 @@ class InverterState(BaseState):
         0x20 Overvoltage protection
         0x40 Fan rotation flag
         """
-        self.external_errors = int(f"{device_error:x}")
+        self.external_errors = int(device_error)
         self.level = int(level)
 
         checksum = int(f"{checksum:x}")

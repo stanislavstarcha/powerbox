@@ -29,11 +29,11 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/preferences"
 
 SPEC CHECKSUMS:
-  Capacitor: 679f9673fdf30597493a6362a5d5bf233d46abc2
-  CapacitorApp: 0bc633b4eae40a1f32cd2834788fad3bc42da6a1
-  CapacitorCommunityBluetoothLe: 2eeceb48d1a47cfc4018038675ec1568bdf23859
+  Capacitor: 69c7f687aabb8d85e543497411e40638b5cc08c0
+  CapacitorApp: f51c08c64df914fc934239fd1b3fc809d62a02f6
+  CapacitorCommunityBluetoothLe: da9e7c2c0d761c914bd289234c06fd2f52e1c6e3
   CapacitorCordova: f48c89f96c319101cd2f0ce8a2b7449b5fb8b3dd
-  CapacitorPreferences: 9f9935bce493977183511362131a93f7b260191a
+  CapacitorPreferences: f3eadae2369ac3ab8e21743a2959145b0d1286a3
 
 PODFILE CHECKSUM: 679e29c3e4d19c3c8f0040a9a32e6b1eca17701a
 

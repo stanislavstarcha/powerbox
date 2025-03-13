@@ -42,7 +42,7 @@ export const useHistoryStore = defineStore("history", {
                 [HISTORY_BMS_CELL3_VOLTAGE]: bmsStore,
                 [HISTORY_BMS_CELL4_VOLTAGE]: bmsStore,
                 [HISTORY_PSU_TEMPERATURE_1]: psuStore,
-                [HISTORY_PSU_TEMPERATURE_1]: psuStore,
+                [HISTORY_PSU_TEMPERATURE_2]: psuStore,
                 [HISTORY_PSU_POWER_1]: psuStore,
                 [HISTORY_PSU_POWER_2]: psuStore,
                 [HISTORY_PSU_RPM]: psuStore,
@@ -60,12 +60,24 @@ export const useHistoryStore = defineStore("history", {
 
             if (_.has(this.routes, chartType)) {
                 if (incremental === 1) {
+                    console.log(
+                        "Pushing chart data",
+                        chartType,
+                        offset,
+                        values,
+                    );
                     this.routes[chartType].pushChartData(
                         chartType,
                         offset,
                         values,
                     );
                 } else {
+                    console.log(
+                        "Patching chart data",
+                        chartType,
+                        offset,
+                        values,
+                    );
                     this.routes[chartType].patchChartData(
                         chartType,
                         offset,

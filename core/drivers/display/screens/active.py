@@ -302,7 +302,9 @@ class ActiveScreen(BaseScreen):
             is_hidden=False,
         )
 
-        self.ble = self.create_glyph(11, 0, ICON_BLE, row_span=2, is_hidden=False)
+        self.ble = self.create_glyph(
+            11, 0, ICON_BLE, row_span=2, is_hidden=False, color="grey"
+        )
 
         # mcu data
         self.mcu_memory = self.create_label(
@@ -505,3 +507,9 @@ class ActiveScreen(BaseScreen):
         self.reset_error(DEVICE_MCU)
         self.mcu_temperature.set_text(f"{state.temperature}°С")
         self.mcu_memory.set_text(f"{state.memory}%")
+
+    def on_ble_state(self, state):
+        if state.active:
+            self.ble.set_style_text_color(self.color_to_hex("blue"), 0)
+        else:
+            self.ble.set_style_text_color(self.color_to_hex("grey"), 0)

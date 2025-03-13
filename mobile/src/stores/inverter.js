@@ -5,9 +5,8 @@ import {
     HISTORY_INVERTER_TEMPERATURE,
     COMMAND_INVERTER_ENABLE,
     COMMAND_INVERTER_DISABLE,
-    COMMAND_PSU_ENABLE,
-    COMMAND_PSU_DISABLE,
 } from "stores/uuids.js";
+import { dataViewToHexDump } from "src/utils/index.js";
 import { useAppStore } from "stores/app.js";
 
 export const useInverterStore = defineStore("inverter", {
@@ -15,6 +14,7 @@ export const useInverterStore = defineStore("inverter", {
         ac: null,
         power: null,
         temperature: null,
+        rpm: null,
 
         externalErrors: null,
         internalErrors: null,
@@ -29,8 +29,12 @@ export const useInverterStore = defineStore("inverter", {
     actions: {
         parseState(view) {
             let offset = 0;
+            console.log("Inverter state", dataViewToHexDump(view));
 
             this.power = unpack(view.getUint16(offset));
+            offset += 2;
+
+            this.rpm = unpack(view.getUint16(offset));
             offset += 2;
 
             this.active = unpack_bool(view.getUint8(offset));

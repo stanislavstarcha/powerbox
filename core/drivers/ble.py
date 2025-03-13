@@ -192,7 +192,6 @@ class BLEServerController:
         return payload
 
     def start_advertising(self):
-
         if not self._ble:
             return
 
@@ -207,7 +206,6 @@ class BLEServerController:
         self._ble.gap_advertise(None)
 
     def on_ble_irq(self, event, data):
-
         if event == _IRQ_CENTRAL_CONNECT:
             logger.info("BLE client connected")
             connection, addr_type, addr = data

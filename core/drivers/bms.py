@@ -118,6 +118,12 @@ class BMSState(BaseState):
         ),
     }
 
+    def __init__(self):
+        for a in range(100):
+            self.history[HISTORY_BMS_SOC].push(self._pack(a))
+
+        super(BMSState, self).__init__()
+
     def clear(self):
         self.cells = [None, None, None, None]
 

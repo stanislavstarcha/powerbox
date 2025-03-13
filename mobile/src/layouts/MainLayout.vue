@@ -2,7 +2,7 @@
     <q-layout view="lHh Lpr lFf">
         <q-header>
             <q-toolbar class="flex-center">
-                <img src="~assets/logo-lg.png" height="32" />
+                <img src="~assets/logo-lg.png" height="48" />
                 <router-link to="/help"> </router-link>
             </q-toolbar>
         </q-header>
@@ -39,7 +39,7 @@
                         >!</q-badge
                     >
                 </q-route-tab>
-                <q-route-tab name="esp" to="/esp" icon="flaticon-cpu">
+                <q-route-tab name="mcu" to="/mcu" icon="flaticon-cpu">
                     <q-badge v-if="mcuStore.hasErrors()" color="red" floating
                         >!</q-badge
                     >

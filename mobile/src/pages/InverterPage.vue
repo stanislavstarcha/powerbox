@@ -3,34 +3,61 @@
         <highcharts :options="chartOptions"></highcharts>
 
         <div class="text-h5 q-mt-lg text-bold">{{ $t("inverter") }}</div>
+        <div class="q-mt-md error-message" v-for="error in errors" :key="error">
+            {{ error }}
+        </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">{{ $t("acVoltage") }}</div>
-            <div class="col-2" v-if="inverterStore.ac">
+            <div class="col-9">
+                <span>■</span>
+                {{ $t("acVoltage") }}
+            </div>
+            <div class="col text-right" v-if="inverterStore.ac">
                 {{ inverterStore.ac }} В
             </div>
-            <div class="col-2 text-grey-5" v-if="!inverterStore.ac">
+            <div class="col text-right text-grey-5" v-if="!inverterStore.ac">
                 &mdash;
             </div>
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">{{ $t("consumption") }}</div>
-            <div class="col-2" v-if="inverterStore.power">
+            <div class="col-9">
+                <span :style="{ color: POWER_COLOR }">■</span>
+                {{ $t("consumption") }}
+            </div>
+            <div class="col text-right" v-if="inverterStore.power">
                 {{ inverterStore.power }} {{ $t("watt") }}
             </div>
-            <div class="col-2 text-grey-5" v-if="!inverterStore.power">
+            <div class="col text-right text-grey-5" v-if="!inverterStore.power">
                 &mdash;
             </div>
         </div>
 
         <div class="row q-mt-md">
-            <div class="col-10">{{ $t("temperature") }}</div>
-            <div class="col-2" v-if="inverterStore.temperature">
+            <div class="col-9">
+                <span :style="{ color: TEMPERATURE_COLOR }">■</span>
+                {{ $t("temperature") }}
+            </div>
+            <div class="col text-right" v-if="inverterStore.temperature">
                 {{ inverterStore.temperature }} ℃
             </div>
-            <div class="col-2 text-grey-5" v-if="!inverterStore.temperature">
+            <div
+                class="col text-right text-grey-5"
+                v-if="!inverterStore.temperature"
+            >
                 &mdash;
+            </div>
+        </div>
+        <div class="row q-mt-md">
+            <div class="col-9">
+                <span :style="{ color: FAN_COLOR }">■</span>
+                {{ $t("fan_speed") }}
+            </div>
+            <div class="col text-right" v-if="inverterStore.rpm">
+                {{ inverterStore.rpm }} {{ $t("rpm") }}
+            </div>
+            <div class="col text-right text-grey-5" v-if="!inverterStore.rpm">
+                –
             </div>
         </div>
     </q-page>
@@ -43,42 +70,23 @@ import {
     HISTORY_INVERTER_POWER,
     HISTORY_INVERTER_TEMPERATURE,
     HISTORY_INVERTER_RPM,
+    FAN_COLOR,
+    TEMPERATURE_COLOR,
+    POWER_COLOR,
 } from "stores/uuids.js";
+import { getErrors } from "src/utils/index.js";
 import { useI18n } from "vue-i18n";
 
 const inverterStore = useInverterStore();
 const { t } = useI18n();
 
 const errors = computed(() => {
-    if (!inverterStore.internalErrors) return [];
-
-    const results = [];
-
-    if (inverterStore.internalErrors & (1 << 0)) {
-        results.push(t("inverterErrorTimeout"));
-    }
-
-    if (inverterStore.internalErrors & (1 << 1)) {
-        results.push(t("inverterErrorException"));
-    }
-
-    if (inverterStore.internalErrors & (1 << 2)) {
-        results.push(t("inverterErrorNoResponse"));
-    }
-
-    if (inverterStore.internalErrors & (1 << 3)) {
-        results.push(t("inverterErrorBadResponse"));
-    }
-
-    if (inverterStore.externalErrors == 10) {
-        results.push(t("inverterErrorUnderVoltage"));
-    }
-
-    if (inverterStore.externalErrors == 20) {
-        results.push(t("inverterErrorOverVoltage"));
-    }
-
-    return results;
+    return getErrors(
+        "inverter",
+        inverterStore.internalErrors ?? 0,
+        inverterStore.externalErrors ?? 0,
+        t,
+    );
 });
 
 const chartOptions = ref({
@@ -103,7 +111,7 @@ const chartOptions = ref({
             max: 2500,
             tickPositions: [0, 1000, 2500],
             labels: {
-                style: { fontSize: "9px" },
+                style: { color: POWER_COLOR, fontSize: "9px" },
                 format: "{value} " + t("watt"),
                 align: "left",
                 x: 5,
@@ -114,31 +122,30 @@ const chartOptions = ref({
         },
         {
             opposite: true,
-            max: 75,
+            max: 55,
             title: { text: null },
             visible: true,
-            tickPositions: [0, 25, 75],
+            tickPositions: [0, 30, 55],
             labels: {
-                style: { fontSize: "9px" },
+                style: { color: TEMPERATURE_COLOR, fontSize: "9px" },
                 format: "{value}℃",
                 align: "left",
                 x: -25,
                 y: 10,
             },
             gridLineWidth: 0,
-            lineWidth: 0,
         },
         {
-            opposite: true,
+            opposite: false,
             max: 25000,
             title: { text: null },
             visible: true,
-            tickPositions: [0],
+            tickPositions: [0, 10000, 25000],
             labels: {
-                style: { fontSize: "9px" },
-                format: "{value}",
+                style: { color: FAN_COLOR, fontSize: "9px" },
+                format: "{value} об/хв",
                 align: "left",
-                x: -25,
+                x: 50,
                 y: 10,
             },
             gridLineWidth: 0,
@@ -166,21 +173,21 @@ const chartOptions = ref({
         {
             data: inverterStore.chartData[HISTORY_INVERTER_POWER],
             lineWidth: 4,
-            lineColor: "red",
+            lineColor: POWER_COLOR,
             yAxis: 0,
             animation: false,
         },
         {
             data: inverterStore.chartData[HISTORY_INVERTER_TEMPERATURE],
             lineWidth: 1,
-            lineColor: "green",
+            lineColor: TEMPERATURE_COLOR,
             yAxis: 1,
             animation: false,
         },
         {
             data: inverterStore.chartData[HISTORY_INVERTER_RPM],
             lineWidth: 1,
-            lineColor: "blue",
+            lineColor: FAN_COLOR,
             yAxis: 2,
             animation: false,
         },

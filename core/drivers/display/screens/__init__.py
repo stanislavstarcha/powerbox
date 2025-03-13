@@ -163,4 +163,7 @@ class BaseScreen:
         if color == "green":
             return lv.color_hex(0xFF44FF)
 
+        if color == "blue":
+            return lv.color_hex(0xBB3200)
+
         return lv.color_hex(0x000000)

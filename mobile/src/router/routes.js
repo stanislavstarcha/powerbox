@@ -24,9 +24,9 @@ const routes = [
                 component: () => import("pages/PSUPage.vue"),
             },
             {
-                name: "ESP",
-                path: "esp",
-                component: () => import("pages/ESP32Page.vue"),
+                name: "MCU",
+                path: "mcu",
+                component: () => import("pages/MCUPage.vue"),
             },
             {
                 name: "Inverter",

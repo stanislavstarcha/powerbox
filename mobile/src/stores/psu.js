@@ -11,6 +11,7 @@ import {
     COMMAND_PSU_DISABLE,
 } from "stores/uuids.js";
 import { useAppStore } from "stores/app.js";
+import { dataViewToHexDump } from "src/utils/index.js";
 
 export const usePSUStore = defineStore("psu", {
     state: () => ({
@@ -37,6 +38,7 @@ export const usePSUStore = defineStore("psu", {
     actions: {
         parseState(view) {
             let offset = 0;
+            console.log("PSU state", dataViewToHexDump(view));
 
             this.rpm = unpack(view.getUint16(offset));
             offset += 2;
