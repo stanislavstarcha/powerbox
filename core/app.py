@@ -72,6 +72,9 @@ async def main():
         uart_tx_pin=conf.INVERTER_UART_TX_PIN,
         buzzer=buzzer,
         turn_off_voltage=conf.INVERTER_MIN_CELL_VOLTAGE,
+        fan_tachometer_a_pin=conf.PSU_FAN_TACHOMETER_A_PIN,
+        fan_tachometer_b_pin=conf.PSU_FAN_TACHOMETER_B_PIN,
+        fan_tachometer_timer=conf.PSU_FAN_TACHOMETER_TIMER,
     )
 
     psu = PowerSupplyController(
@@ -81,7 +84,7 @@ async def main():
         current_a_pin=conf.PSU_CURRENT_A_PIN,
         current_b_pin=conf.PSU_CURRENT_B_PIN,
         turn_off_voltage=conf.PSU_MAX_CELL_VOLTAGE,
-        fan_tachometer_pin=conf.PSU_FAN_TACHOMETER_PIN,
+        fan_tachometer_pin=conf.PSU_FAN_TACHOMETER_A_PIN,
         fan_tachometer_timer=conf.PSU_FAN_TACHOMETER_TIMER,
         uart=uart,
         uart_rx_pin=conf.PSU_UART_RX_PIN,

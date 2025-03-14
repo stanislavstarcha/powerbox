@@ -5,6 +5,7 @@ import struct
 from drivers import BaseState
 from drivers.button import ButtonController
 from lib.history import HistoricalData
+from lib.tachometer import Tachometer
 
 from logging import logger
 from const import BLE_INVERTER_STATE_UUID
@@ -61,8 +62,11 @@ class InverterState(BaseState):
     # battery level
     level = None
 
-    # fan speed
-    rpm = None
+    # fan A speed
+    rpm_a = None
+
+    # fan B speed
+    rpm_b = None
 
     # if state is valid
     _valid = False
@@ -89,7 +93,8 @@ class InverterState(BaseState):
         self.dc = None
         self.temperature = None
         self.level = None
-        self.rpm = None
+        self.rpm_a = None
+        self.rpm_b = None
         self.external_errors = 0
         self.notify()
 
@@ -180,16 +185,20 @@ class InverterState(BaseState):
     def is_valid(self):
         return self._valid
 
+    def get_avg_rpm(self):
+        if self.rpm_a and self.rpm_b:
+            return int((self.rpm_a + self.rpm_b) / 2)
+
     def build_history(self):
         self.history[HISTORY_INVERTER_POWER].push(self._pack(self.power))
         self.history[HISTORY_INVERTER_TEMPERATURE].push(self._pack(self.temperature))
-        self.history[HISTORY_INVERTER_RPM].push(self._pack(self.rpm))
+        self.history[HISTORY_INVERTER_RPM].push(self._pack(self.get_avg_rpm()))
 
     def get_ble_state(self):
         return struct.pack(
             ">HHBBBBB",
             self._pack(self.power),
-            self._pack(self.rpm),
+            self._pack(self.get_avg_rpm()),
             self._pack_bool(self.active),
             self._pack(self.ac),
             self._pack(self.temperature),
@@ -241,6 +250,9 @@ class InverterController:
         uart_rx_pin=UART_RX_PIN,
         buzzer=None,
         turn_off_voltage=TURN_OFF_VOLTAGE,
+        fan_tachometer_a_pin=None,
+        fan_tachometer_b_pin=None,
+        fan_tachometer_timer=None,
     ):
         self._state = InverterState()
         self._turn_off_voltage = turn_off_voltage
@@ -263,7 +275,32 @@ class InverterController:
             machine.Pin.PULL_DOWN,
         )
         self._power_gate_pin.off()
+
+        if fan_tachometer_a_pin:
+            self._tachometer_a = Tachometer(
+                pin=machine.Pin(fan_tachometer_a_pin, machine.Pin.IN),
+                period_ms=200,
+                done_callback=self.on_tachometer_a,
+                timer_id=fan_tachometer_timer,
+            )
+
+        if fan_tachometer_b_pin:
+            self._tachometer_b = Tachometer(
+                pin=machine.Pin(fan_tachometer_b_pin, machine.Pin.IN),
+                period_ms=200,
+                done_callback=self.on_tachometer_b,
+                timer_id=fan_tachometer_timer,
+            )
+
         logger.info(f"Initialized inverter")
+
+    def on_tachometer_a(self, rpm):
+        self._state.rpm_a = rpm
+        logger.debug(f"INVERTER FAN A RPM: {rpm}")
+
+    def on_tachometer_b(self, rpm):
+        self._state.rpm_b = rpm
+        logger.debug(f"INVERTER FAN B RPM: {rpm}")
 
     def on_bms_state(self, bms_state):
         triggered = False
@@ -319,6 +356,9 @@ class InverterController:
                 except Exception as e:
                     logger.error("Failed request to inverter")
                     logger.critical(e)
+                self._tachometer_a.measure()
+                self._tachometer_b.measure()
+
                 self._state.snapshot()
 
                 if self._state.is_valid():

@@ -496,7 +496,7 @@ class ActiveScreen(BaseScreen):
         self.set_inverter_state(
             temperature=state.temperature,
             ac_voltage=state.ac,
-            rpm=state.rpm,
+            rpm=state.get_avg_rpm(),
         )
 
     def on_mcu_state(self, state):

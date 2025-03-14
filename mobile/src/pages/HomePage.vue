@@ -199,15 +199,15 @@ const chartOptions = ref({
             data: bmsStore.chartData[HISTORY_BMS_SOC],
             connectNulls: false,
             zones: [
-                { value: 10, color: "#b30707" }, // Red
-                { value: 20, color: "#c02f0b" },
-                { value: 30, color: "#cb570f" },
-                { value: 40, color: "#d47b0e" },
-                { value: 50, color: "#d68d0f" }, // Orange
-                { value: 60, color: "#b6a421" },
-                { value: 70, color: "#8fb533" },
-                { value: 80, color: "#74bf39" },
-                { value: 90, color: "#6dcc3d" },
+                { value: 10, color: "#e02222" }, // Red
+                { value: 20, color: "#e74c1d" },
+                { value: 30, color: "#ee7619" },
+                { value: 40, color: "#f5900a" },
+                { value: 50, color: "#fca503" }, // Orange
+                { value: 60, color: "#d2b221" },
+                { value: 70, color: "#a5bf34" },
+                { value: 80, color: "#84c83a" },
+                { value: 90, color: "#74cb3c" },
                 { color: "#6dcc3d" }, // Green (100)
             ],
         },
