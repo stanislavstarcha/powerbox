@@ -5,6 +5,35 @@
             {{ error }}
         </div>
 
+        <div v-if="mcuStore.updateAvailable" class="row q-mt-md q-mb-md">
+            <q-btn class="col-12" color="primary" @click="showOTADialog()"
+                >New version {{ mcuStore.remoteVersion }} available</q-btn
+            >
+            <div class="q-pa-lg" v-if="OTADialog">
+                Для оновлення оберіть WIFI мережу і пароль
+                <q-input
+                    class="q-mt-md"
+                    outlined
+                    v-model="ssid"
+                    label="Назва WIFI мережі"
+                ></q-input>
+
+                <q-input
+                    class="q-mt-md"
+                    outlined
+                    v-model="password"
+                    type="password"
+                    label="Пароль"
+                />
+                <q-btn
+                    class="col-4 q-mt-md"
+                    color="secondary"
+                    @click="startOTAUpdate()"
+                    >Почати оровлення</q-btn
+                >
+            </div>
+        </div>
+
         <div class="row q-mt-md">
             <div class="col-8">{{ $t("version") }}</div>
             <div class="col text-right">{{ mcuStore.version }}</div>
@@ -45,23 +74,34 @@
             </div>
         </div>
         <div class="row q-mt-md items-center">
+            <q-btn @click="mcuStore.setProfileParam()">Set values</q-btn>
+            <q-btn @click="mcuStore.updateFirmware()">Update</q-btn>
+        </div>
+        <div class="row q-mt-md items-center">
             <q-btn @click="disconnect()">Disconnect</q-btn>
         </div>
     </q-page>
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
+
 import { useAppStore } from "stores/app";
 import { useMCUStore } from "stores/mcu";
-import { useATSStore } from "stores/ats";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 const mcuStore = useMCUStore();
 const appStore = useAppStore();
-const atsStore = useATSStore();
 
 import { formatTimeElapsed, getErrors } from "src/utils/index.js";
+
+const OTADialog = ref(false);
+const ssid = ref();
+const password = ref();
+
+const showOTADialog = () => {
+    OTADialog.value = true;
+};
 
 const ats = computed({
     get: () => appStore.ats,
@@ -75,6 +115,16 @@ const language = computed({
     set: (value) => {
         appStore.setLanguage(value);
     },
+});
+
+const startOTAUpdate = () => {
+    mcuStore.setOTACredentials(ssid.value, password.value);
+    mcuStore.updateFirmware();
+};
+
+onMounted(async () => {
+    ssid.value = await appStore.getPreference("ota_ssid");
+    password.value = await appStore.getPreference("ota_password");
 });
 
 const errors = computed(() => {

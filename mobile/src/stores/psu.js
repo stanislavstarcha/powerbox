@@ -1,4 +1,5 @@
 import { acceptHMRUpdate, defineStore } from "pinia";
+import { numbersToDataView } from "@capacitor-community/bluetooth-le";
 import { unpack, unpack_bool, unpack_voltage } from "src/utils/ble.js";
 
 import {
@@ -76,10 +77,12 @@ export const usePSUStore = defineStore("psu", {
             const appStore = useAppStore();
             if (value) {
                 console.log("Enabling PSU");
-                appStore.runBLECommand(COMMAND_PSU_ENABLE);
+                appStore.runBLECommand(numbersToDataView([COMMAND_PSU_ENABLE]));
             } else {
                 console.log("Disabling PSU");
-                appStore.runBLECommand(COMMAND_PSU_DISABLE);
+                appStore.runBLECommand(
+                    numbersToDataView([COMMAND_PSU_DISABLE]),
+                );
             }
         },
     },

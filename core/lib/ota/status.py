@@ -15,6 +15,8 @@ from esp32 import Partition
 from flashbdev import bdev
 from micropython import const
 
+from logging import logger
+
 OTA_UNSUPPORTED = const(-261)
 ESP_ERR_OTA_VALIDATE_FAILED = const(-5379)
 OTA_MIN: int = const(16)  # type: ignore
@@ -61,28 +63,6 @@ def ready() -> bool:
     return next_ota is not None
 
 
-def partition_table() -> list[tuple[int, int, int, int, str, bool]]:
-    partitions = [p.info() for p in Partition.find(Partition.TYPE_APP)]
-    partitions.extend([p.info() for p in Partition.find(Partition.TYPE_DATA)])
-    partitions.sort(key=lambda i: i[2])  # Sort by address
-    return partitions
-
-
-def partition_table_print() -> None:
-    ptype = {Partition.TYPE_APP: "app", Partition.TYPE_DATA: "data"}
-    subtype = [
-        {0: "factory"} | {i: f"ota_{i-OTA_MIN}" for i in range(OTA_MIN, OTA_MAX)},
-        {0: "ota", 1: "phy", 2: "nvs", 129: "fat"},  # DATA subtypes
-    ]
-    print("Partition table:")
-    print("# Name       Type     SubType      Offset       Size (bytes)")
-    for p in partition_table():
-        print(
-            f"  {p[4]:10s} {ptype[p[0]]:8s} {subtype[p[0]][p[1]]:8} "
-            + f"{p[2]:#10x} {p[3]:#10x} {p[3]:10,}"
-        )
-
-
 # Return a list of OTA partitions sorted by partition subtype number
 def ota_partitions() -> list[Partition]:
     partitions: list[Partition] = [
@@ -110,42 +90,36 @@ def otadata_check() -> None:
         )
         if is_valid and seq > valid_seq:
             valid_seq = seq
-        print(f"OTA record: state={state}, seq={seq}, crc={crc}, valid={is_valid}")
-        print(
+        logger.info(
+            f"OTA record: state={state}, seq={seq}, crc={crc}, valid={is_valid}"
+        )
+        logger.info(
             f"OTA record is {state}."
             + (" Will be updated on next boot." if state == "VALID" else "")
         )
     p = ota_partitions()
-    print(f"Next boot is '{p[(valid_seq - 1) % len(p)].info()[4]}'.")
+    logger.info(f"Next boot is '{p[(valid_seq - 1) % len(p)].info()[4]}'.")
 
 
 # Print a detailed summary of the OTA status of the device
 def status() -> None:
     upyversion, pname = sys.version.split(" ")[2], current_ota.info()[4]
-    print(f"Micropython {upyversion} has booted from partition '{pname}'.")
-    print(f"Will boot from partition '{boot_ota().info()[4]}' on next reboot.")
+    logger.info(f"Micropython {upyversion} has booted from partition '{pname}'.")
+    logger.info(f"Will boot from partition '{boot_ota().info()[4]}' on next reboot.")
     if not ota_partitions():
-        print("There are no OTA partitions available.")
+        logger.warning("There are no OTA partitions available.")
     elif not next_ota:
-        print("No spare OTA partition is available for update.")
+        logger.warning("No spare OTA partition is available for update.")
     else:
-        print(f"The next OTA partition for update is '{next_ota.info()[4]}'.")
-    print(f"The / filesystem is mounted from partition '{bdev.info()[4]}'.")
-    partition_table_print()
+        logger.info(f"The next OTA partition for update is '{next_ota.info()[4]}'.")
+    logger.info(f"The / filesystem is mounted from partition '{bdev.info()[4]}'.")
     otadata_check()
-
-
-# The functions below are used by `ota.rollback` and are here to make
-# `ota.rollback` as lightweight as possible for the common use case:
-# calling `ota.rollback.cancel()` on every boot.
 
 
 # Reboot the device after the provided delay
 def ota_reboot(delay=10) -> None:
-    for i in range(delay, 0, -1):
-        print(f"\rRebooting in {i:2} seconds (ctrl-C to cancel)", end="")
-        time.sleep(1)
-    print()
+    logger.info("Rebooting...")
+    time.sleep(1)
     machine.reset()  # Reboot into the new image
 
 
@@ -171,7 +145,9 @@ def cancel() -> None:
         Partition.mark_app_valid_cancel_rollback()
     except OSError as e:
         if e.args[0] == -261:
-            print(f"{__name__}.cancel(): The bootloader does not support OTA rollback.")
+            logger.error(
+                f"{__name__}.cancel(): The bootloader does not support OTA rollback."
+            )
         else:
             raise e
 

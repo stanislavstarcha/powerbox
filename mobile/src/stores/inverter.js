@@ -1,4 +1,5 @@
 import { acceptHMRUpdate, defineStore } from "pinia";
+import { numbersToDataView } from "@capacitor-community/bluetooth-le";
 import { unpack, unpack_bool } from "src/utils/ble.js";
 import {
     HISTORY_INVERTER_POWER,
@@ -57,9 +58,13 @@ export const useInverterStore = defineStore("inverter", {
             this.active = value;
             const appStore = useAppStore();
             if (value) {
-                appStore.runBLECommand(COMMAND_INVERTER_ENABLE);
+                appStore.runBLECommand(
+                    numbersToDataView([COMMAND_INVERTER_ENABLE]),
+                );
             } else {
-                appStore.runBLECommand(COMMAND_INVERTER_DISABLE);
+                appStore.runBLECommand(
+                    numbersToDataView([COMMAND_INVERTER_DISABLE]),
+                );
             }
         },
     },

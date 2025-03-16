@@ -9,6 +9,8 @@ import io
 
 from micropython import const
 
+from logging import logger
+
 IOCTL_BLOCK_COUNT: int = const(4)  # type: ignore
 IOCTL_BLOCK_SIZE: int = const(5)  # type: ignore
 IOCTL_BLOCK_ERASE: int = const(6)  # type: ignore
@@ -80,8 +82,10 @@ class BlockDevWriter:
         device,  # Block device to recieve the data (eg. esp32.Partition)
         verify: bool = True,  # Should we read back and verify data after writing
         verbose: bool = True,
+        progress_callback=None,
     ):
         self.device = Blockdev(device)
+        self.progress_callback = progress_callback
         self.writer = io.BufferedWriter(
             self.device, self.device.blocksize  # type: ignore
         )
@@ -92,19 +96,26 @@ class BlockDevWriter:
         self.length: int = 0
         blocksize, blockcount = self.device.blocksize, self.device.blockcount
         if self.verbose:
-            print(f"Device capacity: {blockcount} x {blocksize} byte blocks.")
+            logger.debug(f"Device capacity: {blockcount} x {blocksize} byte blocks.")
 
     def set_sha_length(self, sha: str, length: int):
         self.sha = sha
         self.length = length
         blocksize, blockcount = self.device.blocksize, self.device.blockcount
         if length > blocksize * blockcount:
-            raise ValueError(f"length ({length} bytes) is > size of partition.")
+            raise ValueError(
+                f"length ({length} bytes) is > size of partition. Blocksize: {blocksize} blockcount: {blockcount}"
+            )
         if self.verbose and length:
             blocks, remainder = divmod(length, blocksize)
-            print(f"Writing {blocks} blocks + {remainder} bytes.")
+            logger.debug(f"Writing {blocks} blocks + {remainder} bytes.")
 
-    def print_progress(self):
+    def progress(self):
+
+        if self.progress_callback:
+            current_block, _ = divmod(self.device.pos, self.device.blocksize)
+            self.progress_callback(self.device.blockcount, current_block)
+
         if self.verbose:
             block, remainder = divmod(self.device.pos, self.device.blocksize)
             print(f"\rBLOCK {block}", end="")
@@ -115,7 +126,7 @@ class BlockDevWriter:
     def write(self, data: bytearray) -> int:
         self._sha.update(data)
         n = self.writer.write(data)
-        self.print_progress()
+        self.progress()
         return n
 
     # Append data from f (a stream object) to the block device
@@ -132,7 +143,7 @@ class BlockDevWriter:
     #   ValueError("SHA verify fail...") if verified SHA != written sha
     def close(self) -> None:
         self.writer.flush()
-        self.print_progress()
+        self.progress()
         # Check the checksums (SHA256)
         nbytes: int = self.device.end
         if self.length and self.length != nbytes:
@@ -144,15 +155,13 @@ class BlockDevWriter:
             raise ValueError(f"SHA mismatch recv={write_sha} expect={self.sha}.")
         if self.verify:
             if self.verbose:
-                print("Verifying SHA of the written data...", end="")
+                logger.debug("Verifying SHA of the written data...")
             self.device.seek(0)  # Reset to start of partition
             read_sha = sha_file(self.device, self.device.blocksize)
             if read_sha != write_sha:
                 raise ValueError(f"SHA verify failed write={write_sha} read={read_sha}")
-            if self.verbose:
-                print("Passed.")
         if self.verbose or not self.sha:
-            print(f"SHA256={self.sha}")
+            logger.debug(f"SHA256={self.sha}")
         self.device.seek(0)  # Reset to start of partition
 
     def __enter__(self):

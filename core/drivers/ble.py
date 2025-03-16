@@ -14,12 +14,14 @@ from const import (
     BLE_INVERTER_STATE_UUID,
     BLE_PSU_STATE_UUID,
     BLE_MCU_STATE_UUID,
+    BLE_OTA_STATE_UUID,
     BLE_HISTORY_STATE_UUID,
     BLE_RUN_COMMAND_UUID,
     BLE_INFO_SERVICE_UUID,
     BLE_MANUFACTURER_UUID,
     BLE_MODEL_NUMBER_UUID,
     BLE_FIRMWARE_REV_UUID,
+    PROFILE_KEY_ATS,
 )
 
 _IRQ_CENTRAL_CONNECT = const(1)
@@ -70,6 +72,7 @@ class BLEServerController:
         BLE_INVERTER_STATE_UUID: None,
         BLE_PSU_STATE_UUID: None,
         BLE_MCU_STATE_UUID: None,
+        BLE_OTA_STATE_UUID: None,
         BLE_HISTORY_STATE_UUID: None,
         BLE_RUN_COMMAND_UUID: None,
     }
@@ -86,6 +89,8 @@ class BLEServerController:
         inverter=None,
         mcu=None,
         ats=None,
+        ota=None,
+        profile=None,
     ):
         self._state = BLEState()
 
@@ -100,11 +105,14 @@ class BLEServerController:
         self._inverter = inverter
         self._mcu = mcu
         self._ats = ats
+        self._ota = ota
+        self._profile = profile
 
         self._bms.state.attach_ble(self)
         self._psu.state.attach_ble(self)
         self._inverter.state.attach_ble(self)
         self._mcu.state.attach_ble(self)
+        self._ota.state.attach_ble(self)
 
     async def run(self):
         logger.info("Running Bluetooth controller...")
@@ -134,6 +142,7 @@ class BLEServerController:
                 self.HANDLE[BLE_INVERTER_STATE_UUID],
                 self.HANDLE[BLE_PSU_STATE_UUID],
                 self.HANDLE[BLE_MCU_STATE_UUID],
+                self.HANDLE[BLE_OTA_STATE_UUID],
                 self.HANDLE[BLE_HISTORY_STATE_UUID],
                 self.HANDLE[BLE_RUN_COMMAND_UUID],
             ),
@@ -152,6 +161,7 @@ class BLEServerController:
                         (BLE_INVERTER_STATE_UUID, FLAG_READ | FLAG_NOTIFY),
                         (BLE_PSU_STATE_UUID, FLAG_READ | FLAG_NOTIFY),
                         (BLE_MCU_STATE_UUID, FLAG_READ | FLAG_NOTIFY),
+                        (BLE_OTA_STATE_UUID, FLAG_READ | FLAG_NOTIFY),
                         (BLE_HISTORY_STATE_UUID, FLAG_NOTIFY),
                         (BLE_RUN_COMMAND_UUID, FLAG_WRITE),
                     ),
@@ -260,6 +270,12 @@ class BLEServerController:
             self._ble_write(handle, state)
             return
 
+        if handle == self.HANDLE[BLE_OTA_STATE_UUID]:
+            state = self._ota.state.get_ble_state()
+            logger.debug("BLE reading OTA state", state, len(state))
+            self._ble_write(handle, state)
+            return
+
     def on_write_state(self, connection, handle):
         if not self._ble:
             return
@@ -306,21 +322,25 @@ class BLEServerController:
 
         if subcommand == COMMAND_ATS_ENABLE:
             logger.debug("Turn on ATS via BLE command")
+            self._instructions.add(self._profile.set, PROFILE_KEY_ATS, b"\x01")
             self._instructions.add(self._ats.enable)
 
         if subcommand == COMMAND_ATS_DISABLE:
             logger.debug("Turn off ATS via BLE command")
+            self._instructions.add(self._profile.set, PROFILE_KEY_ATS, b"\x00")
             self._instructions.add(self._ats.disable)
 
         if subcommand == COMMAND_CONF_SET_KEY:
-            key = struct.unpack_from(">B", data, 1)
-            logger.debug("Set config key via BLE command")
+            param = struct.unpack_from(">B", data, 1)[0]
+            self._instructions.add(self._profile.set, param, data[2:])
+            logger.debug("Set config key via BLE command", param, data[2:])
 
         if subcommand == COMMAND_CONF_PROFILE:
             logger.debug("Set profile via BLE command")
 
         if subcommand == COMMAND_UPDATE_FIRMWARE:
             logger.debug("Update firmware via BLE command")
+            self._instructions.add(self._ota.update)
 
     def notify(self, uuid, state):
         if not self._ble or self._connection is None:

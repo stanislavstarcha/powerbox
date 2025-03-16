@@ -9,8 +9,11 @@ import io
 
 from esp32 import Partition
 
+from logging import logger
+
 from lib.ota.blockdev_writer import BlockDevWriter
 from lib.ota.status import ota_reboot
+import lib.myrequests as requests
 
 
 # Micropython sockets don't have context manager methods. This wrapper provides
@@ -29,7 +32,6 @@ class SocketWrapper:
 # Open a file or a URL and return a File-like object for reading
 def open_url(url_or_filename: str, **kw) -> io.BufferedReader:
     if url_or_filename.split(":", 1)[0] in ("http", "https"):
-        import requests
 
         r = requests.get(url_or_filename, **kw)
         code: int = r.status_code
@@ -48,7 +50,15 @@ def open_url(url_or_filename: str, **kw) -> io.BufferedReader:
 # to force a reset/restart, or call machine.reset() explicitly. Remember to call
 # ota.rollback.cancel() after a successful reboot to the new image.
 class OTA:
-    def __init__(self, verify=True, verbose=True, reboot=False, sha="", length=0):
+    def __init__(
+        self,
+        verify=True,
+        verbose=True,
+        reboot=False,
+        sha="",
+        length=0,
+        progress_callback=None,
+    ):
         self.reboot = reboot
         self.verbose = verbose
         # Get the next free OTA partition
@@ -56,8 +66,10 @@ class OTA:
         self.part = Partition(Partition.RUNNING).get_next_update()
         if verbose:
             name: str = self.part.info()[4]
-            print(f"Writing new micropython image to OTA partition '{name}'...")
-        self.writer = BlockDevWriter(self.part, verify, verbose)
+            logger.info(f"Writing new micropython image to OTA partition '{name}'...")
+        self.writer = BlockDevWriter(
+            self.part, verify, verbose, progress_callback=progress_callback
+        )
         if sha or length:
             self.writer.set_sha_length(sha, length)
 
@@ -75,13 +87,12 @@ class OTA:
         self.writer.close()
         # Set as boot partition for next reboot
         name: str = self.part.info()[4]
-        print(f"OTA Partition '{name}' updated successfully.")
+        logger.info(f"OTA Partition '{name}' updated successfully.")
         self.part.set_boot()  # Raise OSError(-5379) if image on part is not valid
         bootname = Partition(Partition.BOOT).info()[4]
         if name != bootname:
-            print(f"Warning: failed to set {name} as the next boot partition.")
-        print(f"Micropython will boot from '{bootname}' partition on next boot.")
-        print("Remember to call ota.rollback.cancel() after successful reboot.")
+            logger.warning(f"Warning: failed to set {name} as the next boot partition.")
+        logger.info(f"Micropython will boot from '{bootname}' partition on next boot.")
         if self.reboot:
             ota_reboot()
 
@@ -108,7 +119,7 @@ class OTA:
     # - length: the length (in bytes) of the firmware file
     def from_firmware_file(self, url: str, sha: str = "", length: int = 0, **kw) -> int:
         if self.verbose:
-            print(f"Opening firmware file {url}...")
+            logger.debug(f"Opening firmware file {url}...")
         with open_url(url, **kw) as f:
             return self.from_stream(f, sha, length)
 
@@ -120,7 +131,7 @@ class OTA:
         if not url.endswith(".json"):
             raise ValueError("Url does not end with '.json'")
         if self.verbose:
-            print(f"Opening json file {url}...")
+            logger.debug(f"Opening json file {url}...")
         with open_url(url, **kw) as f:
             from json import load
 
@@ -135,7 +146,7 @@ class OTA:
                 firmware = f"{baseurl}/{firmware}"
             return self.from_firmware_file(firmware, sha, length, **kw)
         except KeyError as err:
-            print('OTA json must include "firmware", "sha" and "length" keys.')
+            logger.error('OTA json must include "firmware", "sha" and "length" keys.')
             raise err
 
 

@@ -1,12 +1,14 @@
 PODS:
-  - Capacitor (6.1.2):
+  - Capacitor (7.1.0):
     - CapacitorCordova
-  - CapacitorApp (6.0.1):
+  - CapacitorApp (7.0.0):
     - Capacitor
-  - CapacitorCommunityBluetoothLe (6.0.2):
+  - CapacitorCommunityBluetoothLe (7.0.0):
     - Capacitor
-  - CapacitorCordova (6.1.2)
-  - CapacitorPreferences (6.0.3):
+  - CapacitorCordova (7.1.0)
+  - CapacitorPreferences (7.0.0):
+    - Capacitor
+  - CapawesomeTeamCapacitorWifi (7.0.1):
     - Capacitor
 
 DEPENDENCIES:
@@ -15,6 +17,7 @@ DEPENDENCIES:
   - "CapacitorCommunityBluetoothLe (from `../../node_modules/@capacitor-community/bluetooth-le`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorPreferences (from `../../node_modules/@capacitor/preferences`)"
+  - "CapawesomeTeamCapacitorWifi (from `../../node_modules/@capawesome-team/capacitor-wifi`)"
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -27,14 +30,17 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorPreferences:
     :path: "../../node_modules/@capacitor/preferences"
+  CapawesomeTeamCapacitorWifi:
+    :path: "../../node_modules/@capawesome-team/capacitor-wifi"
 
 SPEC CHECKSUMS:
-  Capacitor: 69c7f687aabb8d85e543497411e40638b5cc08c0
-  CapacitorApp: f51c08c64df914fc934239fd1b3fc809d62a02f6
-  CapacitorCommunityBluetoothLe: da9e7c2c0d761c914bd289234c06fd2f52e1c6e3
-  CapacitorCordova: f48c89f96c319101cd2f0ce8a2b7449b5fb8b3dd
-  CapacitorPreferences: f3eadae2369ac3ab8e21743a2959145b0d1286a3
+  Capacitor: bceb785fb78f5e81e4a9e37843bc1c24bd9c7194
+  CapacitorApp: 9cb31064a6c6bb2b1438583733a7bf45557fc1da
+  CapacitorCommunityBluetoothLe: f911fcbecc25033bca1cfcc5782c46c11ebf62ec
+  CapacitorCordova: 866217f32c1d25b326c568a10ea3ed0c36b13e29
+  CapacitorPreferences: 8e4bef1f937fc991a19d7ea99330c36a62edd24b
+  CapawesomeTeamCapacitorWifi: e89800217d8aeaa8ee08b65d4d2b995103495fc9
 
-PODFILE CHECKSUM: 679e29c3e4d19c3c8f0040a9a32e6b1eca17701a
+PODFILE CHECKSUM: aa3cecd4fd8616ed04a7bc3227a898172a41a2e8
 
 COCOAPODS: 1.16.2

@@ -31,10 +31,15 @@ class ATSController:
     _no_pin = None
     _state = None
 
-    def __init__(self, nc_pin=NC_PIN, no_pin=NO_PIN):
+    def __init__(self, nc_pin=NC_PIN, no_pin=NO_PIN, enabled=False):
         self._state = ATSState()
         self._nc_pin = machine.Pin(nc_pin, machine.Pin.IN, machine.Pin.PULL_DOWN)
         self._no_pin = machine.Pin(no_pin, machine.Pin.IN, machine.Pin.PULL_DOWN)
+        if enabled:
+            self.enable()
+
+    def on_profile_state(self, state):
+        pass
 
     def enable(self):
         try:
@@ -49,7 +54,6 @@ class ATSController:
             )
 
             # TODO get initial state, e.g. when it's already connected
-
             logger.info(
                 f"Initialized ATS controller nc: {self._nc_pin} no: {self._no_pin}"
             )
@@ -62,6 +66,7 @@ class ATSController:
     def disable(self):
         self._nc_pin.irq(handler=None)
         self._no_pin.irq(handler=None)
+        self._state.mode = ATS_MODE_NONE
 
     def _check_state(self, pin):
 

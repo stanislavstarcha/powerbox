@@ -1,6 +1,11 @@
 from micropython import const
 
-VERSION = "0.10.0"
+VERSION = "0.9.0"
+
+FIRMWARE_URL = "https://github.com/stanislavstarcha/powerbox/releases/latest/download/firmware.json"
+
+BUZZER_SIGNAL_PIN = const(1)
+LED_PIN = const(8)
 
 BLE_ENABLED = True
 BLE_GAP_NAME = "Trypillia"
@@ -9,8 +14,6 @@ BLE_MODEL = "Trypillia-4K12"
 
 LOGGER_TRANSPORT = const(0)
 LOGGER_LEVEL = const(4)
-
-LED_PIN = const(8)
 
 UART_IF = const(2)
 
@@ -44,10 +47,7 @@ INVERTER_FAN_TACHOMETER_B_PIN = const(47)
 ATS_NO_PIN = const(14)
 ATS_NC_PIN = const(13)
 
-BUZZER_SIGNAL_PIN = const(1)
-
-
-DISPLAY_ENABLED = True
+DISPLAY_ENABLED = False
 DISPLAY_WIDTH = const(320)
 DISPLAY_HEIGHT = const(480)
 

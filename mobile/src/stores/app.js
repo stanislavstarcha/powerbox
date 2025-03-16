@@ -20,6 +20,7 @@ import {
     BLE_BMS_STATE_UUID,
     BLE_PSU_STATE_UUID,
     BLE_MCU_STATE_UUID,
+    BLE_OTA_STATE_UUID,
     BLE_INVERTER_STATE_UUID,
     BLE_ATS_STATE_UUID,
     BLE_HISTORY_STATE_UUID,
@@ -133,34 +134,45 @@ export const useAppStore = defineStore("app", {
 
                 await this.loadDevicePreferences();
 
-                const [atsState, bmsState, psuState, inverterState, mcuState] =
-                    await Promise.all([
-                        BleClient.read(
-                            deviceId,
-                            BLE_CORE_SERVICE_UUID,
-                            BLE_ATS_STATE_UUID,
-                        ),
-                        BleClient.read(
-                            deviceId,
-                            BLE_CORE_SERVICE_UUID,
-                            BLE_BMS_STATE_UUID,
-                        ),
-                        BleClient.read(
-                            deviceId,
-                            BLE_CORE_SERVICE_UUID,
-                            BLE_PSU_STATE_UUID,
-                        ),
-                        BleClient.read(
-                            deviceId,
-                            BLE_CORE_SERVICE_UUID,
-                            BLE_INVERTER_STATE_UUID,
-                        ),
-                        BleClient.read(
-                            deviceId,
-                            BLE_CORE_SERVICE_UUID,
-                            BLE_MCU_STATE_UUID,
-                        ),
-                    ]);
+                const [
+                    atsState,
+                    bmsState,
+                    psuState,
+                    inverterState,
+                    mcuState,
+                    otaState,
+                ] = await Promise.all([
+                    BleClient.read(
+                        deviceId,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_ATS_STATE_UUID,
+                    ),
+                    BleClient.read(
+                        deviceId,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_BMS_STATE_UUID,
+                    ),
+                    BleClient.read(
+                        deviceId,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_PSU_STATE_UUID,
+                    ),
+                    BleClient.read(
+                        deviceId,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_INVERTER_STATE_UUID,
+                    ),
+                    BleClient.read(
+                        deviceId,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_MCU_STATE_UUID,
+                    ),
+                    BleClient.read(
+                        deviceId,
+                        BLE_CORE_SERVICE_UUID,
+                        BLE_OTA_STATE_UUID,
+                    ),
+                ]);
 
                 await Promise.all([
                     BleClient.startNotifications(
@@ -201,6 +213,13 @@ export const useAppStore = defineStore("app", {
                     BleClient.startNotifications(
                         deviceId,
                         BLE_CORE_SERVICE_UUID,
+                        BLE_OTA_STATE_UUID,
+                        this.mcuStore.parseOTAState,
+                    ),
+
+                    BleClient.startNotifications(
+                        deviceId,
+                        BLE_CORE_SERVICE_UUID,
                         BLE_HISTORY_STATE_UUID,
                         this.historyStore.parseState,
                     ),
@@ -214,14 +233,16 @@ export const useAppStore = defineStore("app", {
                 ]);
 
                 // request history
-                await this.runBLECommand(COMMAND_PULL_HISTORY);
+                await this.runBLECommand(
+                    numbersToDataView([COMMAND_PULL_HISTORY]),
+                );
 
                 this.atsStore.parseState(atsState);
                 this.bmsStore.parseState(bmsState);
                 this.psuStore.parseState(psuState);
                 this.inverterStore.parseState(inverterState);
                 this.mcuStore.parseState(mcuState);
-                this.atsStore.parseState(atsState);
+                this.mcuStore.checkFirmwareUpdate();
 
                 console.log("Connected to device:", deviceId);
                 Loading.hide();
@@ -237,19 +258,11 @@ export const useAppStore = defineStore("app", {
             }
         },
 
-        async runBLECommand(commandId, data = null) {
-            const view =
-                data === null
-                    ? numbersToDataView([commandId])
-                    : numbersToDataView([commandId, data]);
-
+        async runBLECommand(view) {
             console.log(
                 "Run BLE command:",
                 BleClient,
-                commandId,
                 this.deviceId,
-                BLE_CORE_SERVICE_UUID,
-                BLE_RUN_COMMAND_UUID,
                 dataViewToHexDump(view),
             );
             await BleClient.write(
@@ -285,7 +298,13 @@ export const useAppStore = defineStore("app", {
             this.setCurrentLimit(_.defaultTo(JSON.parse(current.value), 0));
         },
 
+        async getPreference(key) {
+            const v = await Preferences.get({ key });
+            return JSON.parse(v.value);
+        },
+
         async savePreference(key, value) {
+            console.log("storing preference", key, value);
             await Preferences.set({
                 key: key,
                 value: JSON.stringify(value),
@@ -296,9 +315,11 @@ export const useAppStore = defineStore("app", {
             this.savePreference("ats", value).then(() => {
                 this.ats = value;
                 if (value) {
-                    this.runBLECommand(COMMAND_ATS_ENABLE);
+                    this.runBLECommand(numbersToDataView([COMMAND_ATS_ENABLE]));
                 } else {
-                    this.runBLECommand(COMMAND_ATS_DISABLE);
+                    this.runBLECommand(
+                        numbersToDataView([COMMAND_ATS_DISABLE]),
+                    );
                 }
             });
         },
@@ -314,7 +335,9 @@ export const useAppStore = defineStore("app", {
         setCurrentLimit(value) {
             this.savePreference("current", value).then(() => {
                 this.currentLimit = value;
-                this.runBLECommand(COMMAND_PSU_CURRENT, value);
+                this.runBLECommand(
+                    numbersToDataView([COMMAND_PSU_CURRENT, value]),
+                );
             });
         },
 

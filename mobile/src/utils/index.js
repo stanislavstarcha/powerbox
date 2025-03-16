@@ -1,3 +1,7 @@
+import { numbersToDataView } from "@capacitor-community/bluetooth-le";
+
+import { COMMAND_CONF_SET_KEY } from "stores/uuids.js";
+
 function dataViewToHexDump(dataview) {
     const bytes = [];
     for (let i = 0; i < dataview.byteLength; i++) {
@@ -43,4 +47,51 @@ function getErrors(device, internal, external, t) {
     return errors;
 }
 
-export { dataViewToHexDump, formatTimeElapsed, getErrors };
+function pack_bool_param(param, value) {
+    return numbersToDataView([
+        COMMAND_CONF_SET_KEY,
+        param,
+        value ? 0x01 : 0x00,
+    ]);
+}
+
+function pack_int_param(param, value) {
+    return numbersToDataView([
+        COMMAND_CONF_SET_KEY,
+        param,
+        value ? 0x01 : 0x00,
+    ]);
+}
+
+function pack_float_param(param, value) {
+    const view = new DataView(new ArrayBuffer(6));
+    view.setInt8(0, COMMAND_CONF_SET_KEY);
+    view.setInt8(1, param);
+    view.setFloat32(2, value, true);
+    return view;
+}
+
+function pack_string_param(param, value) {
+    const encoded = new TextEncoder().encode(value);
+    const buffer = new ArrayBuffer(encoded.length + 2);
+    const view = new DataView(buffer);
+
+    view.setInt8(0, COMMAND_CONF_SET_KEY);
+    view.setInt8(1, param);
+
+    for (let i = 0; i < encoded.length; i++) {
+        view.setUint8(i + 2, encoded[i]);
+    }
+
+    return view;
+}
+
+export {
+    dataViewToHexDump,
+    formatTimeElapsed,
+    getErrors,
+    pack_bool_param,
+    pack_float_param,
+    pack_int_param,
+    pack_string_param,
+};
