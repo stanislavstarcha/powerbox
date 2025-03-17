@@ -1,4 +1,5 @@
 import struct
+import machine
 
 from bluetooth import BLE, FLAG_READ, FLAG_WRITE, FLAG_NOTIFY
 from micropython import const
@@ -50,6 +51,7 @@ COMMAND_ATS_DISABLE = const(0x31)
 COMMAND_CONF_SET_KEY = const(0x40)
 COMMAND_CONF_PROFILE = const(0x41)
 COMMAND_UPDATE_FIRMWARE = const(0x50)
+COMMAND_REBOOT = const(0xF0)
 
 
 class BLEState(BaseState):
@@ -341,6 +343,10 @@ class BLEServerController:
         if subcommand == COMMAND_UPDATE_FIRMWARE:
             logger.debug("Update firmware via BLE command")
             self._instructions.add(self._ota.update)
+
+        if subcommand == COMMAND_REBOOT:
+            logger.debug("Rebooting vie BLE command")
+            machine.reset()
 
     def notify(self, uuid, state):
         if not self._ble or self._connection is None:

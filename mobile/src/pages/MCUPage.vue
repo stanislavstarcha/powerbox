@@ -1,5 +1,5 @@
 <template>
-    <q-page class="">
+    <q-page class="hide-bottom-space">
         <div class="text-h5 q-mt-lg text-bold">{{ $t("mainController") }}</div>
         <div class="q-mt-md error-message" v-for="error in errors" :key="error">
             {{ error }}
@@ -7,15 +7,20 @@
 
         <div v-if="mcuStore.updateAvailable" class="row q-mt-md q-mb-md">
             <q-btn class="col-12" color="primary" @click="showOTADialog()"
-                >New version {{ mcuStore.remoteVersion }} available</q-btn
+                >{{ $t("newVersionAvailable") }}
+                {{ mcuStore.remoteVersion }}</q-btn
             >
             <div class="q-pa-lg" v-if="OTADialog">
-                Для оновлення оберіть WIFI мережу і пароль
+                {{ $t("selectWifiPassword") }}
+
                 <q-input
                     class="q-mt-md"
                     outlined
                     v-model="ssid"
-                    label="Назва WIFI мережі"
+                    :label="$t('wifiNetwork')"
+                    :autocorrect="'off'"
+                    :autocomplete="'off'"
+                    :spellcheck="false"
                 ></q-input>
 
                 <q-input
@@ -23,13 +28,16 @@
                     outlined
                     v-model="password"
                     type="password"
-                    label="Пароль"
+                    :label="$t('wifiPassword')"
+                    :autocorrect="'off'"
+                    :autocomplete="'off'"
+                    :spellcheck="false"
                 />
                 <q-btn
                     class="col-4 q-mt-md"
                     color="secondary"
                     @click="startOTAUpdate()"
-                    >Почати оровлення</q-btn
+                    >{{ $t("startFirmwareUpdate") }}</q-btn
                 >
             </div>
         </div>
@@ -74,16 +82,17 @@
             </div>
         </div>
         <div class="row q-mt-md items-center">
-            <q-btn @click="mcuStore.setProfileParam()">Set values</q-btn>
-            <q-btn @click="mcuStore.updateFirmware()">Update</q-btn>
-        </div>
-        <div class="row q-mt-md items-center">
-            <q-btn @click="disconnect()">Disconnect</q-btn>
+            <q-btn size="xs" @click="disconnect()">{{
+                $t("disconnect")
+            }}</q-btn>
+            <q-btn size="xs" @click="reboot()">{{ $t("reboot") }}</q-btn>
         </div>
     </q-page>
 </template>
 
 <script setup>
+import { Keyboard } from "@capacitor/keyboard";
+
 import { computed, ref, onMounted } from "vue";
 
 import { useAppStore } from "stores/app";
@@ -125,6 +134,7 @@ const startOTAUpdate = () => {
 onMounted(async () => {
     ssid.value = await appStore.getPreference("ota_ssid");
     password.value = await appStore.getPreference("ota_password");
+    Keyboard.setAccessoryBarVisible({ isVisible: false });
 });
 
 const errors = computed(() => {

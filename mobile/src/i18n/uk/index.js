@@ -40,6 +40,15 @@ export default {
     noStationsFound:
         "Не знайдено жодної станції. Переконайтесь що вона ввімкнена та знаходиться поблизу.",
 
+    startFirmwareUpdate: "Почати оновлення",
+    wifiNetwork: "Назва WIFI мережі",
+    wifiPassword: "WIFI пароль",
+    newVersionAvailable: "Доступна нова версія",
+    selectWifiPassword: "Для оновлення оберіть WIFI мережу і пароль",
+    otaPreparing: "Підготовка оновлення",
+    otaDownloading: "Завантаження",
+    otaUpdating: "Оновлюємо версію",
+
     inverterInternalError0: "Контролер інвертора не відповідає",
     inverterInternalError1: "Непередбачена помилка інвертора",
     inverterInternalError2: "Інвертер не відповідає",
@@ -54,17 +63,21 @@ export default {
     inverterExternalError5: "Висока напруга батареї",
     inverterExternalError6: "Проблема з вентиляторами",
 
-    bmsErrorTimeout: "Контролер BMS не відповідає",
-    bmsErrorException: "Непередбачена помилка BMS",
-    bmsErrorNoResponse: "BMS не відповідає",
-    bmsErrorBadResponse: "Помилка при отриманні відповіді від BMS",
+    bmsInternalError0: "Контролер батареї не відповідає",
+    bmsInternalError1: "Непередбачена помилка контролера батареї",
+    bmsInternalError2: "Контролер батареї не відповідає",
+    bmsInternalError3: "Помилка при отриманні відповіді",
 
-    psuErrorTimeout: "Контролер блока живлення не відповідає",
-    psuErrorException: "Непередбачена помилка блока живлення",
-    psuErrorTemperatureSensor: "Помилка сенсору температури",
-    psuErrorVoltageSensor: "Помилка сенсору вольтметра",
+    psuInternalError0: "Контролер блока живлення не відповідає",
+    psuInternalError1: "Непередбачена помилка блока живлення",
+    psuInternalError2: "Контролер батареї не відповідає",
+    psuInternalError3: "Помилка при отриманні відповіді",
+
     psuErrorPin: "Помилка ініціалізаціії кнопки",
 
     avrMode: "Режим вводу резерву",
     appLanguage: "Мова інтерфейсу",
+
+    reboot: "Перезавантажити",
+    disconnect: "Відключитися",
 };

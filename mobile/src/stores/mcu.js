@@ -70,15 +70,15 @@ export const useMCUStore = defineStore("esp", {
             if (this.status === OTA_STATUS_UPDATING) {
                 console.log("OTA updating " + this.progress);
                 Loading.show({
-                    message: "OTA updating " + this.progress,
+                    message: $("otaUpdating") + " " + this.progress + "%",
                     spinner: QSpinnerGears,
                 });
             }
 
             if (this.status === OTA_STATUS_PREPARING) {
-                console.log("OTA preparing ");
+                console.log("OTA preparing...");
                 Loading.show({
-                    message: "OTA preparing",
+                    message: $("otaPreparing"),
                     spinner: QSpinnerGears,
                 });
             }
@@ -86,7 +86,7 @@ export const useMCUStore = defineStore("esp", {
             if (this.status === OTA_STATUS_DOWNLOADING) {
                 console.log("Downloading");
                 Loading.show({
-                    message: "Downloading",
+                    message: $("otaDownloading"),
                     spinner: QSpinnerGears,
                 });
             }
@@ -170,14 +170,6 @@ export const useMCUStore = defineStore("esp", {
             const appStore = useAppStore();
 
             appStore.runBLECommand(pack_bool_param(PROFILE_KEY_ATS, false));
-
-            appStore.runBLECommand(
-                pack_string_param(PROFILE_KEY_WIFI_SSID, "keatlon"),
-            );
-
-            appStore.runBLECommand(
-                pack_string_param(PROFILE_KEY_WIFI_PASSWORD, "playwifi2"),
-            );
 
             appStore.runBLECommand(
                 pack_float_param(PROFILE_KEY_MIN_VOLTAGE, 2.8),

@@ -1,6 +1,6 @@
 from micropython import const
 
-VERSION = "0.9.0"
+VERSION = "0.10.0"
 
 FIRMWARE_URL = "https://github.com/stanislavstarcha/powerbox/releases/latest/download/firmware.json"
 

@@ -1,26 +1,25 @@
 # Install and run firmware
 
+Add paths to your bash/zsh rc for convenience 
+
 ```shell
-cd $HOME
-git clone https://github.com/stanislavstarcha/powerbox
 export POWERBOX_HOME=$HOME/powerbox
+export LVGL_HOME=$HOME/lvgl_micropython
 ```
 
-Connect ESP32 to USB and find the port `ls /dev/tty*`
 
-A typical serial port should look like this 
-- `/dev/tty.usbmodem11101`
-- `/dev/cu.usbserial-0001`
-- `/dev/tty.usbmodem1234561`
-
-
-## Build firmware
-
-Install LVGL micropython
 ```shell
-cd $HOME
-git clone https://github.com/lvgl-micropython/lvgl_micropython
-export LVGL_HOME=$HOME/workspace/lvgl_micropython
+mkdir $POWERBOX_HOME
+cd $POWERBOX_HOME
+git clone https://github.com/stanislavstarcha/powerbox .
+```
+
+## Install LVGL micropython
+
+```shell
+mkdir $LVGL_HOME
+cd $LVGL_HOME
+git clone https://github.com/lvgl-micropython/lvgl_micropython .
 ```
 
 ### Copy fonts
@@ -74,16 +73,8 @@ and define custom fonts we've built earlier
 ```
 
 
-### Build binaries
+## Build firmware
 
-ESP32 version 
-
-```shell
-cd $LVGL_HOME
-python make.py esp32 BOARD=ESP32_GENERIC DISPLAY=ILI9488 FROZEN_MANIFEST=$POWERBOX_HOME/manifest.py
-```
-
-ESP32-S3 OTA version
 ```shell
 cd $LVGL_HOME
 python make.py esp32 BOARD=ESP32_GENERIC_S3 DISPLAY=ILI9488 \
@@ -93,6 +84,13 @@ FROZEN_MANIFEST=$POWERBOX_HOME/manifest.py BOARD_VARIANT=SPIRAM_OCT \
 ```
 
 ### Flash firmware
+
+Connect ESP32 to USB and find the port `ls /dev/tty*`
+
+A typical serial port should look like this 
+- `/dev/tty.usbmodem11101`
+- `/dev/cu.usbserial-0001`
+- `/dev/tty.usbmodem1234561`
 
 Instead of `/dev/cu.usbserial-0001` use the actual port 
 
@@ -105,18 +103,21 @@ python -m esptool --chip esp32s3 -p /dev/tty.wchusbserial59710258441 \
 0x0 /Users/stasstarcha/workspace/lvgl_micropython/build/lvgl_micropy_ESP32_GENERIC_S3-SPIRAM_OCT-16.bin
 ```
 
-Manually write second partition
-```
-python -m esptool --chip esp32s3 -p /dev/tty.wchusbserial59710258441 -b 460800 \
---before default_reset --after no_reset write_flash --flash_mode dio --flash_size 16MB --flash_freq 80m \
-0x280000 lib/micropython/ports/esp32/build-ESP32_GENERIC_S3-SPIRAM_OCT/micropython.bin
-```
+### Build release
+
+Specify the version and run the command to produce bin and json files that
+should be attached to a release on github.
+
+```shell
+cd $POWEBOX_HOME
+python scripts/release.py --version=0.10.0 \
+--path=$LVGL_HOME/lib/micropython/ports/esp32/build-ESP32_GENERIC_S3-SPIRAM_OCT/micropython.bin \
+--output=../build
+
+ ```
 
 
-The above puts micropython, LVGL library, and the actual code into the firmware.
-
-
-### Development mode
+## Development mode
 
 During development, it's easier to update files one by one.
 
@@ -125,3 +126,4 @@ python initialize.py \
 --baud_rate 115200 \
 --port /dev/cu.usbserial-0001
 ```
+
