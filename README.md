@@ -24,6 +24,7 @@ git clone https://github.com/lvgl-micropython/lvgl_micropython .
 
 ### Copy fonts
 ```shell
+cd $POWEBOX_HOME
 cp ./resources/fonts/Roboto-Black.ttf $LVGL_HOME/lib/lvgl/scripts/built_in_font
 cp ./resources/fonts/Roboto-Regular.ttf $LVGL_HOME/lib/lvgl/scripts/built_in_font
 cp ./resources/fonts/Material-Sharp-28.ttf $LVGL_HOME/lib/lvgl/scripts/built_in_font
@@ -60,8 +61,8 @@ python generate_all.py
 
 Open `$LVGL_HOME/lib/lvconf.h`
 
-And set to 0 (disable) all `#define LV_FONT_MONTSERRAT_*`
-and define custom fonts we've built earlier
+Set to 0 (disable) all `#define LV_FONT_MONTSERRAT_*`
+and define custom fonts built earlier.
 
 ```
 #define LV_FONT_MONTSERRAT_14 0
@@ -85,14 +86,15 @@ FROZEN_MANIFEST=$POWERBOX_HOME/manifest.py BOARD_VARIANT=SPIRAM_OCT \
 
 ### Flash firmware
 
-Connect ESP32 to USB and find the port `ls /dev/tty*`
+Connect ESP32-S3 to USB and find the port `ls /dev/tty*`
 
 A typical serial port should look like this 
 - `/dev/tty.usbmodem11101`
 - `/dev/cu.usbserial-0001`
 - `/dev/tty.usbmodem1234561`
 
-Instead of `/dev/cu.usbserial-0001` use the actual port 
+Note: On MacOS you may need a CH34xVCPDriver that would create a new port like
+`/dev/tty.wchusbserial59710258441`
 
 ```shell
 cd $LVGL_HOME
@@ -106,14 +108,13 @@ python -m esptool --chip esp32s3 -p /dev/tty.wchusbserial59710258441 \
 ### Build release
 
 Specify the version and run the command to produce bin and json files that
-should be attached to a release on github.
+should be attached to a release on GitHub.
 
 ```shell
 cd $POWEBOX_HOME
 python scripts/release.py --version=0.10.0 \
 --path=$LVGL_HOME/lib/micropython/ports/esp32/build-ESP32_GENERIC_S3-SPIRAM_OCT/micropython.bin \
 --output=../build
-
  ```
 
 
@@ -126,4 +127,3 @@ python initialize.py \
 --baud_rate 115200 \
 --port /dev/cu.usbserial-0001
 ```
-
