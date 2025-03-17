@@ -1,5 +1,4 @@
 sandbox
-scripts
 .idea
 .vscode
 .python-version
@@ -13,3 +12,4 @@ node_modules
 *.lck
 package-lock.json
 build
+debug
