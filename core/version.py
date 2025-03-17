@@ -1,0 +1,3 @@
+FIRMWARE = "0.10.0"
+PCB_CORE = "0.1.0"
+PCB_BOOSTER = "0.1.0"

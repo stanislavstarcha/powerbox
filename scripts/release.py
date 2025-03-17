@@ -3,6 +3,14 @@ import hashlib
 import json
 import shutil
 from pathlib import Path
+import importlib.util
+
+
+def import_variable(file_path, variable_name):
+    spec = importlib.util.spec_from_file_location("module_name", file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return getattr(module, variable_name, None)
 
 
 def calculate_sha256(file_path):
@@ -14,10 +22,10 @@ def calculate_sha256(file_path):
 
 
 def main():
+    version = import_variable("core/version.py", "FIRMWARE")
     script_dir = Path(__file__).resolve().parent
 
     parser = argparse.ArgumentParser(description="Process firmware file.")
-    parser.add_argument("--version", required=True, type=str, help="Firmware version")
     parser.add_argument("--path", required=True, type=Path, help="Path to input file")
     parser.add_argument(
         "--output", type=Path, default=script_dir / "build", help="Output directory"
@@ -43,8 +51,8 @@ def main():
     file_sha256 = calculate_sha256(input_file)
 
     firmware_json = {
-        "firmware": f"https://github.com/stanislavstarcha/powerbox/releases/download/{args.version}/firmware.bin",
-        "version": args.version,
+        "firmware": f"https://github.com/stanislavstarcha/powerbox/releases/download/{version}/firmware.bin",
+        "version": version,
         "sha": file_sha256,
         "length": file_length,
     }

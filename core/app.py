@@ -34,6 +34,7 @@ from const import (
 )
 
 import conf
+import version
 
 led = LedController(pin=conf.LED_PIN)
 led.on()
@@ -52,7 +53,7 @@ def disable_keyboard_interrupt():
 
 async def main():
     # disable_keyboard_interrupt()
-    logger.info("Bootstrapping app ver: ", conf.VERSION)
+    logger.info("Bootstrapping app ver: ", version.FIRMWARE)
 
     uart = UART(conf.UART_IF)
     profile = ProfileController()
@@ -125,7 +126,7 @@ async def main():
             gap_name=conf.BLE_GAP_NAME,
             manufacturer=conf.BLE_MANUFACTURER,
             model=conf.BLE_MODEL,
-            firmware=conf.VERSION,
+            firmware=version.FIRMWARE,
             instructions=instructions,
             ats=ats,
             bms=bms,
@@ -151,7 +152,7 @@ async def main():
             frequency=conf.DISPLAY_FREQ,
         )
 
-        display.active_screen.set_version(conf.VERSION)
+        display.active_screen.set_version(version.FIRMWARE)
 
         mcu.state.add_callback(EVENT_STATE_CHANGE, display.on_mcu_state)
         bms.state.add_callback(EVENT_STATE_CHANGE, display.on_bms_state)
