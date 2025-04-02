@@ -535,7 +535,7 @@
       "plot": "core-v5-20250225",
       "pos_files": "",
       "specctra_dsn": "",
-      "step": "",
+      "step": "../../../../../Downloads/core.step",
       "svg": "",
       "vrml": ""
     },

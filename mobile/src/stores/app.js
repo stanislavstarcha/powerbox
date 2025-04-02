@@ -4,7 +4,6 @@ import { Loading, QSpinnerGears } from "quasar";
 import { acceptHMRUpdate, defineStore } from "pinia";
 import { Preferences } from "@capacitor/preferences";
 import { numbersToDataView } from "@capacitor-community/bluetooth-le";
-
 import { useRouter } from "vue-router";
 import { useATSStore } from "stores/ats";
 import { useBMSStore } from "stores/bms";
@@ -12,7 +11,6 @@ import { usePSUStore } from "stores/psu";
 import { useInverterStore } from "stores/inverter";
 import { useMCUStore } from "stores/mcu";
 import { useHistoryStore } from "stores/history";
-
 import { i18n } from "src/boot/i18n";
 
 import {
@@ -77,7 +75,7 @@ export const useAppStore = defineStore("app", {
         async scan() {
             this.scanning = true;
             Loading.show({
-                message: "searchingForDevices",
+                message: i18n.global.t("searchingForDevices"),
                 spinner: QSpinnerGears,
             });
             this.clearDevices();
@@ -117,7 +115,7 @@ export const useAppStore = defineStore("app", {
         async connect(deviceId) {
             try {
                 Loading.show({
-                    message: "connectingToDevice",
+                    message: i18n.global.t("connectingToDevice"),
                     spinner: QSpinnerGears,
                 });
                 console.log("Connecting to device", deviceId);
@@ -343,6 +341,15 @@ export const useAppStore = defineStore("app", {
 
         addDevice(device) {
             this.devices.push(device);
+        },
+
+        subscribeToEvents(uuid, callback) {
+            BleClient.startNotifications(
+                this.deviceId,
+                BLE_CORE_SERVICE_UUID,
+                uuid,
+                callback,
+            );
         },
     },
 });

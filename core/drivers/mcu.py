@@ -3,9 +3,9 @@ import gc
 import struct
 import time
 
+import version
 from drivers import BaseState
 from const import BLE_MCU_STATE_UUID
-from conf import VERSION
 
 from logging import logger
 
@@ -30,7 +30,7 @@ class MCUState(BaseState):
         return struct.pack(
             ">IBBBB",
             self._pack(uptime),
-            self._pack_version(VERSION),
+            self._pack_version(version.FIRMWARE),
             self._pack(self.temperature),
             self._pack(self.memory),
             self._pack(self.internal_errors),

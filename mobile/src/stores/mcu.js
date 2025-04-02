@@ -4,6 +4,7 @@ import { Loading, QSpinnerGears } from "quasar";
 import { numbersToDataView } from "@capacitor-community/bluetooth-le";
 
 import { unpack, unpack_version } from "src/utils/ble.js";
+import { i18n } from "src/boot/i18n";
 
 import {
     dataViewToHexDump,
@@ -70,7 +71,11 @@ export const useMCUStore = defineStore("esp", {
             if (this.status === OTA_STATUS_UPDATING) {
                 console.log("OTA updating " + this.progress);
                 Loading.show({
-                    message: $("otaUpdating") + " " + this.progress + "%",
+                    message:
+                        i18n.global.t("otaUpdating") +
+                        " " +
+                        this.progress +
+                        "%",
                     spinner: QSpinnerGears,
                 });
             }
@@ -78,7 +83,7 @@ export const useMCUStore = defineStore("esp", {
             if (this.status === OTA_STATUS_PREPARING) {
                 console.log("OTA preparing...");
                 Loading.show({
-                    message: $("otaPreparing"),
+                    message: i18n.global.t("otaPreparing"),
                     spinner: QSpinnerGears,
                 });
             }
@@ -86,7 +91,7 @@ export const useMCUStore = defineStore("esp", {
             if (this.status === OTA_STATUS_DOWNLOADING) {
                 console.log("Downloading");
                 Loading.show({
-                    message: $("otaDownloading"),
+                    message: i18n.global.t("otaDownloading"),
                     spinner: QSpinnerGears,
                 });
             }
@@ -133,8 +138,6 @@ export const useMCUStore = defineStore("esp", {
             const newerParts = newer.split(".").map(Number);
             const currentParts = current.split(".").map(Number);
 
-            console.log("newer parts", newerParts, "current", currentParts);
-
             for (let i = 0; i < 3; i++) {
                 if ((newerParts[i] || 0) > (currentParts[i] || 0)) return true;
                 if ((newerParts[i] || 0) < (currentParts[i] || 0)) return false;
@@ -144,7 +147,7 @@ export const useMCUStore = defineStore("esp", {
 
         updateFirmware() {
             Loading.show({
-                message: "Preparing firmware update",
+                message: i18n.global.t("otaPreparing"),
                 spinner: QSpinnerGears,
             });
 
@@ -179,6 +182,8 @@ export const useMCUStore = defineStore("esp", {
                 pack_float_param(PROFILE_KEY_MAX_VOLTAGE, 3.4),
             );
         },
+
+        subscribeToLogs(callback) {},
     },
 });
 

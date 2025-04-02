@@ -14,7 +14,7 @@ from drivers.display.screens.idle import IdleScreen
 
 class DisplayController:
 
-    BUFFER_SIZE = 65535
+    BUFFER_SIZE = 65536
     REFRESH_MS = 500
 
     _sleep_timer = None
@@ -34,8 +34,7 @@ class DisplayController:
         frequency=None,
     ):
         self._sleep_timer = machine.Timer(-1)
-
-        spi_bus = machine.SPI.Bus(host=2, mosi=mosi_pin, miso=miso_pin, sck=sck_pin)
+        spi_bus = machine.SPI.Bus(host=1, mosi=mosi_pin, miso=miso_pin, sck=sck_pin)
         display_bus = lcd_bus.SPIBus(
             spi_bus=spi_bus,
             freq=frequency,
@@ -65,8 +64,8 @@ class DisplayController:
         reset = machine.Pin(reset_pin, machine.Pin.OUT)
         reset.on()
 
-        display.init()
         display.set_power(True)
+        display.init()
         display.set_rotation(lv.DISPLAY_ROTATION._270)
 
         led = machine.Pin(led_pin, machine.Pin.OUT)
@@ -81,13 +80,13 @@ class DisplayController:
 
     async def run(self):
         logger.info("Running Display...")
+
         counter = 0
         start_time = time.time_ns()
         while True:
             counter += 1
             time_passed = time.time_ns() - start_time
 
-            # Update LVGL internal time
             tick = int(time_passed / 1000000)
             lv.tick_inc(tick)
             lv.task_handler()
@@ -98,6 +97,7 @@ class DisplayController:
 
     def on_wake(self):
         lv.screen_load(self.active_screen.get_screen())
+        logger.info("Load active screen")
 
     def on_ats_state(self, state):
         self.active_screen.set_ats_mode(state.mode)

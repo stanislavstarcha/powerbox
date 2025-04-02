@@ -80,8 +80,8 @@ class ProfileController:
                     hex(PROFILE_KEY_WIFI_SSID): None,
                     hex(PROFILE_KEY_WIFI_PASSWORD): None,
                     hex(PROFILE_KEY_PSU_CURRENT): 0,
-                    hex(PROFILE_KEY_MIN_VOLTAGE): conf.PSU_MAX_CELL_VOLTAGE,
-                    hex(PROFILE_KEY_MAX_VOLTAGE): conf.INVERTER_MIN_CELL_VOLTAGE,
+                    hex(PROFILE_KEY_MIN_VOLTAGE): conf.INVERTER_MIN_CELL_VOLTAGE,
+                    hex(PROFILE_KEY_MAX_VOLTAGE): conf.PSU_MAX_CELL_VOLTAGE,
                 }
             )
             self._write()

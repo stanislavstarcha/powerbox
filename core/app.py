@@ -1,9 +1,9 @@
 import micropython
-import network
 
 import asyncio
 import time
 
+from lib.ota.status import current_ota
 from logging import logger
 
 from drivers import UART
@@ -42,18 +42,15 @@ led.on()
 buzzer = BuzzerController(signal_pin=conf.BUZZER_SIGNAL_PIN)
 buzzer.boot()
 
-wlan = network.WLAN(network.STA_IF)
-wlan.active(False)
-wlan.active(True)
-
 
 def disable_keyboard_interrupt():
     micropython.kbd_intr(-1)
 
 
 async def main():
+    await asyncio.sleep(3)
     # disable_keyboard_interrupt()
-    logger.info("Bootstrapping app ver: ", version.FIRMWARE)
+    logger.info(f"Bootstrapping from {current_ota} app ver: {version.FIRMWARE}")
 
     uart = UART(conf.UART_IF)
     profile = ProfileController()
@@ -137,6 +134,7 @@ async def main():
             profile=profile,
         )
         ble.initialize()
+        logger.attach_ble(ble)
 
     if conf.DISPLAY_ENABLED:
         display = DisplayController(
@@ -153,13 +151,11 @@ async def main():
         )
 
         display.active_screen.set_version(version.FIRMWARE)
-
         mcu.state.add_callback(EVENT_STATE_CHANGE, display.on_mcu_state)
         bms.state.add_callback(EVENT_STATE_CHANGE, display.on_bms_state)
         ats.state.add_callback(EVENT_STATE_CHANGE, display.on_ats_state)
         psu.state.add_callback(EVENT_STATE_CHANGE, display.on_psu_state)
         inverter.state.add_callback(EVENT_STATE_CHANGE, display.on_inverter_state)
-        ble.state.add_callback(EVENT_STATE_CHANGE, display.on_ble_state)
 
         psu.state.add_callback(
             EVENT_STATE_ON,
@@ -196,6 +192,9 @@ async def main():
     inverter.state.add_callback(EVENT_STATE_ON, bms.enable_discharge)
     inverter.state.add_callback(EVENT_STATE_OFF, bms.disable_discharge)
 
+    if conf.BLE_ENABLED and conf.DISPLAY_ENABLED:
+        ble.state.add_callback(EVENT_STATE_CHANGE, display.on_ble_state)
+
     coroutines = []
 
     if conf.DISPLAY_ENABLED:
@@ -226,5 +225,6 @@ while True:
         asyncio.run(main())
     except Exception as e:
         logger.critical(e)
-        led.pulse(color=(100, 0, 0), duration=50, n=20)
-        time.sleep(5)
+        while True:
+            led.pulse(color=(100, 0, 0), duration=50, n=3)
+            time.sleep(3)

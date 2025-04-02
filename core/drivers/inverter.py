@@ -292,7 +292,7 @@ class InverterController:
                 timer_id=fan_tachometer_timer,
             )
 
-        logger.info(f"Initialized inverter")
+        logger.info(f"Initialized inverter turn off voltage: {turn_off_voltage}")
 
     def on_tachometer_a(self, rpm):
         self._state.rpm_a = rpm
@@ -315,6 +315,7 @@ class InverterController:
         if triggered:
             self._turn_off_confirmations += 1
             if self._turn_off_confirmations >= self.TURN_OFF_MAX_CONFIRMATIONS:
+                logger.info(f"Inverter reached min voltage threshold")
                 self.off()
                 self._turn_off_confirmations = 0
         else:

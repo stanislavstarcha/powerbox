@@ -16,7 +16,7 @@ parser.add_argument("-e", "--erase", action="store_true")
 parser.add_argument("-n", "--nocode", action="store_true")
 parser.add_argument("-b", "--baud_rate", type=int, default=115200)
 parser.add_argument("-p", "--port", required=True)
-parser.add_argument("-d", "--directory", default="core")
+parser.add_argument("-d", "--directory", default="../core")
 parser.add_argument("-v", "--version", default="1.23")
 
 args = parser.parse_args()

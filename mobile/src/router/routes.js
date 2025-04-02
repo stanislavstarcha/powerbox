@@ -24,14 +24,19 @@ const routes = [
                 component: () => import("pages/PSUPage.vue"),
             },
             {
+                name: "Inverter",
+                path: "inverter",
+                component: () => import("pages/InverterPage.vue"),
+            },
+            {
                 name: "MCU",
                 path: "mcu",
                 component: () => import("pages/MCUPage.vue"),
             },
             {
-                name: "Inverter",
-                path: "inverter",
-                component: () => import("pages/InverterPage.vue"),
+                name: "DEBUG",
+                path: "debug",
+                component: () => import("pages/DebugPage.vue"),
             },
         ],
     },

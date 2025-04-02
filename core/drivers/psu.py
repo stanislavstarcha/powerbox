@@ -345,6 +345,7 @@ class PowerSupplyController:
         if triggered:
             self._turn_off_confirmations += 1
             if self._turn_off_confirmations >= self.TURN_OFF_MAX_CONFIRMATIONS:
+                logger.info("PSU reached max voltage threshold")
                 self.off()
         else:
             self._turn_off_confirmations = 0
@@ -360,18 +361,21 @@ class PowerSupplyController:
         )
 
     def on(self):
+        logger.info("Turning on PSU")
         self._uart.init(rx=self._uart_rx_pin, baud_rate=4800)
         self._power_gate_pin.on()
         self._state.on()
-        logger.info("Power supply is on")
+        logger.info("PSU is on")
 
     def off(self):
+        logger.info("Turning off PSU")
         self._power_gate_pin.off()
         self._state.off()
         self._state.clear()
-        logger.info("Power supply is off")
+        logger.info("PSU is off")
 
     def on_power_trigger(self):
+        logger.info("PSU power trigger")
         if self._state.active:
             self.off()
         else:

@@ -16,6 +16,7 @@ from const import (
     BLE_PSU_STATE_UUID,
     BLE_MCU_STATE_UUID,
     BLE_OTA_STATE_UUID,
+    BLE_LOG_STATE_UUID,
     BLE_HISTORY_STATE_UUID,
     BLE_RUN_COMMAND_UUID,
     BLE_INFO_SERVICE_UUID,
@@ -52,6 +53,8 @@ COMMAND_CONF_SET_KEY = const(0x40)
 COMMAND_CONF_PROFILE = const(0x41)
 COMMAND_UPDATE_FIRMWARE = const(0x50)
 COMMAND_REBOOT = const(0xF0)
+COMMAND_START_LOG = const(0x60)
+COMMAND_STTOP_LOG = const(0x61)
 
 
 class BLEState(BaseState):
@@ -75,6 +78,7 @@ class BLEServerController:
         BLE_PSU_STATE_UUID: None,
         BLE_MCU_STATE_UUID: None,
         BLE_OTA_STATE_UUID: None,
+        BLE_LOG_STATE_UUID: None,
         BLE_HISTORY_STATE_UUID: None,
         BLE_RUN_COMMAND_UUID: None,
     }
@@ -145,6 +149,7 @@ class BLEServerController:
                 self.HANDLE[BLE_PSU_STATE_UUID],
                 self.HANDLE[BLE_MCU_STATE_UUID],
                 self.HANDLE[BLE_OTA_STATE_UUID],
+                self.HANDLE[BLE_LOG_STATE_UUID],
                 self.HANDLE[BLE_HISTORY_STATE_UUID],
                 self.HANDLE[BLE_RUN_COMMAND_UUID],
             ),
@@ -164,6 +169,7 @@ class BLEServerController:
                         (BLE_PSU_STATE_UUID, FLAG_READ | FLAG_NOTIFY),
                         (BLE_MCU_STATE_UUID, FLAG_READ | FLAG_NOTIFY),
                         (BLE_OTA_STATE_UUID, FLAG_READ | FLAG_NOTIFY),
+                        (BLE_LOG_STATE_UUID, FLAG_READ | FLAG_NOTIFY),
                         (BLE_HISTORY_STATE_UUID, FLAG_NOTIFY),
                         (BLE_RUN_COMMAND_UUID, FLAG_WRITE),
                     ),
@@ -347,6 +353,14 @@ class BLEServerController:
         if subcommand == COMMAND_REBOOT:
             logger.debug("Rebooting vie BLE command")
             machine.reset()
+
+        if subcommand == COMMAND_START_LOG:
+            logger.debug("Start forwarding logs vie BLE command")
+            logger.start_ble_forwarding()
+
+        if subcommand == COMMAND_START_LOG:
+            logger.debug("Start forwarding logs vie BLE command")
+            logger.stop_ble_forwarding()
 
     def notify(self, uuid, state):
         if not self._ble or self._connection is None:

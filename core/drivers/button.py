@@ -1,4 +1,3 @@
-import esp32
 import machine
 import time
 
@@ -62,10 +61,10 @@ class ButtonController:
         )
 
     def trigger(self, timer):
-        logger.debug(f"Confirming button {self._listen_pin} state")
         timer.deinit()
         if self._listen_pin.value() == 0:
             return
+        logger.debug(f"Confirming button {self._listen_pin} state")
         if self._on_change is not None:
             self._on_change()
             if self._buzzer:

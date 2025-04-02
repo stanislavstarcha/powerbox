@@ -25,3 +25,8 @@
 .power-color {
     color: red;
 }
+
+.log-message {
+    white-space: pre-wrap; /* Preserve line breaks and wrap text */
+    word-break: break-word;
+}

@@ -253,7 +253,7 @@ class BaseState:
     def _notify_history_update(self):
         """Build incremental historical state"""
 
-        if not self.history:
+        if not self.history or not self._ble:
             return
 
         for chart_type, historical_data in self.history.items():
@@ -290,4 +290,7 @@ class BaseState:
     @staticmethod
     def as_hex(data):
         # Convert each byte of the binary data to a 2-digit hex value and print it
+        if not data:
+            return ""
+
         return " ".join(f"{byte:02X}" for byte in data)

@@ -79,12 +79,16 @@ class OTAController:
 
     def connect_wifi(self):
         logger.info("Connecting to wifi...", self._ssid, self._password)
-        self.state.status = STATUS_PREPARING
-        self.state.notify()
 
         wlan = network.WLAN(network.STA_IF)
         wlan.active(False)
+        time.sleep_ms(200)
         wlan.active(True)
+        time.sleep_ms(200)
+
+        self.state.status = STATUS_PREPARING
+        self.state.notify()
+
         wlan.config(pm=wlan.PM_NONE)
         wlan.config(txpower=5)
         wlan.connect(self._ssid, self._password)

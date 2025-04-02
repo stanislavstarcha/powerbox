@@ -82,19 +82,17 @@
             </div>
         </div>
         <div class="row q-mt-md items-center">
-            <q-btn size="xs" @click="disconnect()">{{
-                $t("disconnect")
-            }}</q-btn>
-            <q-btn size="xs" @click="reboot()">{{ $t("reboot") }}</q-btn>
+            <a href="javascript:;" @click="showDebugPage()">{{
+                $t("showDebugInfo")
+            }}</a>
         </div>
     </q-page>
 </template>
 
 <script setup>
-import { Keyboard } from "@capacitor/keyboard";
-
 import { computed, ref, onMounted } from "vue";
 
+import { useRouter } from "vue-router";
 import { useAppStore } from "stores/app";
 import { useMCUStore } from "stores/mcu";
 import { useI18n } from "vue-i18n";
@@ -104,6 +102,7 @@ const appStore = useAppStore();
 
 import { formatTimeElapsed, getErrors } from "src/utils/index.js";
 
+const router = useRouter();
 const OTADialog = ref(false);
 const ssid = ref();
 const password = ref();
@@ -131,10 +130,14 @@ const startOTAUpdate = () => {
     mcuStore.updateFirmware();
 };
 
+const showDebugPage = () => {
+    router.push({ name: "DEBUG" });
+};
+
 onMounted(async () => {
     ssid.value = await appStore.getPreference("ota_ssid");
     password.value = await appStore.getPreference("ota_password");
-    Keyboard.setAccessoryBarVisible({ isVisible: false });
+    // Keyboard.setAccessoryBarVisible({ isVisible: false });
 });
 
 const errors = computed(() => {

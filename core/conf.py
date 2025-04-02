@@ -1,7 +1,5 @@
 from micropython import const
 
-VERSION = "0.10.0"
-
 FIRMWARE_URL = "https://github.com/stanislavstarcha/powerbox/releases/latest/download/firmware.json"
 
 BUZZER_SIGNAL_PIN = const(1)
@@ -47,7 +45,7 @@ INVERTER_FAN_TACHOMETER_B_PIN = const(47)
 ATS_NO_PIN = const(14)
 ATS_NC_PIN = const(13)
 
-DISPLAY_ENABLED = False
+DISPLAY_ENABLED = True
 DISPLAY_WIDTH = const(320)
 DISPLAY_HEIGHT = const(480)
 
@@ -57,7 +55,6 @@ DISPLAY_MOSI_PIN = const(10)
 DISPLAY_SCLK_PIN = const(11)
 DISPLAY_CS_PIN = const(3)
 DISPLAY_RESET_PIN = const(46)
-
 DISPLAY_MISO_PIN = const(-1)
 
 DISPLAY_FREQ = const(40000000)
