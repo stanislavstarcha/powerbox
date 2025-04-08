@@ -26,14 +26,14 @@ class ButtonController:
         self,
         listen_pin=LISTEN_PIN,
         trigger_delay=DELAY,
-        timer_id=-1,
         on_change=None,
         buzzer=None,
+        trigger_timer=None,
     ):
         self._buzzer = buzzer
         self._on_change = on_change
+        self._trigger_timer = trigger_timer
         self._trigger_delay = trigger_delay
-        self._trigger_timer = machine.Timer(timer_id)
         self._listen_pin = machine.Pin(
             listen_pin, machine.Pin.IN, machine.Pin.PULL_DOWN
         )

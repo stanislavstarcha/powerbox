@@ -239,6 +239,9 @@ class InverterController:
     # last inverter state
     _state = None
 
+    _tachometer_a = None
+    _tachometer_b = None
+
     def __init__(
         self,
         power_button_pin=POWER_BUTTON_PIN,
@@ -252,7 +255,8 @@ class InverterController:
         turn_off_voltage=TURN_OFF_VOLTAGE,
         fan_tachometer_a_pin=None,
         fan_tachometer_b_pin=None,
-        fan_tachometer_timer=None,
+        fan_tachometer_a_timer=None,
+        fan_tachometer_b_timer=None,
     ):
         self._state = InverterState()
         self._turn_off_voltage = turn_off_voltage
@@ -266,7 +270,7 @@ class InverterController:
             listen_pin=power_button_pin,
             on_change=self.on_power_trigger,
             buzzer=buzzer,
-            timer_id=power_button_timer,
+            trigger_timer=power_button_timer,
         )
 
         self._power_gate_pin = machine.Pin(
@@ -276,20 +280,22 @@ class InverterController:
         )
         self._power_gate_pin.off()
 
-        if fan_tachometer_a_pin:
+        if fan_tachometer_a_pin and fan_tachometer_a_timer:
             self._tachometer_a = Tachometer(
+                name="A",
                 pin=machine.Pin(fan_tachometer_a_pin, machine.Pin.IN),
                 period_ms=200,
                 done_callback=self.on_tachometer_a,
-                timer_id=fan_tachometer_timer,
+                timer_id=fan_tachometer_a_timer,
             )
 
-        if fan_tachometer_b_pin:
+        if fan_tachometer_b_pin and fan_tachometer_b_timer:
             self._tachometer_b = Tachometer(
+                name="B",
                 pin=machine.Pin(fan_tachometer_b_pin, machine.Pin.IN),
                 period_ms=200,
                 done_callback=self.on_tachometer_b,
-                timer_id=fan_tachometer_timer,
+                timer_id=fan_tachometer_b_timer,
             )
 
         logger.info(f"Initialized inverter turn off voltage: {turn_off_voltage}")
@@ -357,8 +363,12 @@ class InverterController:
                 except Exception as e:
                     logger.error("Failed request to inverter")
                     logger.critical(e)
-                self._tachometer_a.measure()
-                self._tachometer_b.measure()
+
+                if self._tachometer_a:
+                    self._tachometer_a.measure()
+
+                if self._tachometer_b:
+                    self._tachometer_b.measure()
 
                 self._state.snapshot()
 

@@ -112,7 +112,7 @@ class Logger:
         message = self._format(level, *messages)
         self._transport.send(message)
 
-        if self._ble:
+        if self._ble and self._ble_forwarding:
             chunk_size = 19
             full_message = " ".join(str(m) for m in messages).encode("utf-8")
 

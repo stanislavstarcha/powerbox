@@ -33,6 +33,20 @@ class DisplayController:
         reset_pin=None,
         frequency=None,
     ):
+        """
+        Initialize a display controller.
+
+        :param width: Display width
+        :param height: Display height
+        :param led_pin: Backlight pin
+        :param mosi_pin: SPI MOSI pin
+        :param miso_pin: SPI MISO pin
+        :param sck_pin: SPI SCK pin
+        :param dc_pin: SPI DC pin
+        :param cs_pin: SPI CS pin
+        :param reset_pin: Display reset pin
+        :param frequency: SPI frequency
+        """
         self._sleep_timer = machine.Timer(-1)
         spi_bus = machine.SPI.Bus(host=1, mosi=mosi_pin, miso=miso_pin, sck=sck_pin)
         display_bus = lcd_bus.SPIBus(
@@ -79,6 +93,19 @@ class DisplayController:
         self.on_wake()
 
     async def run(self):
+        """
+        Asynchronously runs the display controller, handling display tasks and managing the refresh rate.
+
+        This function starts an infinite loop that continuously updates the display.
+        It calculates the time passed in nanoseconds since the start time, converts it to milliseconds,
+        and increments the LittlevGL tick counter accordingly. The task handler of LittlevGL is called
+        to process any pending tasks, and the loop then sleeps for the specified refresh interval.
+
+        The loop ensures that the display is updated at a regular interval defined by REFRESH_MS.
+
+        :raises asyncio.CancelledError: If the task is cancelled.
+        """
+
         logger.info("Running Display...")
 
         counter = 0
@@ -93,6 +120,7 @@ class DisplayController:
             await asyncio.sleep_ms(self.REFRESH_MS)
 
     def on_sleep(self, timer):
+        logger.info("Load idle screen")
         lv.screen_load(self.idle_screen.get_screen())
 
     def on_wake(self):

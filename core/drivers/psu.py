@@ -269,7 +269,7 @@ class PowerSupplyController:
     def __init__(
         self,
         power_button_pin=POWER_BUTTON_PIN,
-        power_button_timer=-1,
+        power_button_timer=None,
         power_gate_pin=POWER_GATE_PIN,
         current_a_pin=CURRENT_A_PIN,
         current_b_pin=CURRENT_B_PIN,
@@ -299,7 +299,7 @@ class PowerSupplyController:
                 listen_pin=power_button_pin,
                 on_change=self.on_power_trigger,
                 buzzer=buzzer,
-                timer_id=power_button_timer,
+                trigger_timer=power_button_timer,
             )
         except Exception as e:
             self._state.set_error(self._state.ERROR_PIN)

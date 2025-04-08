@@ -1,6 +1,6 @@
-import micropython
-
 import asyncio
+import machine
+import micropython
 import time
 
 from lib.ota.status import current_ota
@@ -48,6 +48,11 @@ def disable_keyboard_interrupt():
 
 
 async def main():
+    """
+    Main application entry point.
+
+    This function initializes all the drivers and starts the event loop.
+    """
     await asyncio.sleep(3)
     # disable_keyboard_interrupt()
     logger.info(f"Bootstrapping from {current_ota} app ver: {version.FIRMWARE}")
@@ -81,9 +86,11 @@ async def main():
         uart_tx_pin=conf.BMS_UART_TX_PIN,
     )
 
+    button_timer = machine.Timer(conf.BUTTON_TIMER_ID)
+
     inverter = InverterController(
         power_button_pin=conf.INVERTER_POWER_BUTTON_PIN,
-        power_button_timer=conf.INVERTER_POWER_BUTTON_TIMER,
+        power_button_timer=button_timer,
         power_gate_pin=conf.INVERTER_POWER_GATE_PIN,
         uart=uart,
         uart_rx_pin=conf.INVERTER_UART_RX_PIN,
@@ -92,14 +99,15 @@ async def main():
         turn_off_voltage=profile.get(
             PROFILE_KEY_MIN_VOLTAGE, conf.INVERTER_MIN_CELL_VOLTAGE
         ),
-        fan_tachometer_a_pin=conf.PSU_FAN_TACHOMETER_A_PIN,
-        fan_tachometer_b_pin=conf.PSU_FAN_TACHOMETER_B_PIN,
-        fan_tachometer_timer=conf.PSU_FAN_TACHOMETER_TIMER,
+        fan_tachometer_a_pin=conf.INVERTER_FAN_TACHOMETER_A_PIN,
+        fan_tachometer_b_pin=conf.INVERTER_FAN_TACHOMETER_B_PIN,
+        fan_tachometer_a_timer=conf.INVERTER_FAN_TACHOMETER_A_TIMER,
+        fan_tachometer_b_timer=conf.INVERTER_FAN_TACHOMETER_B_TIMER,
     )
 
     psu = PowerSupplyController(
         power_button_pin=conf.PSU_POWER_BUTTON_PIN,
-        power_button_timer=conf.PSU_POWER_BUTTON_TIMER,
+        power_button_timer=button_timer,
         power_gate_pin=conf.PSU_POWER_GATE_PIN,
         current_a_pin=conf.PSU_CURRENT_A_PIN,
         current_b_pin=conf.PSU_CURRENT_B_PIN,

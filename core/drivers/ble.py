@@ -358,8 +358,8 @@ class BLEServerController:
             logger.debug("Start forwarding logs vie BLE command")
             logger.start_ble_forwarding()
 
-        if subcommand == COMMAND_START_LOG:
-            logger.debug("Start forwarding logs vie BLE command")
+        if subcommand == COMMAND_STTOP_LOG:
+            logger.debug("Stop forwarding logs vie BLE command")
             logger.stop_ble_forwarding()
 
     def notify(self, uuid, state):
