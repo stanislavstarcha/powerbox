@@ -1,11 +1,17 @@
+"""
+BLE (Bluetooth Low Energy) module.
+
+This module provides the implementation of BLEState and BLEServerController
+classes, which manage the BLE state and control logic for Bluetooth communication.
+"""
+
 import struct
 import machine
+import time
 
 from bluetooth import BLE, FLAG_READ, FLAG_WRITE, FLAG_NOTIFY
 from micropython import const
 from drivers import BaseState
-import time
-
 from logging import logger
 
 from const import (
@@ -38,32 +44,44 @@ _ADV_TYPE_UUID128_COMPLETE = const(0x07)
 _ADV_TYPE_APPEARANCE = const(0x19)
 
 COMMAND_PULL_HISTORY = const(0x01)
-
 COMMAND_PSU_ENABLE = const(0x10)
 COMMAND_PSU_DISABLE = const(0x11)
 COMMAND_PSU_CURRENT = const(0x12)
-
 COMMAND_INVERTER_ENABLE = const(0x20)
 COMMAND_INVERTER_DISABLE = const(0x21)
-
 COMMAND_ATS_ENABLE = const(0x30)
 COMMAND_ATS_DISABLE = const(0x31)
-
 COMMAND_CONF_SET_KEY = const(0x40)
 COMMAND_CONF_PROFILE = const(0x41)
 COMMAND_UPDATE_FIRMWARE = const(0x50)
 COMMAND_REBOOT = const(0xF0)
 COMMAND_START_LOG = const(0x60)
-COMMAND_STTOP_LOG = const(0x61)
+COMMAND_STOP_LOG = const(0x61)
 
 
 class BLEState(BaseState):
-    NAME = "BLE"
+    """
+    Represents the state of the BLE module.
 
+    Attributes:
+        NAME (str): The name of the state.
+        active (bool): Indicates whether the BLE module is active.
+    """
+
+    NAME = "BLE"
     active = False
 
 
 class BLEServerController:
+    """
+    Controller for the BLE server.
+
+    This class manages the BLE server, including advertising, handling connections,
+    and processing read/write requests.
+
+    Attributes:
+        HANDLE (dict): A mapping of BLE UUIDs to their handles.
+    """
 
     _name = None
     _ble = None
@@ -98,6 +116,23 @@ class BLEServerController:
         ota=None,
         profile=None,
     ):
+        """
+        Initialize the BLEServerController.
+
+        Args:
+            gap_name (str): The GAP name for the BLE device.
+            manufacturer (str): The manufacturer name.
+            model (str): The model name.
+            firmware (str): The firmware version.
+            instructions: Instructions handler.
+            bms: BMS controller instance.
+            psu: PSU controller instance.
+            inverter: Inverter controller instance.
+            mcu: MCU controller instance.
+            ats: ATS controller instance.
+            ota: OTA controller instance.
+            profile: Profile handler instance.
+        """
         self._state = BLEState()
 
         self._gap_name = gap_name
@@ -121,21 +156,34 @@ class BLEServerController:
         self._ota.state.attach_ble(self)
 
     async def run(self):
+        """
+        Run the BLE server.
+
+        This method continuously monitors the BLE state and sleeps between updates.
+        """
         logger.info("Running Bluetooth controller...")
         while True:
             self._state.snapshot()
             await self._state.sleep()
 
     def collect(self):
+        """
+        Collect the current BLE state.
+
+        Returns:
+            BLEState: The current BLE state.
+        """
         return self._state
 
-    def initialize(
-        self,
-    ):
+    def initialize(self):
+        """
+        Initialize the BLE server.
+
+        This method sets up the BLE services, characteristics, and advertising.
+        """
         self._ble = BLE()
         self._ble.active(False)
         self._ble.active(True)
-        # get some sleep otherwise ic restarts
         time.sleep_ms(100)
 
         self._ble.irq(self.on_ble_irq)
@@ -193,6 +241,17 @@ class BLEServerController:
 
     @staticmethod
     def _get_advertisement_payload(name=None, services=None, appearance=0):
+        """
+        Generate the advertisement payload.
+
+        Args:
+            name (str): The device name.
+            services (list): List of service UUIDs.
+            appearance (int): Appearance value.
+
+        Returns:
+            bytearray: The advertisement payload.
+        """
         payload = bytearray()
         if name:
             payload += struct.pack("BB", len(name) + 1, _ADV_TYPE_NAME) + name
@@ -210,6 +269,9 @@ class BLEServerController:
         return payload
 
     def start_advertising(self):
+        """
+        Start BLE advertising.
+        """
         if not self._ble:
             return
 
@@ -221,9 +283,19 @@ class BLEServerController:
         self._ble.gap_advertise(100000, adv_data)
 
     def stop_advertising(self):
+        """
+        Stop BLE advertising.
+        """
         self._ble.gap_advertise(None)
 
     def on_ble_irq(self, event, data):
+        """
+        Handle BLE IRQ events.
+
+        Args:
+            event (int): The IRQ event type.
+            data: The event data.
+        """
         if event == _IRQ_CENTRAL_CONNECT:
             logger.info("BLE client connected")
             connection, addr_type, addr = data
@@ -247,7 +319,13 @@ class BLEServerController:
             return self.on_write_state(connection, attr_handle)
 
     def on_read_state(self, connection, handle):
+        """
+        Handle BLE read requests.
 
+        Args:
+            connection: The BLE connection.
+            handle: The attribute handle being read.
+        """
         if handle == self.HANDLE[BLE_ATS_STATE_UUID]:
             state = self._ats.state.get_ble_state()
             logger.info("BLE reading ATS state", state, len(state))
@@ -285,6 +363,13 @@ class BLEServerController:
             return
 
     def on_write_state(self, connection, handle):
+        """
+        Handle BLE write requests.
+
+        Args:
+            connection: The BLE connection.
+            handle: The attribute handle being written to.
+        """
         if not self._ble:
             return
 
@@ -351,18 +436,25 @@ class BLEServerController:
             self._instructions.add(self._ota.update)
 
         if subcommand == COMMAND_REBOOT:
-            logger.debug("Rebooting vie BLE command")
+            logger.debug("Rebooting via BLE command")
             machine.reset()
 
         if subcommand == COMMAND_START_LOG:
-            logger.debug("Start forwarding logs vie BLE command")
+            logger.debug("Start forwarding logs via BLE command")
             logger.start_ble_forwarding()
 
-        if subcommand == COMMAND_STTOP_LOG:
+        if subcommand == COMMAND_STOP_LOG:
             logger.debug("Stop forwarding logs vie BLE command")
             logger.stop_ble_forwarding()
 
     def notify(self, uuid, state):
+        """
+        Notify a BLE client of a state change.
+
+        Args:
+            uuid: The UUID of the state.
+            state: The state data to notify.
+        """
         if not self._ble or self._connection is None:
             return
 
@@ -374,12 +466,27 @@ class BLEServerController:
                 pass
 
     def _ble_write(self, handle, data):
+        """
+        Write data to a BLE characteristic.
+
+        Args:
+            handle: The attribute handle.
+            data: The data to write.
+        """
         try:
             self._ble.gatts_write(handle, data)
         except Exception as e:
             logger.critical(e)
 
     def _ble_notify(self, connection, handle, data):
+        """
+        Send a BLE notification.
+
+        Args:
+            connection: The BLE connection.
+            handle: The attribute handle.
+            data: The data to notify.
+        """
         try:
             self._ble.gatts_notify(connection, handle, data)
         except OSError:
@@ -387,4 +494,10 @@ class BLEServerController:
 
     @property
     def state(self):
+        """
+        Get the current BLE state.
+
+        Returns:
+            BLEState: The current BLE state.
+        """
         return self._state

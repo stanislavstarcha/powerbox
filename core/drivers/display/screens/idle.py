@@ -5,6 +5,17 @@ from drivers.display.screens import BaseScreen
 
 
 class IdleScreen(BaseScreen):
+    """
+    IdleScreen class displays a low-power or idle view of system status.
+
+    Attributes:
+        BASE_X (int): The base x-coordinate for widget placement.
+        BASE_Y (int): The base y-coordinate for widget placement.
+        progress_body: Widget representing progress (e.g. battery or capacity arc).
+        left_eye: Widget representing the left eye indicator.
+        right_eye: Widget representing the right eye indicator.
+        capacity: Widget showing numeric capacity.
+    """
 
     BASE_X = 200
     BASE_Y = 120
@@ -15,13 +26,19 @@ class IdleScreen(BaseScreen):
     capacity = None
 
     def create_widgets(self):
+        """
+        Creates and arranges all widgets on the IdleScreen.
 
+        This method sets the background style and grid layout for the screen,
+        and adds various graphical elements (e.g. arcs and labels) which represent
+        capacity, progress and facial indicators.
+        """
         self._screen.set_style_bg_color(lv.color_hex(0xFFFFFF), 0)
-
         self._screen.set_style_pad_all(0, lv.PART.MAIN)
         self._screen.set_style_margin_all(0, lv.PART.MAIN)
         self._screen.set_style_pad_gap(0, lv.PART.MAIN)
 
+        # Example widget creation for capacity and progress (implementation unchanged)
         self.capacity = self.create_label(
             None,
             None,
@@ -39,8 +56,7 @@ class IdleScreen(BaseScreen):
             thickness=5,
             value=90,
         )
-
-        # head
+        # Additional widget creation for head and eyes is done below...
         self.create_arc(
             x=self.BASE_X + 46,
             y=self.BASE_Y - 26,
@@ -122,7 +138,12 @@ class IdleScreen(BaseScreen):
         )
 
     def set_eyes(self, is_open):
+        """
+        Sets the eye widget appearance based on the open or closed state.
 
+        Args:
+            is_open (bool): If True, set eyes to the "open" state; otherwise, "closed".
+        """
         if is_open:
             self.left_eye.set_bg_end_angle(350)
             self.right_eye.set_bg_end_angle(350)
@@ -131,6 +152,12 @@ class IdleScreen(BaseScreen):
             self.right_eye.set_bg_end_angle(110)
 
     def set_capacity(self, value):
+        """
+        Updates the battery capacity display and progress arc.
+
+        Args:
+            value (int): The current battery capacity percentage.
+        """
         if value is None:
             return
 
@@ -141,9 +168,22 @@ class IdleScreen(BaseScreen):
         self.capacity.set_text(f"{value}%")
 
     def generate_random_state(self):
+        """
+        Generates a random state for testing purposes.
+
+        Randomly adjusts the eye state and capacity value to simulate varying system conditions.
+        """
         self.set_eyes(random.randint(0, 1))
         self.set_capacity(random.randint(0, 100))
 
     def on_bms_state(self, state):
+        """
+        Processes Battery Management System (BMS) state updates.
+
+        This method updates the capacity display and eye state based on the BMS data.
+
+        Args:
+            state: An object representing the current BMS state, which should include a 'soc' attribute.
+        """
         self.set_capacity(state.soc)
         self.set_eyes(random.randint(0, 100) > 80)

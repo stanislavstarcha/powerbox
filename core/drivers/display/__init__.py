@@ -1,3 +1,10 @@
+"""
+Display module.
+
+This module provides the `DisplayController` class, which manages the display hardware,
+handles screen transitions, and updates the display based on system states.
+"""
+
 import asyncio
 import time
 import machine
@@ -13,6 +20,20 @@ from drivers.display.screens.idle import IdleScreen
 
 
 class DisplayController:
+    """
+    Controller for managing the display hardware and screen transitions.
+
+    This class handles the initialization of the display, manages active and idle screens,
+    and updates the display based on system states.
+
+    Attributes:
+        BUFFER_SIZE (int): The size of the display buffer.
+        REFRESH_MS (int): The refresh interval in milliseconds.
+        _sleep_timer (machine.Timer): Timer for managing sleep transitions.
+        _idle (bool): Whether the display is in idle mode.
+        active_screen (ActiveScreen): The active screen instance.
+        idle_screen (IdleScreen): The idle screen instance.
+    """
 
     BUFFER_SIZE = 65536
     REFRESH_MS = 500
@@ -34,18 +55,19 @@ class DisplayController:
         frequency=None,
     ):
         """
-        Initialize a display controller.
+        Initializes the DisplayController.
 
-        :param width: Display width
-        :param height: Display height
-        :param led_pin: Backlight pin
-        :param mosi_pin: SPI MOSI pin
-        :param miso_pin: SPI MISO pin
-        :param sck_pin: SPI SCK pin
-        :param dc_pin: SPI DC pin
-        :param cs_pin: SPI CS pin
-        :param reset_pin: Display reset pin
-        :param frequency: SPI frequency
+        Args:
+            width (int, optional): Display width.
+            height (int, optional): Display height.
+            led_pin (int, optional): Backlight pin.
+            mosi_pin (int, optional): SPI MOSI pin.
+            miso_pin (int, optional): SPI MISO pin.
+            sck_pin (int, optional): SPI SCK pin.
+            dc_pin (int, optional): SPI DC pin.
+            cs_pin (int, optional): SPI CS pin.
+            reset_pin (int, optional): Display reset pin.
+            frequency (int, optional): SPI frequency.
         """
         self._sleep_timer = machine.Timer(-1)
         spi_bus = machine.SPI.Bus(host=1, mosi=mosi_pin, miso=miso_pin, sck=sck_pin)
@@ -103,9 +125,9 @@ class DisplayController:
 
         The loop ensures that the display is updated at a regular interval defined by REFRESH_MS.
 
-        :raises asyncio.CancelledError: If the task is cancelled.
+        Raises:
+            asyncio.CancelledError: If the task is cancelled.
         """
-
         logger.info("Running Display...")
 
         counter = 0
@@ -120,18 +142,38 @@ class DisplayController:
             await asyncio.sleep_ms(self.REFRESH_MS)
 
     def on_sleep(self, timer):
+        """
+        Handles the transition to the idle screen when the system goes to sleep.
+
+        Args:
+            timer (machine.Timer): The timer triggering the sleep transition.
+        """
         logger.info("Load idle screen")
         lv.screen_load(self.idle_screen.get_screen())
 
     def on_wake(self):
+        """
+        Handles the transition to the active screen when the system wakes up.
+        """
         lv.screen_load(self.active_screen.get_screen())
         logger.info("Load active screen")
 
     def on_ats_state(self, state):
+        """
+        Updates the display based on the ATS (Automatic Transfer Switch) state.
+
+        Args:
+            state: The ATS state object.
+        """
         self.active_screen.set_ats_mode(state.mode)
 
     def on_bms_state(self, state):
+        """
+        Updates the display based on the BMS (Battery Management System) state.
 
+        Args:
+            state: The BMS state object.
+        """
         allow_sleep_counter = (
             state.get_power() == 0
             and not state.charging_allowed
@@ -140,7 +182,6 @@ class DisplayController:
         )
 
         if allow_sleep_counter:
-
             if not self._idle:
                 self._sleep_timer.init(
                     period=60000,
@@ -158,13 +199,37 @@ class DisplayController:
         self.idle_screen.on_bms_state(state)
 
     def on_psu_state(self, state):
+        """
+        Updates the display based on the PSU (Power Supply Unit) state.
+
+        Args:
+            state: The PSU state object.
+        """
         self.active_screen.on_psu_state(state)
 
     def on_inverter_state(self, state):
+        """
+        Updates the display based on the inverter state.
+
+        Args:
+            state: The inverter state object.
+        """
         self.active_screen.on_inverter_state(state)
 
     def on_mcu_state(self, state):
+        """
+        Updates the display based on the MCU (Microcontroller Unit) state.
+
+        Args:
+            state: The MCU state object.
+        """
         self.active_screen.on_mcu_state(state)
 
     def on_ble_state(self, state):
+        """
+        Updates the display based on the BLE (Bluetooth Low Energy) state.
+
+        Args:
+            state: The BLE state object.
+        """
         self.active_screen.on_ble_state(state)

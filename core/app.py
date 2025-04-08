@@ -1,3 +1,10 @@
+"""
+Main application module.
+
+This module initializes all drivers, controllers, and event loops required
+for the application to function. It serves as the entry point for the system.
+"""
+
 import asyncio
 import machine
 import micropython
@@ -51,7 +58,9 @@ async def main():
     """
     Main application entry point.
 
-    This function initializes all the drivers and starts the event loop.
+    This function initializes all the drivers, controllers, and event loops.
+    It sets up the hardware, configures the system, and starts the asynchronous
+    tasks required for the application to run.
     """
     await asyncio.sleep(3)
     # disable_keyboard_interrupt()

@@ -1,3 +1,11 @@
+"""
+Configuration module.
+
+This module contains configuration constants and settings used throughout
+the application. These settings define hardware pin mappings, timers, and
+other system-wide parameters.
+"""
+
 from micropython import const
 
 FIRMWARE_URL = "https://github.com/stanislavstarcha/powerbox/releases/latest/download/firmware.json"

@@ -1,3 +1,10 @@
+"""
+PSU (Power Supply Unit) module.
+
+This module provides the implementation of the `PSUState` and `PowerSupplyController`
+classes, which manage the state, control logic, and hardware interaction for the PSU.
+"""
+
 import machine
 import struct
 
@@ -24,9 +31,29 @@ from logging import logger
 
 
 class PSUState(BaseState):
+    """
+    Represents the state of the Power Supply Unit (PSU).
+
+    Attributes:
+        NAME (str): The name of the state.
+        BLE_STATE_UUID (UUID): The BLE UUID for the PSU state.
+        ERROR_PIN (int): Error code for pin-related issues.
+        active (bool): Whether the PSU is active.
+        current (int): Current channel (0-3).
+        FRAME_SIZE (int): Size of the data frame.
+        rpm (int): Fan RPM.
+        power1 (int): Power output 1.
+        power2 (int): Power output 2.
+        ac (int): AC state.
+        t1 (int): Temperature sensor 1.
+        t2 (int): Temperature sensor 2.
+        t3 (int): Temperature sensor 3.
+        state (int): Current state of the PSU.
+        unknown (int): Unknown state value.
+        history (dict): Historical data for telemetry.
+    """
 
     NAME = "PSU"
-
     BLE_STATE_UUID = BLE_PSU_STATE_UUID
     ERROR_PIN = 6
 
@@ -76,6 +103,11 @@ class PSUState(BaseState):
     }
 
     def clear(self):
+        """
+        Clears the PSU state.
+
+        Resets all telemetry and state attributes to their default values.
+        """
         self.rpm = None
         self.active = False
         self.power1 = None
@@ -89,10 +121,22 @@ class PSUState(BaseState):
         self.notify()
 
     def get_avg_temperature(self):
+        """
+        Calculates the average temperature from the two temperature sensors.
+
+        Returns:
+            int: The average temperature, or None if one of the sensors is missing.
+        """
         if self.t1 and self.t2:
             return int((self.t1 + self.t2) / 2)
 
     def get_ble_state(self):
+        """
+        Constructs the BLE state representation of the PSU.
+
+        Returns:
+            bytes: A packed representation of the PSU state for BLE communication.
+        """
         t1 = self.get_avg_temperature()
         return struct.pack(
             ">HHHBBBBBBB",
@@ -109,6 +153,9 @@ class PSUState(BaseState):
         )
 
     def build_history(self):
+        """
+        Updates the historical telemetry data for the PSU.
+        """
         t1 = self.get_avg_temperature()
         self.history[HISTORY_PSU_RPM].push(self._pack(self.rpm))
         self.history[HISTORY_PSU_POWER_1].push(self._pack(self.power1))
@@ -117,9 +164,24 @@ class PSUState(BaseState):
         self.history[HISTORY_PSU_TEMPERATURE_2].push(self._pack(self.t3))
 
     def crc(self, data):
+        """
+        Calculates the CRC checksum for the given data.
+
+        Args:
+            data (bytes): The data to calculate the checksum for.
+
+        Returns:
+            int: The CRC checksum.
+        """
         return sum(b for b in data) % 0x100
 
     def parse(self, frame):
+        """
+        Parses a data frame and updates the PSU state.
+
+        Args:
+            frame (bytes): The data frame to parse.
+        """
         offset = 0
         header = struct.unpack_from(">BB", frame)
         if header != (0x49, 0x34):
@@ -195,6 +257,12 @@ class PSUState(BaseState):
         )
 
     def parse_buffer(self, buffer):
+        """
+        Parses a buffer of data and extracts valid frames.
+
+        Args:
+            buffer (bytes): The buffer containing data frames.
+        """
 
         if buffer is None:
             return
@@ -222,12 +290,18 @@ class PSUState(BaseState):
 
 class PowerSupplyController:
     """
-    Controller listens for button pin pressed and turns on/off PSU
-    via a MOSFET. The button pin is when connected gets 3.3V from
-    the controller.
+    Controller for managing the Power Supply Unit (PSU).
 
-    Current pins define corresponding CD4051B multiplexer A,B pins. C pin is grounded
-    and not available in the controller.
+    This class handles monitoring, controlling, and interacting with the PSU hardware.
+
+    Attributes:
+        POWER_BUTTON_PIN (int): Pin for the power button.
+        POWER_GATE_PIN (int): Pin for controlling the PSU power gate.
+        CURRENT_A_PIN (int): Pin A for current control.
+        CURRENT_B_PIN (int): Pin B for current control.
+        TURN_OFF_VOLTAGE (float): Voltage threshold for turning off the PSU.
+        TURN_OFF_MAX_CONFIRMATIONS (int): Maximum confirmations for turn-off voltage.
+        CURRENT_CHANNEL (int): Default current channel.
     """
 
     # A pin to listen to
@@ -281,6 +355,23 @@ class PowerSupplyController:
         turn_off_voltage=TURN_OFF_VOLTAGE,
         current_channel=CURRENT_CHANNEL,
     ):
+        """
+        Initializes the PowerSupplyController.
+
+        Args:
+            power_button_pin (int): Pin for the power button.
+            power_button_timer (int): Timer for the power button.
+            power_gate_pin (int): Pin for the power gate.
+            current_a_pin (int): Pin A for current control.
+            current_b_pin (int): Pin B for current control.
+            fan_tachometer_pin (int): Pin for the fan tachometer.
+            fan_tachometer_timer (int): Timer for the fan tachometer.
+            uart (UART): UART interface for communication.
+            uart_rx_pin (int): Pin for UART RX.
+            buzzer (Buzzer): Buzzer instance for notifications.
+            turn_off_voltage (float): Voltage threshold for turning off the PSU.
+            current_channel (int): Default current channel.
+        """
         self._state = PSUState()
         self._uart = uart
         self._uart_rx_pin = uart_rx_pin
@@ -329,10 +420,22 @@ class PowerSupplyController:
         logger.info("Initialized power supply controller")
 
     def on_tachometer(self, rpm):
+        """
+        Callback for tachometer updates.
+
+        Args:
+            rpm (int): The measured RPM of the fan.
+        """
         self._state.rpm = rpm
         logger.debug(f"PSU FAN RPM: {rpm}")
 
     def on_bms_state(self, bms_state):
+        """
+        Handles updates from the Battery Management System (BMS).
+
+        Args:
+            bms_state (BMSState): The current state of the BMS.
+        """
         triggered = False
         for voltage in bms_state.cells:
             if voltage is None:
@@ -351,6 +454,12 @@ class PowerSupplyController:
             self._turn_off_confirmations = 0
 
     def set_current(self, channel):
+        """
+        Sets the current channel for the PSU.
+
+        Args:
+            channel (int): The current channel to set (0-3).
+        """
         self._state.current_channel = channel
         channel_a = channel & 0x01
         channel_b = (channel >> 1) & 0x01
@@ -361,6 +470,9 @@ class PowerSupplyController:
         )
 
     def on(self):
+        """
+        Turns on the PSU.
+        """
         logger.info("Turning on PSU")
         self._uart.init(rx=self._uart_rx_pin, baud_rate=4800)
         self._power_gate_pin.on()
@@ -368,6 +480,9 @@ class PowerSupplyController:
         logger.info("PSU is on")
 
     def off(self):
+        """
+        Turns off the PSU.
+        """
         logger.info("Turning off PSU")
         self._power_gate_pin.off()
         self._state.off()
@@ -375,6 +490,9 @@ class PowerSupplyController:
         logger.info("PSU is off")
 
     def on_power_trigger(self):
+        """
+        Handles the power button trigger event.
+        """
         logger.info("PSU power trigger")
         if self._state.active:
             self.off()
@@ -382,6 +500,11 @@ class PowerSupplyController:
             self.on()
 
     async def run(self):
+        """
+        Main loop for the PSU controller.
+
+        Continuously monitors and updates the PSU state.
+        """
         logger.info("Running PSU...")
         while True:
             if self.state.active:
@@ -392,4 +515,10 @@ class PowerSupplyController:
 
     @property
     def state(self):
+        """
+        Gets the current state of the PSU.
+
+        Returns:
+            PSUState: The current PSU state.
+        """
         return self._state

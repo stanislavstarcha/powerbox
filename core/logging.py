@@ -1,3 +1,11 @@
+"""
+Logging module.
+
+This module provides logging functionality for the application. It allows
+logging messages at various levels (info, debug, error) and supports
+different transport mechanisms for log output.
+"""
+
 import machine
 import time
 import uio
@@ -7,6 +15,9 @@ from const import BLE_LOG_STATE_UUID
 
 
 class LogLevels:
+    """
+    Defines log levels for the application.
+    """
     CRITICAL = 0
     ERROR = 1
     WARNING = 2
@@ -16,6 +27,9 @@ class LogLevels:
 
 
 class TerminalColors:
+    """
+    Defines terminal colors for log messages.
+    """
     HEADER = "\033[95m"
     OKBLUE = "\033[94m"
     OKGREEN = "\033[92m"
@@ -44,13 +58,27 @@ LEVEL_NAMES = {
 
 
 class BaseLoggerTransport:
+    """
+    Base class for logger transport mechanisms.
+    """
 
     @staticmethod
     def send(message):
+        """
+        Send a log message.
+
+        Args:
+            message (str): The log message to send.
+        """
         print(message)
 
 
 class UARTLoggerTransport(BaseLoggerTransport):
+    """
+    UART-based logger transport.
+
+    This class provides a transport mechanism for logging messages over UART.
+    """
 
     BAUD_RATE = 115200
     UART_IF = None
@@ -64,6 +92,15 @@ class UARTLoggerTransport(BaseLoggerTransport):
         uart_tx_pin=UART_TX_PIN,
         uart_rx_pin=UART_RX_PIN,
     ):
+        """
+        Initialize the UARTLoggerTransport.
+
+        Args:
+            uart_if (int): UART interface number.
+            baud_rate (int): Baud rate for the UART interface.
+            uart_tx_pin (int): Pin number for UART TX.
+            uart_rx_pin (int): Pin number for UART RX.
+        """
         self._uart = machine.UART(
             uart_if,
             baudrate=baud_rate,
@@ -72,41 +109,95 @@ class UARTLoggerTransport(BaseLoggerTransport):
         )
 
     def send(self, message):
+        """
+        Send a log message over UART.
+
+        Args:
+            message (str): The log message to send.
+        """
         self._uart.write(message + "\n")
 
 
 class Logger:
-
-    _transport = None
-    _level = 4
-
-    _ble = None
-    _ble_forwarding = False
+    """
+    Logger class for managing log messages and transports.
+    """
 
     def __init__(self):
+        """
+        Initialize the Logger instance.
+        """
         self._transport = BaseLoggerTransport()
+        self._level = 4
+        self._ble = None
+        self._ble_forwarding = False
 
     def setup(self, transport=None, level=None, wifi=None):
+        """
+        Set up the logger with the specified transport and log level.
+
+        Args:
+            transport (BaseLoggerTransport): The transport mechanism for log output.
+            level (int): The log level.
+            wifi (str): WiFi configuration (optional).
+        """
         self._level = level
 
     def debug(self, *messages):
+        """
+        Log a debug message.
+
+        Args:
+            *messages: The messages to log.
+        """
         self._log(LogLevels.DEBUG, *messages)
 
     def info(self, *messages):
+        """
+        Log an info message.
+
+        Args:
+            *messages: The messages to log.
+        """
         self._log(LogLevels.INFO, *messages)
 
     def warning(self, *messages):
+        """
+        Log a warning message.
+
+        Args:
+            *messages: The messages to log.
+        """
         self._log(LogLevels.WARNING, *messages)
 
     def error(self, *messages):
+        """
+        Log an error message.
+
+        Args:
+            *messages: The messages to log.
+        """
         self._log(LogLevels.ERROR, *messages)
 
     def critical(self, e):
+        """
+        Log a critical error message.
+
+        Args:
+            e (Exception): The exception to log.
+        """
         buf = uio.StringIO()
         sys.print_exception(e, buf)
         self._log(LogLevels.CRITICAL, e, buf.getvalue())
 
     def _log(self, level, *messages):
+        """
+        Internal method to log a message at a specific level.
+
+        Args:
+            level (int): The log level.
+            *messages: The messages to log.
+        """
         if level > self._level:
             return
         message = self._format(level, *messages)
@@ -133,24 +224,42 @@ class Logger:
 
     @staticmethod
     def _format(level, *messages):
-        timestamp = time.time()
-        color_prefix = ""
-        color_suffix = ""
-        if LEVEL_COLORS[level]:
-            color_prefix = LEVEL_COLORS[level]
-            color_suffix = TerminalColors.ENDC
+        """
+        Format a log message.
 
+        Args:
+            level (int): The log level.
+            *messages: The messages to format.
+
+        Returns:
+            str: The formatted log message.
+        """
+        timestamp = time.time()
+        color_prefix = LEVEL_COLORS.get(level, "")
+        color_suffix = TerminalColors.ENDC if color_prefix else ""
         message = " ".join(str(m) for m in messages)
-        level_name = LEVEL_NAMES[level]
+        level_name = LEVEL_NAMES.get(level, "UNKNOWN")
         return f"{color_prefix} {level_name} [{timestamp}] {message} {color_suffix}"
 
     def attach_ble(self, ble):
+        """
+        Attach a BLE transport to the logger.
+
+        Args:
+            ble: The BLE instance to attach.
+        """
         self._ble = ble
 
     def start_ble_forwarding(self):
+        """
+        Start forwarding logs over BLE.
+        """
         self._ble_forwarding = True
 
     def stop_ble_forwarding(self):
+        """
+        Stop forwarding logs over BLE.
+        """
         self._ble_forwarding = False
 
 

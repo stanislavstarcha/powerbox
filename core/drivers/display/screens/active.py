@@ -24,6 +24,28 @@ DEVICE_MCU = micropython.const(3)
 
 
 class ActiveScreen(BaseScreen):
+    """
+    ActiveScreen class displays real-time system status and error information.
+    
+    Attributes:
+        errors (list): List to keep error codes for various devices.
+        error_glyph, error_label, error: Widgets for showing error information.
+        bms_voltage_label, bms_voltage_cell_1, bms_voltage_cell_2, bms_voltage_cell_3, bms_voltage_cell_4:
+            Widgets for battery cell voltage.
+        bms_temperature_label, bms_temperature_mos, bms_temperature_bat_1, bms_temperature_bat_2:
+            Widgets for battery temperature.
+        version_label, version: Widgets for version information.
+        ats, ats_label: Widgets for ATS mode display.
+        ble: Widget for BLE state indication.
+        psu_label, psu_temperature, psu_ac_voltage, psu_rpm:
+            Widgets for PSU data.
+        inverter_label, inverter_temperature, inverter_ac_voltage, inverter_rpm:
+            Widgets for inverter data.
+        power_label, power, power_timer, power_in_glyph_a, power_out_glyph_a, power_in_glyph_b, power_out_glyph_b:
+            Widgets for power statistics and direction.
+        capacity, capacity_bar: Widgets for battery capacity.
+        mcu_label, mcu_glyph, mcu_temperature, mcu_health_glyph: Widgets for MCU data.
+    """
 
     errors = None
 
@@ -78,16 +100,34 @@ class ActiveScreen(BaseScreen):
     mcu_health_glyph = None
 
     def __init__(self):
+        """
+        Initializes the ActiveScreen by setting initial error states and creating the screen.
+        """
         self.errors = [0, 0, 0, 0]
         super(ActiveScreen, self).__init__()
 
     def set_cell_voltage(self, v1, v2, v3, v4):
+        """
+        Sets the voltage values for battery cells.
+
+        Args:
+            v1 (float): Voltage of cell 1.
+            v2 (float): Voltage of cell 2.
+            v3 (float): Voltage of cell 3.
+            v4 (float): Voltage of cell 4.
+        """
         self.bms_voltage_cell_1.set_text(f"{v1} В")
         self.bms_voltage_cell_2.set_text(f"{v2} В")
         self.bms_voltage_cell_3.set_text(f"{v3} В")
         self.bms_voltage_cell_4.set_text(f"{v4} В")
 
     def set_ats_mode(self, mode):
+        """
+        Sets the ATS (Automatic Transfer Switch) mode using corresponding icon.
+
+        Args:
+            mode (int): ATS mode (0, 1, or 2).
+        """
         if mode == 0:
             self.ats.set_text(chr(ICON_DOTS))
 
@@ -100,19 +140,48 @@ class ActiveScreen(BaseScreen):
     def set_bms_temperature(
         self, temperature_mos, bms_temperature_bat_1, bms_temperature_bat_2
     ):
+        """
+        Sets battery management system temperatures.
+
+        Args:
+            temperature_mos (int or float): MOS temperature.
+            bms_temperature_bat_1 (int or float): Temperature of battery sensor 1.
+            bms_temperature_bat_2 (int or float): Temperature of battery sensor 2.
+        """
         self.bms_temperature_mos.set_text(f"{temperature_mos}°С")
         self.bms_temperature_bat_1.set_text(f"{bms_temperature_bat_1}°С")
         self.bms_temperature_bat_2.set_text(f"{bms_temperature_bat_2}°С")
 
     def set_version(self, version):
+        """
+        Displays the version string on the screen.
+
+        Args:
+            version (str): Version information.
+        """
         self.version.set_text(version)
 
     def set_capacity(self, value):
+        """
+        Sets the battery capacity value and updates the capacity bar.
+
+        Args:
+            value (int): Battery capacity percentage.
+        """
         if value is not None:
             self.capacity.set_text(f"{value}%")
             self.capacity_bar.set_value(value, lv.ANIM.OFF)
 
     def set_psu_state(self, t1, t2, ac_voltage, rpm):
+        """
+        Updates the PSU state display with temperature, AC voltage, and RPM.
+
+        Args:
+            t1 (int or float): First temperature value.
+            t2 (int or float): Second temperature value.
+            ac_voltage (int or float): AC voltage.
+            rpm (int): Fan RPM.
+        """
         if t1 and t2:
             self.psu_temperature.set_text(f"{t1}°С / {t2}°С")
         if ac_voltage:
@@ -121,6 +190,14 @@ class ActiveScreen(BaseScreen):
             self.psu_rpm.set_text(f"{rpm} об/хв")
 
     def set_inverter_state(self, temperature, ac_voltage, rpm):
+        """
+        Updates the inverter state display with temperature, AC voltage, and RPM.
+
+        Args:
+            temperature (int or float): Inverter temperature.
+            ac_voltage (int or float): Inverter AC voltage.
+            rpm (int): Inverter fan RPM.
+        """
         if temperature:
             self.inverter_temperature.set_text(f"{temperature}°С")
         if ac_voltage:
@@ -129,7 +206,14 @@ class ActiveScreen(BaseScreen):
             self.inverter_rpm.set_text(f"{rpm} об/хв")
 
     def set_power_consumption(self, direction, power, seconds):
+        """
+        Updates the power consumption display.
 
+        Args:
+            direction (bool): Direction flag indicating charging/discharging.
+            power (int or float): Power consumption in Watts.
+            seconds (int): Time in seconds until full charge/discharge.
+        """
         if power is not None:
             self.power.set_text(f"{power} Вт")
 
@@ -139,16 +223,25 @@ class ActiveScreen(BaseScreen):
             self.power_timer.set_text(f"До повного заряду {seconds}")
 
     def show_error_state(self):
+        """
+        Displays the error state by showing associated widgets.
+        """
         self.show_widget(self.error_glyph)
         self.show_widget(self.error_label)
         self.show_widget(self.error)
 
     def hide_error_state(self):
+        """
+        Hides the error state widgets.
+        """
         self.hide_widget(self.error_glyph)
         self.hide_widget(self.error_label)
         self.hide_widget(self.error)
 
     def show_bms_state(self):
+        """
+        Displays the battery management system state by showing relevant widgets.
+        """
         self.show_widget(self.bms_voltage_label)
         self.show_widget(self.bms_temperature_label)
         self.show_widget(self.power_label)
@@ -168,6 +261,9 @@ class ActiveScreen(BaseScreen):
         self.show_widget(self.power)
 
     def show_psu_state(self):
+        """
+        Displays the PSU state by showing relevant widgets.
+        """
         self.show_widget(self.psu_label)
         self.show_widget(self.psu_temperature)
         self.show_widget(self.psu_rpm)
@@ -177,6 +273,9 @@ class ActiveScreen(BaseScreen):
         self.show_widget(self.power_timer)
 
     def hide_psu_state(self):
+        """
+        Hides the PSU state widgets.
+        """
         self.hide_widget(self.psu_label)
         self.hide_widget(self.psu_temperature)
         self.hide_widget(self.psu_rpm)
@@ -186,6 +285,9 @@ class ActiveScreen(BaseScreen):
         self.hide_widget(self.power_timer)
 
     def show_inverter_state(self):
+        """
+        Displays the inverter state by showing relevant widgets.
+        """
         self.show_widget(self.inverter_label)
         self.show_widget(self.inverter_temperature)
         self.show_widget(self.inverter_rpm)
@@ -195,6 +297,9 @@ class ActiveScreen(BaseScreen):
         self.show_widget(self.power_timer)
 
     def hide_inverter_state(self):
+        """
+        Hides the inverter state widgets.
+        """
         self.hide_widget(self.inverter_label)
         self.hide_widget(self.inverter_temperature)
         self.hide_widget(self.inverter_rpm)
@@ -204,6 +309,13 @@ class ActiveScreen(BaseScreen):
         self.hide_widget(self.power_timer)
 
     def set_error(self, device_id, error):
+        """
+        Sets error information for a device and displays error state if any error exists.
+
+        Args:
+            device_id (int): The device identifier.
+            error (int): The error code.
+        """
         self.errors[device_id] = error
         if any(self.errors):
             codes = []
@@ -224,11 +336,20 @@ class ActiveScreen(BaseScreen):
             self.show_error_state()
 
     def reset_error(self, device_id):
+        """
+        Resets error information for a device and hides error state if no errors exist.
+
+        Args:
+            device_id (int): The device identifier.
+        """
         self.errors[device_id] = 0
         if not any(self.errors):
             self.hide_error_state()
 
     def create_widgets(self):
+        """
+        Creates and arranges all widgets on the ActiveScreen.
+        """
         self._screen.set_style_bg_color(lv.color_hex(0xFFFFFF), 0)
 
         self._screen.set_style_pad_all(0, lv.PART.MAIN)
@@ -389,6 +510,9 @@ class ActiveScreen(BaseScreen):
         self._screen.set_layout(lv.LAYOUT.GRID)
 
     def _generate_random_state(self):
+        """
+        Generates a random state for testing by randomly setting PSU or inverter values.
+        """
         is_charging = random.randint(0, 1)
 
         if is_charging:
@@ -441,6 +565,12 @@ class ActiveScreen(BaseScreen):
         )
 
     def on_bms_state(self, state):
+        """
+        Processes BMS state updates, updating widget data and errors accordingly.
+
+        Args:
+            state: BMS state object with attributes for errors, soc, temperatures, and cell voltages.
+        """
         if state.internal_errors:
             self.set_error(DEVICE_BMS, state.internal_errors)
             return
@@ -468,6 +598,12 @@ class ActiveScreen(BaseScreen):
         )
 
     def on_psu_state(self, state):
+        """
+        Processes PSU state updates and updates PSU widget data and errors accordingly.
+
+        Args:
+            state: PSU state object containing internal/external errors and telemetry.
+        """
         if state.internal_errors:
             self.set_error(DEVICE_PSU, state.internal_errors)
             return
@@ -488,6 +624,12 @@ class ActiveScreen(BaseScreen):
             )
 
     def on_inverter_state(self, state):
+        """
+        Processes inverter state updates and updates inverter widget data and errors accordingly.
+
+        Args:
+            state: Inverter state object containing errors and telemetry.
+        """
         if state.internal_errors:
             self.set_error(DEVICE_INVERTER, state.internal_errors)
         else:
@@ -500,6 +642,12 @@ class ActiveScreen(BaseScreen):
         )
 
     def on_mcu_state(self, state):
+        """
+        Processes MCU state updates and updates MCU widget data and errors accordingly.
+
+        Args:
+            state: MCU state object containing temperature, memory, and internal errors.
+        """
         if state.internal_errors:
             self.set_error(DEVICE_MCU, state.internal_errors)
             return
@@ -509,6 +657,12 @@ class ActiveScreen(BaseScreen):
         self.mcu_memory.set_text(f"{state.memory}%")
 
     def on_ble_state(self, state):
+        """
+        Processes BLE state updates by updating the BLE widget color.
+
+        Args:
+            state: BLE state object with an 'active' flag.
+        """
         if state.active:
             self.ble.set_style_text_color(self.color_to_hex("blue"), 0)
         else:
