@@ -5,18 +5,11 @@ This module provides the implementation of the `PSUState` and `PowerSupplyContro
 classes, which manage the state, control logic, and hardware interaction for the PSU.
 """
 
-import machine
 import struct
 
-from drivers import BaseState
-from drivers.button import ButtonController
-from lib.history import HistoricalData
+import machine
 
 from const import BLE_PSU_STATE_UUID
-
-from lib.tachometer import Tachometer
-
-
 from const import (
     HISTORY_PSU_RPM,
     HISTORY_PSU_TEMPERATURE_1,
@@ -26,7 +19,10 @@ from const import (
     DATA_TYPE_BYTE,
     DATA_TYPE_WORD,
 )
-
+from drivers import BaseState
+from drivers.button import ButtonController
+from lib.history import HistoricalData
+from lib.tachometer import Tachometer
 from logging import logger
 
 

@@ -6,13 +6,11 @@ classes, which manage the BLE state and control logic for Bluetooth communicatio
 """
 
 import struct
-import machine
 import time
 
+import machine
 from bluetooth import BLE, FLAG_READ, FLAG_WRITE, FLAG_NOTIFY
 from micropython import const
-from drivers import BaseState
-from logging import logger
 
 from const import (
     BLE_CORE_SERVICE_UUID,
@@ -31,6 +29,8 @@ from const import (
     BLE_FIRMWARE_REV_UUID,
     PROFILE_KEY_ATS,
 )
+from drivers import BaseState
+from logging import logger
 
 _IRQ_CENTRAL_CONNECT = const(1)
 _IRQ_CENTRAL_DISCONNECT = const(2)

@@ -6,15 +6,15 @@ classes, which manage the state and control logic for the microcontroller,
 including memory usage, temperature monitoring, and heartbeat functionality.
 """
 
-import esp32
 import gc
 import struct
 import time
 
-import version
-from drivers import BaseState
-from const import BLE_MCU_STATE_UUID
+import esp32
 
+import version
+from const import BLE_MCU_STATE_UUID
+from drivers import BaseState
 from logging import logger
 
 

@@ -6,9 +6,10 @@ used in the system, such as state management and hardware interaction.
 """
 
 import asyncio
-import machine
-import time
 import gc
+import time
+
+import machine
 
 from const import (
     BLE_HISTORY_STATE_UUID,

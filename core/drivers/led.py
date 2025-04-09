@@ -5,9 +5,10 @@ This module provides the implementation of the `LedController` class, which
 manages the behavior of an LED, including turning it on, off, and pulsing.
 """
 
+import time
+
 import machine
 import neopixel
-import time
 
 
 class LedController:

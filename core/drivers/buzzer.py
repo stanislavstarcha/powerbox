@@ -6,7 +6,9 @@ manages the buzzer's behavior, including boot, power-up, and stopping operations
 """
 
 import asyncio
+
 import machine
+
 from logging import logger
 
 

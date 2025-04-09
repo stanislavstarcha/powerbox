@@ -1,20 +1,16 @@
 import struct
 import time
+
 import network
 
-from drivers import BaseState
-
-
+from const import BLE_OTA_STATE_UUID
 from const import (
     PROFILE_KEY_WIFI_SSID,
     PROFILE_KEY_WIFI_PASSWORD,
 )
-
-from logging import logger
+from drivers import BaseState
 from lib.ota.update import OTA
-
-from const import BLE_OTA_STATE_UUID
-
+from logging import logger
 
 STATUS_IDLE = 0
 STATUS_PREPARING = 1

@@ -1,9 +1,10 @@
 import lvgl as lv  # NOQA
 
+
 class BaseScreen:
     """
     BaseScreen class to manage screen elements using the LVGL library.
-    
+
     Attributes:
         _screen (lv.obj): The LVGL object representing the screen.
     """

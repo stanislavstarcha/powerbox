@@ -1,5 +1,6 @@
-import lvgl as lv  # NOQA
 import random
+
+import lvgl as lv  # NOQA
 
 from drivers.display.screens import BaseScreen
 

@@ -7,16 +7,15 @@ handles screen transitions, and updates the display based on system states.
 
 import asyncio
 import time
-import machine
 
 import ili9488  # NOQA
-import lvgl as lv  # NOQA
 import lcd_bus  # NOQA
-
-from logging import logger
+import lvgl as lv  # NOQA
+import machine
 
 from drivers.display.screens.active import ActiveScreen
 from drivers.display.screens.idle import IdleScreen
+from logging import logger
 
 
 class DisplayController:

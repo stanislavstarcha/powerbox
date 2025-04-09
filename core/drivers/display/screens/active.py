@@ -1,7 +1,7 @@
-import micropython
 import random
 
 import lvgl as lv  # NOQA
+import micropython
 
 from drivers.display.screens import BaseScreen
 
@@ -26,7 +26,7 @@ DEVICE_MCU = micropython.const(3)
 class ActiveScreen(BaseScreen):
     """
     ActiveScreen class displays real-time system status and error information.
-    
+
     Attributes:
         errors (list): List to keep error codes for various devices.
         error_glyph, error_label, error: Widgets for showing error information.

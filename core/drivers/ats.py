@@ -7,11 +7,12 @@ switch functionality.
 """
 
 import struct
-from logging import logger
+
 import machine
 
-from drivers import BaseState
 from const import BLE_ATS_STATE_UUID, ATS_MODE_NONE, ATS_MODE_CITY, ATS_MODE_BATTERY
+from drivers import BaseState
+from logging import logger
 
 
 class ATSState(BaseState):

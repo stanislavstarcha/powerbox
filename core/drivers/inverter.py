@@ -7,17 +7,11 @@ communication, fan tachometer monitoring, and power state management.
 """
 
 import asyncio
-import machine
 import struct
 
-from drivers import BaseState
-from drivers.button import ButtonController
-from lib.history import HistoricalData
-from lib.tachometer import Tachometer
+import machine
 
-from logging import logger
 from const import BLE_INVERTER_STATE_UUID
-
 from const import (
     HISTORY_INVERTER_POWER,
     HISTORY_INVERTER_TEMPERATURE,
@@ -25,6 +19,11 @@ from const import (
     DATA_TYPE_BYTE,
     DATA_TYPE_WORD,
 )
+from drivers import BaseState
+from drivers.button import ButtonController
+from lib.history import HistoricalData
+from lib.tachometer import Tachometer
+from logging import logger
 
 
 class InverterState(BaseState):

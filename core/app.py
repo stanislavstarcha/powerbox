@@ -10,7 +10,7 @@ import machine
 import micropython
 import time
 
-from lib.ota.status import current_ota
+from lib.ota.status import current_ota, cancel as cancel_ota
 from logging import logger
 
 from drivers import UART
@@ -31,7 +31,6 @@ from const import (
     EVENT_STATE_ON,
     EVENT_STATE_OFF,
     EVENT_STATE_CHANGE,
-    EVENT_STATE_ERROR,
     PROFILE_KEY_ATS,
     PROFILE_KEY_WIFI_SSID,
     PROFILE_KEY_WIFI_PASSWORD,
@@ -51,7 +50,19 @@ buzzer.boot()
 
 
 def disable_keyboard_interrupt():
+    """
+    Production code must not listen for keyboard interrupts.
+    Sometimes ESP32 may produce noise on the UART0 interface
+    due to floating pins that eventually causes keyboard interrupts.
+    """
     micropython.kbd_intr(-1)
+
+
+async def mark_boot_as_successful():
+    """Mark partition as successful after 10 seconds."""
+    await asyncio.sleep(10)
+    cancel_ota()
+    logger.info(f"Marked OTA partition {current_ota} as successful.")
 
 
 async def main():
@@ -63,7 +74,7 @@ async def main():
     tasks required for the application to run.
     """
     await asyncio.sleep(3)
-    # disable_keyboard_interrupt()
+    disable_keyboard_interrupt()
     logger.info(f"Bootstrapping from {current_ota} app ver: {version.FIRMWARE}")
 
     uart = UART(conf.UART_IF)
@@ -221,6 +232,7 @@ async def main():
         coroutines.append(asyncio.create_task(ble.run()))
 
     coroutines += [
+        asyncio.create_task(mark_boot_as_successful()),
         asyncio.create_task(instructions.run()),
         asyncio.create_task(ats.run()),
         asyncio.create_task(bms.run()),

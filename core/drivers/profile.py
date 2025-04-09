@@ -5,12 +5,11 @@ This module provides the implementation of the `ProfileState` and `ProfileContro
 classes, which manage the configuration and state of the system profile.
 """
 
-import os
 import json
+import os
 import struct
 
-from drivers import BaseState
-
+import conf
 from const import (
     PROFILE_KEY_ATS,
     PROFILE_KEY_PSU_CURRENT,
@@ -24,8 +23,7 @@ from const import (
     DATA_TYPE_FLOAT32,
     DATA_TYPE_STRING,
 )
-
-import conf
+from drivers import BaseState
 from logging import logger
 
 KEY_TYPES = {

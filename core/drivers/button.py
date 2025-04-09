@@ -5,8 +5,9 @@ This module provides the implementation of the `ButtonController` class, which
 manages button input, including debouncing, state changes, and optional buzzer feedback.
 """
 
-import machine
 import time
+
+import machine
 
 from logging import logger
 
@@ -70,7 +71,9 @@ class ButtonController:
             trigger=machine.Pin.IRQ_RISING,
             handler=self._check_state,
         )
-        logger.info(f"Button {self._listen_pin} state initialized", self._listen_pin.value())
+        logger.info(
+            f"Button {self._listen_pin} state initialized", self._listen_pin.value()
+        )
 
     def _check_state(self, pin):
         """

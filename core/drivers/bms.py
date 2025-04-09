@@ -154,17 +154,6 @@ class BMSState(BaseState):
         ),
     }
 
-    def __init__(self):
-        """
-        Initialize the BMSState instance.
-
-        Preloads historical data for the state of charge (SOC).
-        """
-        for a in range(100):
-            self.history[HISTORY_BMS_SOC].push(self._pack(a))
-
-        super(BMSState, self).__init__()
-
     def clear(self):
         """
         Clear the BMS state.

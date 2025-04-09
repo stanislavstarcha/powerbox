@@ -1,5 +1,5 @@
-from collections import deque
 import struct
+from collections import deque
 
 from const import HISTORY_SIZE
 
