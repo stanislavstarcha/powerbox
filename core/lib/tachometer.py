@@ -37,7 +37,6 @@ class Tachometer:
         self._buffer = deque((), buffer_size)
 
     def measure(self):
-        print("Tachometer: start measure", self._name)
         self._started_us = time.ticks_us()
         self._total_pulses = 0
         self._timer.deinit()
@@ -58,7 +57,6 @@ class Tachometer:
         return int(sum(self._buffer) / len(self._buffer))
 
     def finish(self, t):
-        print("Tachometer: stop measure", self._name)
         t.deinit()
         factor = int(1000 / self._period_ms)
         self._pin.irq(handler=None)

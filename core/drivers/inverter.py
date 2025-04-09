@@ -137,6 +137,9 @@ class InverterState(BaseState):
         self.external_errors = int(device_error)
         self.level = int(level)
 
+        # clear fan rotation error due to custom fan model
+        self.external_errors &= ~(1 << 6)
+
         checksum = int(f"{checksum:x}")
         actual_checksum = (
             address

@@ -80,6 +80,8 @@ def build(lvgl_path):
     if proc.returncode != 0:
         raise RuntimeError(f"Process failed with code {proc.returncode}")
 
+    return True
+
 
 def stage(lvgl_path, version):
     """

@@ -252,6 +252,8 @@ class PSUState(BaseState):
             f"PSU AC: {self.ac} t1: {self.t1} t2: {self.t2} t3: {self.t3} p1: {self.power1} p2: {self.power2}"
         )
 
+        return True
+
     def parse_buffer(self, buffer):
         """
         Parses a buffer of data and extracts valid frames.
@@ -275,13 +277,13 @@ class PSUState(BaseState):
         logger.debug("PSU frame", self.as_hex(frame))
 
         try:
-            error = self.parse(frame)
-            if not error:
-                return True
-
-            buffer = buffer[frame_start + self.FRAME_SIZE :]
+            succeeded = self.parse(frame)
+            if not succeeded:
+                return
         except Exception as e:
-            print(e)
+            logger.critical(e)
+
+        return True
 
 
 class PowerSupplyController:
@@ -376,7 +378,7 @@ class PowerSupplyController:
         if fan_tachometer_pin:
             self._tachometer = Tachometer(
                 pin=machine.Pin(fan_tachometer_pin, machine.Pin.IN),
-                period_ms=200,
+                period_ms=250,
                 done_callback=self.on_tachometer,
                 timer_id=fan_tachometer_timer,
             )
