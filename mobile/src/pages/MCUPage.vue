@@ -126,8 +126,9 @@ const language = computed({
 });
 
 const startOTAUpdate = () => {
-    mcuStore.setOTACredentials(ssid.value, password.value);
-    mcuStore.updateFirmware();
+    mcuStore.setOTACredentials(ssid.value, password.value).then(() => {
+        mcuStore.updateFirmware();
+    });
 };
 
 const showDebugPage = () => {

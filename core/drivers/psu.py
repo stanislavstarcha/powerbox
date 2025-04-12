@@ -29,7 +29,18 @@ from logging import logger
 class PSUState(BaseState):
     """
     Represents the state of the Power Supply Unit (PSU).
-
+    
+    This class manages the telemetry data, state information, and historical data
+    for the PSU. It handles data parsing, state transitions, and BLE communication.
+    
+    The state tracks:
+    - Power status (active/inactive)
+    - Current channel selection
+    - Fan RPM
+    - Power output levels
+    - Temperature readings
+    - Error conditions
+    
     Attributes:
         NAME (str): The name of the state.
         BLE_STATE_UUID (UUID): The BLE UUID for the PSU state.
@@ -100,9 +111,10 @@ class PSUState(BaseState):
 
     def clear(self):
         """
-        Clears the PSU state.
-
-        Resets all telemetry and state attributes to their default values.
+        Reset the PSU state to default values.
+        
+        Clears all telemetry data and state attributes, then notifies
+        any observers of the state change.
         """
         self.rpm = None
         self.active = False
@@ -118,18 +130,21 @@ class PSUState(BaseState):
 
     def get_avg_temperature(self):
         """
-        Calculates the average temperature from the two temperature sensors.
-
+        Calculate the average temperature from the two primary temperature sensors.
+        
         Returns:
-            int: The average temperature, or None if one of the sensors is missing.
+            int: The average temperature in the same units as the sensors,
+                 or None if either sensor is missing.
         """
         if self.t1 and self.t2:
             return int((self.t1 + self.t2) / 2)
 
     def get_ble_state(self):
         """
-        Constructs the BLE state representation of the PSU.
-
+        Construct the BLE state representation of the PSU.
+        
+        Packs the current state data into a binary format for BLE transmission.
+        
         Returns:
             bytes: A packed representation of the PSU state for BLE communication.
         """
@@ -150,7 +165,10 @@ class PSUState(BaseState):
 
     def build_history(self):
         """
-        Updates the historical telemetry data for the PSU.
+        Update the historical telemetry data for the PSU.
+        
+        Pushes the current telemetry values to their respective historical data
+        collections for trend analysis and visualization.
         """
         t1 = self.get_avg_temperature()
         self.history[HISTORY_PSU_RPM].push(self._pack(self.rpm))
@@ -161,85 +179,122 @@ class PSUState(BaseState):
 
     def crc(self, data):
         """
-        Calculates the CRC checksum for the given data.
-
+        Calculate the CRC checksum for the given data.
+        
         Args:
             data (bytes): The data to calculate the checksum for.
-
+            
         Returns:
-            int: The CRC checksum.
+            int: The CRC checksum value (0-255).
         """
         return sum(b for b in data) % 0x100
 
     def parse(self, frame):
         """
-        Parses a data frame and updates the PSU state.
-
+        Parse a data frame and update the PSU state.
+        
+        Extracts telemetry data from a binary frame, validates checksums,
+        and updates the state attributes.
+        
         Args:
             frame (bytes): The data frame to parse.
+            
+        Returns:
+            bool: True if parsing was successful, False otherwise.
         """
+        if not frame or len(frame) < self.FRAME_SIZE:
+            self.set_error(self.ERROR_BAD_RESPONSE)
+            logger.error(f"PSU frame too short: {len(frame) if frame else 0} < {self.FRAME_SIZE}")
+            return False
+            
         offset = 0
-        header = struct.unpack_from(">BB", frame)
-        if header != (0x49, 0x34):
+        
+        # Validate header
+        try:
+            header = struct.unpack_from(">BB", frame)
+            if header != (0x49, 0x34):
+                self.set_error(self.ERROR_BAD_RESPONSE)
+                logger.error(f"PSU bad header: {header}")
+                return False
+            offset += 2
+        except struct.error as e:
             self.set_error(self.ERROR_BAD_RESPONSE)
-            logger.error("PSU bad header")
-            return
-        offset += 2
+            logger.error(f"PSU header parse error: {e}")
+            return False
 
-        power1 = struct.unpack_from("<H", frame, offset)[0]
-        offset += 2
+        # Parse power values
+        try:
+            power1 = struct.unpack_from("<H", frame, offset)[0]
+            offset += 2
 
-        power2 = struct.unpack_from("<H", frame, offset)[0]
-        offset += 2
+            power2 = struct.unpack_from("<H", frame, offset)[0]
+            offset += 2
 
-        actual_power_crc = struct.unpack_from(">B", frame, offset)[0]
-        offset += 1
+            actual_power_crc = struct.unpack_from(">B", frame, offset)[0]
+            offset += 1
 
-        power_crc = self.crc(frame[2:6])
-        power_crc_diff = abs(power_crc - actual_power_crc)
+            power_crc = self.crc(frame[2:6])
+            power_crc_diff = abs(power_crc - actual_power_crc)
 
-        if power_crc != actual_power_crc:
+            if power_crc != actual_power_crc:
+                self.set_error(self.ERROR_BAD_RESPONSE)
+                logger.error(
+                    f"PSU bad power CRC: calculated={power_crc}, received={actual_power_crc}, diff={power_crc_diff}"
+                )
+                return False
+        except struct.error as e:
             self.set_error(self.ERROR_BAD_RESPONSE)
-            logger.error(
-                "PSU bad power CRC", power_crc, actual_power_crc, power_crc_diff
-            )
-            return
+            logger.error(f"PSU power data parse error: {e}")
+            return False
 
-        data_header = struct.unpack_from(">B", frame, offset)
-        offset += 1
-
-        state = struct.unpack_from(">B", frame, offset)[0]
-        offset += 1
-
-        unknown = struct.unpack_from(">B", frame, offset)[0]
-        offset += 1
-
-        ac = struct.unpack_from(">B", frame, offset)[0]
-        offset += 1
-
-        t1 = struct.unpack_from(">B", frame, offset)[0]
-        offset += 1
-
-        t2 = struct.unpack_from(">B", frame, offset)[0]
-        offset += 1
-
-        t3 = struct.unpack_from(">B", frame, offset)[0]
-        offset += 1
-
-        reserved = struct.unpack_from(">BBBBBBB", frame, offset)
-        offset += 7
-
-        actual_data_crc = struct.unpack_from(">B", frame, offset)[0]
-        offset += 1
-
-        data_crc = self.crc(frame[9:21])
-        crc_diff = abs(data_crc - actual_data_crc)
-
-        if data_crc != actual_data_crc:
+        # Parse data header
+        try:
+            data_header = struct.unpack_from(">B", frame, offset)
+            offset += 1
+        except struct.error as e:
             self.set_error(self.ERROR_BAD_RESPONSE)
-            logger.error("PSU bad CRC", data_crc, actual_data_crc, crc_diff)
-            return
+            logger.error(f"PSU data header parse error: {e}")
+            return False
 
+        # Parse state and telemetry data
+        try:
+            state = struct.unpack_from(">B", frame, offset)[0]
+            offset += 1
+
+            unknown = struct.unpack_from(">B", frame, offset)[0]
+            offset += 1
+
+            ac = struct.unpack_from(">B", frame, offset)[0]
+            offset += 1
+
+            t1 = struct.unpack_from(">B", frame, offset)[0]
+            offset += 1
+
+            t2 = struct.unpack_from(">B", frame, offset)[0]
+            offset += 1
+
+            t3 = struct.unpack_from(">B", frame, offset)[0]
+            offset += 1
+
+            reserved = struct.unpack_from(">BBBBBBB", frame, offset)
+            offset += 7
+
+            actual_data_crc = struct.unpack_from(">B", frame, offset)[0]
+            offset += 1
+
+            data_crc = self.crc(frame[9:21])
+            crc_diff = abs(data_crc - actual_data_crc)
+
+            if data_crc != actual_data_crc:
+                self.set_error(self.ERROR_BAD_RESPONSE)
+                logger.error(f"PSU bad data CRC: calculated={data_crc}, received={actual_data_crc}, diff={crc_diff}")
+                return False
+        except struct.error as e:
+            self.set_error(self.ERROR_BAD_RESPONSE)
+            logger.error(f"PSU telemetry data parse error: {e}")
+            return False
+
+        # Update state with parsed data
         self.reset_error(self.ERROR_BAD_RESPONSE)
         self.power1 = power1
         self.power2 = power2
@@ -248,6 +303,7 @@ class PSUState(BaseState):
         self.t1 = t1
         self.t2 = t2
         self.t3 = t3
+        
         logger.info(
             f"PSU AC: {self.ac} t1: {self.t1} t2: {self.t2} t3: {self.t3} p1: {self.power1} p2: {self.power2}"
         )
@@ -256,42 +312,62 @@ class PSUState(BaseState):
 
     def parse_buffer(self, buffer):
         """
-        Parses a buffer of data and extracts valid frames.
-
+        Parse a buffer of data and extract valid frames.
+        
+        Searches for a valid frame in the buffer, extracts it, and parses it.
+        Handles incomplete buffers and invalid frames gracefully.
+        
         Args:
             buffer (bytes): The buffer containing data frames.
+            
+        Returns:
+            bool: True if a valid frame was parsed, False otherwise.
         """
-
         if buffer is None:
-            return
+            logger.debug("PSU parse_buffer: received None buffer")
+            return False
 
+        # Find the start of a frame (header bytes)
         frame_start = buffer.find(b"\x49\x34")
         if frame_start < 0:
-            return
+            logger.debug("PSU parse_buffer: no valid frame header found")
+            return False
 
-        # incomplete buffer
+        # Check if we have a complete frame
         if (frame_start + self.FRAME_SIZE) > len(buffer):
-            return
+            logger.debug(f"PSU parse_buffer: incomplete frame at position {frame_start}")
+            return False
 
+        # Extract the frame
         frame = buffer[frame_start : frame_start + self.FRAME_SIZE]
-        logger.debug("PSU frame", self.as_hex(frame))
+        logger.debug(f"PSU frame at position {frame_start}: {self.as_hex(frame)}")
 
+        # Parse the frame
         try:
             succeeded = self.parse(frame)
             if not succeeded:
-                return
+                logger.debug("PSU parse_buffer: frame parsing failed")
+                return False
+            return True
         except Exception as e:
-            logger.critical(e)
-
-        return True
+            logger.critical(f"PSU parse_buffer: unexpected error: {e}")
+            return False
 
 
 class PowerSupplyController:
     """
     Controller for managing the Power Supply Unit (PSU).
-
-    This class handles monitoring, controlling, and interacting with the PSU hardware.
-
+    
+    This class provides a comprehensive interface for controlling and monitoring a power supply unit.
+    It handles hardware interactions, state management, and telemetry collection for the PSU.
+    
+    The controller manages:
+    - Power state (on/off) via a MOSFET gate
+    - Current channel selection (0-3) via two control pins
+    - Fan speed monitoring via tachometer
+    - UART communication for telemetry data
+    - Battery voltage monitoring for safety shutdown
+    
     Attributes:
         POWER_BUTTON_PIN (int): Pin for the power button.
         POWER_GATE_PIN (int): Pin for controlling the PSU power gate.
@@ -354,73 +430,98 @@ class PowerSupplyController:
         current_channel=CURRENT_CHANNEL,
     ):
         """
-        Initializes the PowerSupplyController.
-
+        Initialize the Power Supply Unit controller.
+        
+        Sets up all hardware interfaces and initializes the controller state.
+        Configures pins for power control, current selection, and monitoring.
+        
         Args:
-            power_button_pin (int): Pin for the power button.
-            power_button_timer (int): Timer for the power button.
-            power_gate_pin (int): Pin for the power gate.
-            current_a_pin (int): Pin A for current control.
-            current_b_pin (int): Pin B for current control.
-            fan_tachometer_pin (int): Pin for the fan tachometer.
-            fan_tachometer_timer (int): Timer for the fan tachometer.
-            uart (UART): UART interface for communication.
-            uart_rx_pin (int): Pin for UART RX.
-            buzzer (Buzzer): Buzzer instance for notifications.
-            turn_off_voltage (float): Voltage threshold for turning off the PSU.
-            current_channel (int): Default current channel.
+            power_button_pin (int): GPIO pin for the power button input.
+            power_button_timer (int, optional): Timer ID for button debouncing.
+            power_gate_pin (int): GPIO pin for controlling the PSU power MOSFET.
+            current_a_pin (int): GPIO pin A for current channel selection (LSB).
+            current_b_pin (int): GPIO pin B for current channel selection (MSB).
+            fan_tachometer_pin (int, optional): GPIO pin for fan tachometer input.
+            fan_tachometer_timer (int, optional): Timer ID for tachometer measurements.
+            uart (UART, optional): UART interface for PSU communication.
+            uart_rx_pin (int, optional): GPIO pin for UART RX.
+            buzzer (Buzzer, optional): Buzzer instance for audio feedback.
+            turn_off_voltage (float, optional): Voltage threshold for safety shutdown.
+            current_channel (int, optional): Initial current channel (0-3).
+            
+        Raises:
+            Exception: If pin initialization fails.
         """
+        # Initialize state and basic attributes
         self._state = PSUState()
         self._uart = uart
         self._uart_rx_pin = uart_rx_pin
         self._turn_off_voltage = turn_off_voltage
-
-        if fan_tachometer_pin:
+        self._turn_off_confirmations = 0
+        self._buffer = None
+        
+        # Initialize hardware components
+        self._initialize_tachometer(fan_tachometer_pin, fan_tachometer_timer)
+        self._initialize_power_button(power_button_pin, power_button_timer, buzzer)
+        self._initialize_power_gate(power_gate_pin)
+        self._initialize_current_control(current_a_pin, current_b_pin, current_channel)
+        
+        logger.info("Initialized power supply controller")
+        
+    def _initialize_tachometer(self, pin, timer_id):
+        """Initialize the fan tachometer if pin is provided."""
+        if pin:
             self._tachometer = Tachometer(
-                pin=machine.Pin(fan_tachometer_pin, machine.Pin.IN),
+                pin=machine.Pin(pin, machine.Pin.IN),
                 period_ms=250,
                 done_callback=self.on_tachometer,
-                timer_id=fan_tachometer_timer,
+                timer_id=timer_id,
             )
-
+            
+    def _initialize_power_button(self, pin, timer_id, buzzer):
+        """Initialize the power button controller."""
         try:
             self._power_button = ButtonController(
-                listen_pin=power_button_pin,
+                listen_pin=pin,
                 on_change=self.on_power_trigger,
                 buzzer=buzzer,
-                trigger_timer=power_button_timer,
+                trigger_timer=timer_id,
             )
         except Exception as e:
             self._state.set_error(self._state.ERROR_PIN)
-            logger.error("PSU button pin failed")
-
+            logger.error(f"PSU button pin failed: {e}")
+            
+    def _initialize_power_gate(self, pin):
+        """Initialize the power gate MOSFET control pin."""
         try:
             self._power_gate_pin = machine.Pin(
-                power_gate_pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
+                pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
             )
-            self._power_gate_pin.off()
+            self._power_gate_pin.off()  # Ensure PSU starts in off state
         except Exception as e:
             self._state.set_error(self._state.ERROR_PIN)
-            logger.error("PSU gate pin failed")
-
+            logger.error(f"PSU gate pin failed: {e}")
+            
+    def _initialize_current_control(self, pin_a, pin_b, channel):
+        """Initialize the current control pins and set initial channel."""
         try:
             self._current_a_pin = machine.Pin(
-                current_a_pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
+                pin_a, machine.Pin.OUT, machine.Pin.PULL_DOWN
             )
             self._current_b_pin = machine.Pin(
-                current_b_pin, machine.Pin.OUT, machine.Pin.PULL_DOWN
+                pin_b, machine.Pin.OUT, machine.Pin.PULL_DOWN
             )
-            self.set_current(current_channel)
+            self.set_current(channel)
         except Exception as e:
             self._state.set_error(self._state.ERROR_PIN)
-            logger.critical(e)
-
-        logger.info("Initialized power supply controller")
+            logger.critical(f"PSU current control pins failed: {e}")
 
     def on_tachometer(self, rpm):
         """
-        Callback for tachometer updates.
-
+        Process tachometer measurements for fan speed monitoring.
+        
+        Updates the state with the current fan RPM and logs the measurement.
+        
         Args:
             rpm (int): The measured RPM of the fan.
         """
@@ -429,32 +530,51 @@ class PowerSupplyController:
 
     def on_bms_state(self, bms_state):
         """
-        Handles updates from the Battery Management System (BMS).
-
+        Process updates from the Battery Management System (BMS).
+        
+        Monitors battery cell voltages and triggers PSU shutdown if voltage
+        exceeds the safety threshold for a sufficient number of confirmations.
+        
         Args:
             bms_state (BMSState): The current state of the BMS.
         """
-        triggered = False
-        for voltage in bms_state.cells:
+        # Check if any cell voltage exceeds the threshold
+        voltage_exceeded = False
+        
+        for cell_index, voltage in enumerate(bms_state.cells):
             if voltage is None:
                 continue
-            voltage /= 1000
-            if voltage > self._turn_off_voltage:
-                triggered = True
+                
+            # Convert from mV to V
+            voltage_v = voltage / 1000
+            
+            if voltage_v > self._turn_off_voltage:
+                voltage_exceeded = True
+                logger.debug(f"PSU cell {cell_index} voltage {voltage_v}V exceeds threshold {self._turn_off_voltage}V")
                 break
 
-        if triggered:
+        # Update confirmation counter based on voltage status
+        if voltage_exceeded:
             self._turn_off_confirmations += 1
+            logger.debug(f"PSU voltage threshold exceeded: {self._turn_off_confirmations}/{self.TURN_OFF_MAX_CONFIRMATIONS} confirmations")
+            
+            # Shutdown if we've reached the maximum confirmations
             if self._turn_off_confirmations >= self.TURN_OFF_MAX_CONFIRMATIONS:
-                logger.info("PSU reached max voltage threshold")
+                logger.info(f"PSU reached max voltage threshold ({self._turn_off_voltage}V) - shutting down")
                 self.off()
         else:
-            self._turn_off_confirmations = 0
+            # Reset counter if voltage is within limits
+            if self._turn_off_confirmations > 0:
+                logger.debug("PSU voltage within limits - resetting confirmation counter")
+                self._turn_off_confirmations = 0
 
     def set_current(self, channel):
         """
-        Sets the current channel for the PSU.
-
+        Set the current channel for the PSU.
+        
+        Configures the current control pins to select the desired current channel.
+        The channel is encoded using two pins: A (LSB) and B (MSB).
+        
         Args:
             channel (int): The current channel to set (0-3).
         """
@@ -469,7 +589,10 @@ class PowerSupplyController:
 
     def on(self):
         """
-        Turns on the PSU.
+        Turn on the PSU.
+        
+        Initializes the UART interface, activates the power gate MOSFET,
+        and updates the state to reflect the active status.
         """
         logger.info("Turning on PSU")
         self._uart.init(rx=self._uart_rx_pin, baud_rate=4800)
@@ -479,7 +602,10 @@ class PowerSupplyController:
 
     def off(self):
         """
-        Turns off the PSU.
+        Turn off the PSU.
+        
+        Deactivates the power gate MOSFET, clears the state data,
+        and updates the state to reflect the inactive status.
         """
         logger.info("Turning off PSU")
         self._power_gate_pin.off()
@@ -489,7 +615,9 @@ class PowerSupplyController:
 
     def on_power_trigger(self):
         """
-        Handles the power button trigger event.
+        Handle the power button trigger event.
+        
+        Toggles the PSU state between on and off based on the current state.
         """
         logger.info("PSU power trigger")
         if self._state.active:
@@ -499,9 +627,11 @@ class PowerSupplyController:
 
     async def run(self):
         """
-        Main loop for the PSU controller.
-
-        Continuously monitors and updates the PSU state.
+        Main control loop for the PSU controller.
+        
+        Continuously monitors the PSU state and updates telemetry data.
+        When active, it samples UART data, measures fan speed, and updates
+        the state snapshot.
         """
         logger.info("Running PSU...")
         while True:
@@ -514,9 +644,9 @@ class PowerSupplyController:
     @property
     def state(self):
         """
-        Gets the current state of the PSU.
-
+        Get the current state of the PSU.
+        
         Returns:
-            PSUState: The current PSU state.
+            PSUState: The current PSU state object.
         """
         return self._state

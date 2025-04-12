@@ -1,9 +1,16 @@
 """
 BMS (Battery Management System) module.
 
-This module provides the implementation of BMSErrors, BMSState, and BMSController
-classes, which manage the state, errors, and control logic for the battery
-management system.
+This module provides a comprehensive implementation for managing battery systems, including
+error handling, state tracking, and control functionality. It consists of three main classes:
+
+1. BMSErrors: Defines error codes and their meanings for battery management issues
+2. BMSState: Tracks and manages the current state of the battery system
+3. BMSController: Handles communication with the physical BMS hardware via UART
+
+The module supports monitoring battery parameters such as cell voltages, temperature,
+state of charge, and current, while also providing control functions for charging and
+discharging operations.
 """
 
 import struct
@@ -27,9 +34,11 @@ from const import (
 
 class BMSErrors:
     """
-    Represents the error codes for the BMS.
+    Represents the error codes for the Battery Management System.
 
-    A two-byte value represents one or more errors specified in the following bits:
+    This class defines a comprehensive set of error codes that can be detected by the BMS.
+    Each error is represented by a specific bit in a two-byte value, allowing multiple
+    errors to be reported simultaneously.
 
     Attributes:
         ERROR_LOW_CAPACITY (int): Low capacity error (bit 0).
@@ -68,18 +77,44 @@ class BMSState(BaseState):
     """
     Represents the state of the Battery Management System (BMS).
 
+    This class tracks all aspects of the battery system's current state, including
+    cell voltages, temperatures, charge levels, and protection parameters. It also
+    maintains historical data for key metrics and provides methods for parsing
+    responses from the BMS hardware.
+
     Attributes:
         NAME (str): The name of the state.
         BLE_STATE_UUID (UUID): The BLE UUID for the BMS state.
-        cells (list): Per-cell voltage values.
-        mos_temperature (int): MOSFET temperature.
-        sensor1_temperature (int): Temperature from sensor 1.
-        sensor2_temperature (int): Temperature from sensor 2.
-        voltage (int): Total battery voltage.
-        current (int): Current flowing through the battery.
-        soc (int): State of charge (percentage).
-        charging_allowed (bool): Whether charging is allowed.
-        discharging_allowed (bool): Whether discharging is allowed.
+        cells (list): Per-cell voltage values in millivolts.
+        mos_temperature (int): MOSFET temperature in tenths of a degree Celsius.
+        sensor1_temperature (int): Temperature from sensor 1 in tenths of a degree Celsius.
+        sensor2_temperature (int): Temperature from sensor 2 in tenths of a degree Celsius.
+        voltage (int): Total battery voltage in millivolts.
+        current (int): Current flowing through the battery in milliamperes.
+        soc (int): State of charge as a percentage (0-100).
+        charging_allowed (bool): Whether charging is currently allowed.
+        discharging_allowed (bool): Whether discharging is currently allowed.
+        temperature_sensors (int): Number of temperature sensors.
+        cycles (int): Number of charge/discharge cycles.
+        cycle_capacity (int): Capacity in ampere-hours.
+        battery_strings (int): Number of battery strings.
+        state (int): Current state flags.
+        total_over_voltage_protection (int): Total over-voltage protection threshold.
+        total_under_voltage_protection (int): Total under-voltage protection threshold.
+        cell_over_voltage_protection (int): Cell over-voltage protection threshold.
+        cell_over_voltage_recovery (int): Cell over-voltage recovery threshold.
+        cell_over_voltage_delay (int): Cell over-voltage delay in milliseconds.
+        cell_under_voltage_protection (int): Cell under-voltage protection threshold.
+        cell_under_voltage_recovery (int): Cell under-voltage recovery threshold.
+        cell_under_voltage_delay (int): Cell under-voltage delay in milliseconds.
+        cell_pressure_difference (int): Cell pressure difference threshold.
+        discharge_over_current (int): Discharge over-current threshold.
+        discharge_over_current_delay (int): Discharge over-current delay in milliseconds.
+        charge_over_current (int): Charge over-current threshold.
+        charge_over_current_delay (int): Charge over-current delay in milliseconds.
+        balancing_voltage (int): Balancing voltage threshold.
+        balancing_pressure_difference (int): Balancing pressure difference threshold.
+        history (dict): Historical data for various metrics.
     """
 
     NAME = "BMS"
@@ -156,9 +191,11 @@ class BMSState(BaseState):
 
     def clear(self):
         """
-        Clear the BMS state.
+        Clear the BMS state by resetting all attributes to their default values.
 
-        Resets all state attributes to their default values.
+        This method is typically called when a communication error occurs or when
+        initializing a new state. It resets all state variables to None or their
+        appropriate default values.
         """
         self.cells = [None, None, None, None]
 
@@ -201,10 +238,17 @@ class BMSState(BaseState):
 
     def parse(self, response):
         """
-        Parse a response from the BMS.
+        Parse a response from the BMS hardware.
+
+        This method decodes the binary response from the BMS hardware, extracting
+        all relevant state information including cell voltages, temperatures,
+        current, voltage, and protection parameters.
 
         Args:
-            response (bytes): The response data to parse.
+            response (bytes): The binary response data to parse from the BMS hardware.
+
+        Raises:
+            AssertionError: If the response format is invalid or descriptors don't match.
         """
         _, size = struct.unpack_from(">HH", response)
 
@@ -371,9 +415,11 @@ class BMSState(BaseState):
 
     def build_history(self):
         """
-        Build historical data for the BMS.
+        Build historical data for the BMS metrics.
 
-        Updates the historical data for SOC, current, and per-cell voltages.
+        Updates the historical data for key metrics including state of charge (SOC),
+        current, and per-cell voltages. This data is used for tracking battery
+        performance over time and can be used for analysis and diagnostics.
         """
         self.history[HISTORY_BMS_SOC].push(self._pack(self.soc))
         self.history[HISTORY_BMS_CURRENT].push(self._pack(self.current))
@@ -394,13 +440,16 @@ class BMSState(BaseState):
     @staticmethod
     def crc(frame):
         """
-        Calculate the CRC for a given frame.
+        Calculate the CRC (Cyclic Redundancy Check) for a given frame.
+
+        This method computes a simple checksum by summing all bytes in the frame
+        and returning the high and low bytes of the result.
 
         Args:
-            frame (bytes): The frame to calculate the CRC for.
+            frame (bytes): The binary frame to calculate the CRC for.
 
         Returns:
-            list: A list containing the two-byte CRC.
+            list: A two-element list containing the high and low bytes of the CRC.
         """
         result = 0
         for b in frame:
@@ -409,10 +458,14 @@ class BMSState(BaseState):
 
     def get_ble_state(self):
         """
-        Get the BLE representation of the BMS state.
+        Get the BLE (Bluetooth Low Energy) representation of the BMS state.
+
+        This method packs the current BMS state into a binary format suitable
+        for transmission over BLE, including voltage, current, SOC, charging
+        status, temperatures, and cell voltages.
 
         Returns:
-            bytes: The packed BLE state of the BMS.
+            bytes: The packed BLE state data of the BMS.
         """
         return struct.pack(
             ">HHBBBBBBBBBBHB",
@@ -433,14 +486,25 @@ class BMSState(BaseState):
         )
 
     def get_direction(self):
+        """
+        Determine the current flow direction in the battery.
+
+        Returns:
+            int: A value indicating the direction of current flow (0 for discharge,
+                 non-zero for charge).
+        """
         return self.current & (1 << 15)
 
     def get_power(self):
         """
-        Calculate the power based on current and voltage.
+        Calculate the instantaneous power of the battery.
+
+        This method computes the power in watts based on the current voltage and
+        current values. The calculation accounts for the sign of the current to
+        determine if power is being consumed (positive) or generated (negative).
 
         Returns:
-            int: The calculated power in watts.
+            int: The calculated power in watts, or 0 if current or voltage is None.
         """
         if not self.current or not self.voltage:
             return 0
@@ -453,14 +517,25 @@ class BMSController:
     """
     Controller for the Battery Management System (BMS).
 
-    This class manages communication with the BMS, including querying its state
-    and sending commands.
+    This class manages communication with the physical BMS hardware via UART,
+    providing methods to query the current state and send control commands.
+    It handles the low-level protocol details and provides a high-level interface
+    for interacting with the BMS.
+
+    The controller supports enabling/disabling charging and discharging operations,
+    as well as continuous monitoring of the battery state.
 
     Attributes:
+        HEADER (bytes): The header bytes for BMS communication.
+        STATUS_REQUEST (bytes): Command to request current BMS status.
         ENABLE_CHARGE (bytes): Command to enable charging.
         DISABLE_CHARGE (bytes): Command to disable charging.
         ENABLE_DISCHARGE (bytes): Command to enable discharging.
         DISABLE_DISCHARGE (bytes): Command to disable discharging.
+        BAUD_RATE (int): Default UART baud rate (115200).
+        UART_IF (int): Default UART interface number (1).
+        UART_TX_PIN (int): Default UART TX pin number (18).
+        UART_RX_PIN (int): Default UART RX pin number (16).
     """
 
     HEADER = b"\x4e\x57"
@@ -490,13 +565,16 @@ class BMSController:
         uart_tx_pin=UART_TX_PIN,
     ):
         """
-        Initialize the BMSController.
+        Initialize the BMSController with UART communication parameters.
+
+        This method sets up the UART communication channel for interacting with
+        the BMS hardware and initializes the state tracking object.
 
         Args:
-            baud_rate (int): The baud rate for UART communication.
-            uart_if (int): The UART interface number.
-            uart_rx_pin (int): The UART RX pin number.
-            uart_tx_pin (int): The UART TX pin number.
+            baud_rate (int, optional): The baud rate for UART communication. Defaults to 115200.
+            uart_if (int, optional): The UART interface number. Defaults to 1.
+            uart_rx_pin (int, optional): The UART RX pin number. Defaults to 16.
+            uart_tx_pin (int, optional): The UART TX pin number. Defaults to 18.
         """
         self._state = BMSState()
         self._uart = UART(
@@ -510,9 +588,14 @@ class BMSController:
 
     async def run(self):
         """
-        Run the BMS controller.
+        Run the BMS controller in continuous monitoring mode.
 
-        This method continuously queries the BMS state and updates it.
+        This asynchronous method continuously queries the BMS state and updates
+        the internal state tracking. It runs indefinitely until interrupted,
+        with a configurable delay between queries.
+
+        The method also takes snapshots of the state for historical tracking
+        and handles any communication errors that may occur.
         """
         logger.info("Running BMS controller")
         self.request_status(delay=50)
@@ -524,13 +607,19 @@ class BMSController:
 
     def request_status(self, delay=100):
         """
-        Request the current status from the BMS.
+        Request the current status from the BMS hardware.
+
+        This method sends a status request command to the BMS and processes the
+        response to update the internal state. It handles communication errors
+        and logs relevant information.
 
         Args:
-            delay (int): The delay between sending the request and reading the response.
+            delay (int, optional): The delay in milliseconds between sending the request
+                                 and reading the response. Defaults to 100.
 
         Returns:
-            bool: True if the status was successfully retrieved, False otherwise.
+            bool: True if the status was successfully retrieved and parsed,
+                 False if a communication error occurred.
         """
         data = self._uart.query(self.STATUS_REQUEST, delay=delay)
         if data:
@@ -558,8 +647,12 @@ class BMSController:
         """
         Enable charging on the BMS.
 
+        This method sends a command to the BMS to enable the charging function.
+        It verifies the response and updates the error state accordingly.
+
         Args:
-            delay (int): The delay between sending the command and reading the response.
+            delay (int, optional): The delay in milliseconds between sending the command
+                                 and reading the response. Defaults to 50.
 
         Returns:
             bool: True if charging was successfully enabled, False otherwise.
@@ -579,8 +672,12 @@ class BMSController:
         """
         Disable charging on the BMS.
 
+        This method sends a command to the BMS to disable the charging function.
+        It verifies the response and updates the error state accordingly.
+
         Args:
-            delay (int): The delay between sending the command and reading the response.
+            delay (int, optional): The delay in milliseconds between sending the command
+                                 and reading the response. Defaults to 50.
 
         Returns:
             bool: True if charging was successfully disabled, False otherwise.
@@ -600,8 +697,12 @@ class BMSController:
         """
         Enable discharging on the BMS.
 
+        This method sends a command to the BMS to enable the discharging function.
+        It verifies the response and updates the error state accordingly.
+
         Args:
-            delay (int): The delay between sending the command and reading the response.
+            delay (int, optional): The delay in milliseconds between sending the command
+                                 and reading the response. Defaults to 50.
 
         Returns:
             bool: True if discharging was successfully enabled, False otherwise.
@@ -621,8 +722,12 @@ class BMSController:
         """
         Disable discharging on the BMS.
 
+        This method sends a command to the BMS to disable the discharging function.
+        It verifies the response and updates the error state accordingly.
+
         Args:
-            delay (int): The delay between sending the command and reading the response.
+            delay (int, optional): The delay in milliseconds between sending the command
+                                 and reading the response. Defaults to 50.
 
         Returns:
             bool: True if discharging was successfully disabled, False otherwise.
@@ -642,7 +747,10 @@ class BMSController:
         """
         Get the current state of the BMS.
 
+        This property provides access to the internal BMSState object that
+        tracks all aspects of the battery system's current state.
+
         Returns:
-            BMSState: The current BMS state.
+            BMSState: The current BMS state object containing all state information.
         """
         return self._state

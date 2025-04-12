@@ -480,6 +480,7 @@ class BaseState:
                 continue
             for chunk in chunks:
                 self._ble.notify(BLE_HISTORY_STATE_UUID, chunk)
+                time.sleep_ms(10)
 
     @staticmethod
     def as_hex(data):

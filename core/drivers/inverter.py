@@ -4,6 +4,14 @@ Inverter module.
 This module provides the implementation of the `InverterState` and `InverterController`
 classes, which manage the state and control logic for the inverter, including
 communication, fan tachometer monitoring, and power state management.
+
+The module handles:
+- Communication with the inverter via UART
+- Monitoring fan tachometers for RPM readings
+- Managing power state (on/off)
+- Tracking inverter metrics (voltage, power, temperature)
+- Error detection and handling
+- Historical data collection
 """
 
 import asyncio
@@ -30,19 +38,25 @@ class InverterState(BaseState):
     """
     Represents the state of the inverter.
 
+    This class manages the current state of the inverter, including its operational
+    status, electrical measurements, and error conditions. It also handles parsing
+    of communication frames from the inverter and maintains historical data.
+
     Attributes:
         NAME (str): The name of the state.
         BLE_STATE_UUID (UUID): The BLE UUID for the inverter state.
         active (bool): Indicates whether the inverter is active.
-        ac (int): AC output voltage.
-        power (int): Output power.
-        dc (float): Input voltage.
-        temperature (int): Device temperature.
+        ac (int): AC output voltage in volts.
+        power (int): Output power in watts.
+        dc (float): Input voltage in volts.
+        temperature (int): Device temperature in degrees Celsius.
         level (int): Battery level (1-10).
         rpm_a (int): Fan A speed in RPM.
         rpm_b (int): Fan B speed in RPM.
         _valid (bool): Indicates whether the state is valid.
         history (dict): Historical data for power, temperature, and RPM.
+        external_errors (int): Bitmap of external error conditions.
+        internal_errors (int): Bitmap of internal error conditions.
     """
 
     NAME = "INVERTER"
@@ -77,7 +91,11 @@ class InverterState(BaseState):
         """
         Clear the inverter state.
 
-        Resets all state attributes to their default values.
+        Resets all state attributes to their default values and notifies
+        any observers of the state change.
+
+        Returns:
+            None
         """
         self.active = False
         self.ac = None
@@ -94,8 +112,15 @@ class InverterState(BaseState):
         """
         Parse a frame received from the inverter.
 
+        Extracts and validates data from a communication frame, including
+        voltage, power, temperature, and error conditions. Performs checksum
+        validation to ensure data integrity.
+
         Args:
-            frame (bytes): The frame to parse.
+            frame (bytes): The raw communication frame to parse.
+
+        Returns:
+            None
         """
         # TODO: use frame size
         if len(frame) != 17:
@@ -164,8 +189,15 @@ class InverterState(BaseState):
         """
         Parse a buffer received from the inverter.
 
+        Processes a communication buffer, extracts valid frames, and updates
+        the inverter state. Handles error conditions and sets appropriate
+        error flags.
+
         Args:
-            buffer (bytes): The buffer to parse.
+            buffer (bytes): The communication buffer to parse.
+
+        Returns:
+            bool: True if parsing was successful, False otherwise.
         """
         if not buffer:
             self.set_error(self.ERROR_NO_RESPONSE)
@@ -192,6 +224,9 @@ class InverterState(BaseState):
         """
         Check if the inverter state is valid.
 
+        Validates the current state based on checksum verification
+        and other error conditions.
+
         Returns:
             bool: True if the state is valid, False otherwise.
         """
@@ -201,17 +236,27 @@ class InverterState(BaseState):
         """
         Calculate the average RPM of the fans.
 
+        Computes the arithmetic mean of both fan speeds if both
+        are available.
+
         Returns:
-            int: The average RPM of the fans.
+            int: The average RPM of the fans, or None if either fan
+                 speed is unavailable.
         """
         if self.rpm_a and self.rpm_b:
             return int((self.rpm_a + self.rpm_b) / 2)
+        return None
 
     def build_history(self):
         """
         Build historical data for the inverter.
 
-        Updates the historical data for power, temperature, and RPM.
+        Updates the historical data collections with current power,
+        temperature, and RPM values. This data is used for trending
+        and analysis.
+
+        Returns:
+            None
         """
         self.history[HISTORY_INVERTER_POWER].push(self._pack(self.power))
         self.history[HISTORY_INVERTER_TEMPERATURE].push(self._pack(self.temperature))
@@ -220,6 +265,9 @@ class InverterState(BaseState):
     def get_ble_state(self):
         """
         Get the BLE representation of the inverter state.
+
+        Creates a binary representation of the current state for
+        transmission over Bluetooth Low Energy.
 
         Returns:
             bytes: The packed BLE state of the inverter.
@@ -241,7 +289,15 @@ class InverterController:
     Controller for managing the inverter.
 
     This class handles communication with the inverter, monitoring fan tachometers,
-    and managing the power state.
+    and managing the power state. It provides a high-level interface for controlling
+    the inverter and monitoring its operational status.
+
+    The controller manages:
+    - Power state transitions (on/off)
+    - UART communication with the inverter
+    - Fan tachometer monitoring
+    - Battery voltage monitoring
+    - Error detection and handling
 
     Attributes:
         POWER_BUTTON_PIN (int): Default pin for the power button.
@@ -302,20 +358,27 @@ class InverterController:
         """
         Initialize the InverterController.
 
+        Sets up the controller with the specified hardware configuration,
+        including power button, UART communication, and fan tachometers.
+        Initializes the inverter state and configures the power gate.
+
         Args:
             power_button_pin (int): Pin for the power button.
-            power_button_timer (int): Timer for the power button.
-            power_gate_pin (int): Pin for the power gate.
-            uart (UART): UART instance for communication.
+            power_button_timer (int): Timer for the power button debouncing.
+            power_gate_pin (int): Pin for the power gate control.
+            uart (UART): UART instance for communication with the inverter.
             baud_rate (int): Baud rate for UART communication.
             uart_tx_pin (int): UART TX pin number.
             uart_rx_pin (int): UART RX pin number.
-            buzzer (BuzzerController): Buzzer controller for feedback.
+            buzzer (BuzzerController): Buzzer controller for user feedback.
             turn_off_voltage (float): Voltage threshold for turning off the inverter.
             fan_tachometer_a_pin (int): Pin for fan A tachometer.
             fan_tachometer_b_pin (int): Pin for fan B tachometer.
             fan_tachometer_a_timer (int): Timer for fan A tachometer.
             fan_tachometer_b_timer (int): Timer for fan B tachometer.
+
+        Returns:
+            None
         """
         self._state = InverterState()
         self._turn_off_voltage = turn_off_voltage
@@ -363,8 +426,14 @@ class InverterController:
         """
         Handle RPM updates from fan A tachometer.
 
+        Updates the state with the current RPM reading from fan A
+        and logs the value for debugging.
+
         Args:
             rpm (int): RPM value from fan A.
+
+        Returns:
+            None
         """
         self._state.rpm_a = rpm
         logger.debug(f"INVERTER FAN A RPM: {rpm}")
@@ -373,8 +442,14 @@ class InverterController:
         """
         Handle RPM updates from fan B tachometer.
 
+        Updates the state with the current RPM reading from fan B
+        and logs the value for debugging.
+
         Args:
             rpm (int): RPM value from fan B.
+
+        Returns:
+            None
         """
         self._state.rpm_b = rpm
         logger.debug(f"INVERTER FAN B RPM: {rpm}")
@@ -383,8 +458,15 @@ class InverterController:
         """
         Handle updates from the BMS state.
 
+        Monitors battery cell voltages and turns off the inverter if
+        any cell voltage falls below the configured threshold for a
+        sufficient number of consecutive readings.
+
         Args:
-            bms_state (BMSState): The current state of the BMS.
+            bms_state (BMSState): The current state of the Battery Management System.
+
+        Returns:
+            None
         """
         triggered = False
         for voltage in bms_state.cells:
@@ -407,6 +489,13 @@ class InverterController:
     def on(self):
         """
         Turn on the inverter.
+
+        Initializes UART communication, activates the power gate,
+        and sets the inverter state to active. Includes a bootstrapping
+        delay to allow the inverter to stabilize.
+
+        Returns:
+            None
         """
         self._bootstrapping = True
         self._uart.init(rx=self._rx_pin, tx=self._tx_pin, baud_rate=self._baud_rate)
@@ -417,6 +506,12 @@ class InverterController:
     def off(self):
         """
         Turn off the inverter.
+
+        Deactivates the power gate, clears the inverter state,
+        and resets error conditions.
+
+        Returns:
+            None
         """
         self._bootstrapping = False
         self._power_gate_pin.off()
@@ -428,6 +523,12 @@ class InverterController:
     def on_power_trigger(self):
         """
         Handle power button triggers to toggle the inverter state.
+
+        Toggles the inverter between on and off states based on
+        the current state when the power button is pressed.
+
+        Returns:
+            None
         """
         if self._state.active:
             self.off()
@@ -439,6 +540,17 @@ class InverterController:
         Run the inverter controller.
 
         This method continuously monitors the inverter state and updates it.
+        It handles communication with the inverter, fan tachometer readings,
+        and error detection. The method runs indefinitely in an asynchronous loop.
+
+        The controller performs the following tasks:
+        - Reads inverter status via UART
+        - Measures fan tachometer readings
+        - Updates historical data
+        - Logs operational status and errors
+
+        Returns:
+            None
         """
         logger.info("Running inverter controller...")
         while True:
@@ -478,7 +590,12 @@ class InverterController:
         """
         Read the current status from the inverter.
 
-        Sends a status request command and parses the response.
+        Sends a status request command to the inverter via UART,
+        receives the response, and parses it to update the inverter state.
+        Logs the raw response for debugging purposes.
+
+        Returns:
+            None
         """
         data = self._uart.query(self.STATUS_REQUEST, delay=50)
         logger.debug("Inverter response", self.state.as_hex(data))
@@ -488,6 +605,9 @@ class InverterController:
     def state(self):
         """
         Get the current state of the inverter.
+
+        Provides access to the InverterState object that contains
+        all current operational data and error conditions.
 
         Returns:
             InverterState: The current inverter state.
