@@ -16,7 +16,6 @@ LED_PIN = const(8)
 BLE_ENABLED = True
 BLE_GAP_NAME = "Trypillia"
 BLE_MANUFACTURER = "egg17"
-BLE_MODEL = "Trypillia-4K12"
 
 LOGGER_TRANSPORT = const(0)
 LOGGER_LEVEL = const(4)

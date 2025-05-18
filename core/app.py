@@ -37,6 +37,7 @@ from const import (
     PROFILE_KEY_PSU_CURRENT,
     PROFILE_KEY_MAX_VOLTAGE,
     PROFILE_KEY_MIN_VOLTAGE,
+    PROFILE_KEY_MODEL,
 )
 
 import conf
@@ -150,7 +151,10 @@ async def main():
         ble = BLEServerController(
             gap_name=conf.BLE_GAP_NAME,
             manufacturer=conf.BLE_MANUFACTURER,
-            model=conf.BLE_MODEL,
+            model=profile.get(
+                PROFILE_KEY_MODEL,
+                version.MODEL,
+            ),
             firmware=version.FIRMWARE,
             instructions=instructions,
             ats=ats,
