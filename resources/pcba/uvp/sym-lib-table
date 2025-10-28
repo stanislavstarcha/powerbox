@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "SN74LVC2G04DBVR")(type "KiCad")(uri "${KIPRJMOD}/lib/SN74LVC2G04DBVR/SN74LVC2G04DBVR.kicad_sym")(options "")(descr ""))
+)

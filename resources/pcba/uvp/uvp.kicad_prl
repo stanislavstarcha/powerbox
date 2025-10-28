@@ -5,7 +5,7 @@
     "auto_track_width": true,
     "hidden_netclasses": [],
     "hidden_nets": [],
-    "high_contrast_mode": 0,
+    "high_contrast_mode": 1,
     "net_color_mode": 1,
     "opacity": {
       "images": 0.6,
@@ -65,7 +65,7 @@
       42,
       43
     ],
-    "visible_layers": "fffffff5_ffffffff",
+    "visible_layers": "fffffff7_ff5555ff",
     "zone_display_mode": 0
   },
   "git": {
@@ -75,7 +75,7 @@
     "ssh_key": ""
   },
   "meta": {
-    "filename": "fan.kicad_prl",
+    "filename": "uvp.kicad_prl",
     "version": 4
   },
   "net_inspector_panel": {
