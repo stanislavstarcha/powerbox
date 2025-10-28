@@ -337,7 +337,7 @@ class ActiveScreen(BaseScreen):
 
     def reset_error(self, device_id):
         """
-        Resets error information for a device and hides error state if no errors exist.
+        Resets error information for a device and hides the error state if no errors exist.
 
         Args:
             device_id (int): The device identifier.
