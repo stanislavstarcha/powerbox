@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">powerbox</string>
+    <string name="title_activity_main">powerbox</string>
+    <string name="package_name">powerbox.egg17.com</string>
+    <string name="custom_url_scheme">powerbox.egg17.com</string>
+</resources>

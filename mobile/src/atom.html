@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>3D Atom Model Animation</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Parameters
+        const protonRadius = 1.0;
+        const electrons = [
+            { name: "Electron1", radius: 0.10, orbitRadius: 2.0, speed: 0.2 },
+            { name: "Electron2", radius: 0.45, orbitRadius: 3.0, speed: 1.8 },
+            { name: "Electron3", radius: 0.15, orbitRadius: 4.0, speed: 0.3 },
+            { name: "Electron4", radius: 0.35, orbitRadius: 5.0, speed: 1.6 },
+            { name: "Electron5", radius: 0.20, orbitRadius: 6.0, speed: 0.4 },
+            { name: "Electron6", radius: 0.40, orbitRadius: 7.0, speed: 1.4 },
+            { name: "Electron7", radius: 0.12, orbitRadius: 8.0, speed: 0.5 },
+            { name: "Electron8", radius: 0.30, orbitRadius: 9.0, speed: 1.2 },
+            { name: "Electron9", radius: 0.25, orbitRadius: 10.0, speed: 0.6 },
+            { name: "Electron10", radius: 0.50, orbitRadius: 11.0, speed: 1.0 },
+            { name: "Electron11", radius: 0.18, orbitRadius: 12.0, speed: 0.7 },
+            { name: "Electron12", radius: 0.42, orbitRadius: 13.0, speed: 1.9 },
+            { name: "Electron13", radius: 0.22, orbitRadius: 14.0, speed: 0.8 },
+            { name: "Electron14", radius: 0.38, orbitRadius: 15.0, speed: 1.7 },
+            { name: "Electron15", radius: 0.16, orbitRadius: 16.0, speed: 0.9 },
+            { name: "Electron16", radius: 0.48, orbitRadius: 17.0, speed: 1.5 },
+            { name: "Electron17", radius: 0.14, orbitRadius: 18.0, speed: 1.0 },
+            { name: "Electron18", radius: 0.32, orbitRadius: 19.0, speed: 1.3 },
+            { name: "Electron19", radius: 0.28, orbitRadius: 20.0, speed: 1.1 },
+            { name: "Electron20", radius: 0.44, orbitRadius: 21.0, speed: 1.8 },
+            { name: "Electron21", radius: 0.11, orbitRadius: 22.0, speed: 0.3 },
+            { name: "Electron22", radius: 0.36, orbitRadius: 23.0, speed: 1.6 },
+            { name: "Electron23", radius: 0.24, orbitRadius: 24.0, speed: 0.4 },
+            { name: "Electron24", radius: 0.46, orbitRadius: 25.0, speed: 1.4 },
+            { name: "Electron25", radius: 0.13, orbitRadius: 26.0, speed: 0.5 },
+            { name: "Electron26", radius: 0.40, orbitRadius: 27.0, speed: 1.2 }
+        ];
+        const systemRotationSpeed = 0.001; // Significantly reduced rotation speed
+        const orbitSegments = 64; // Number of segments for orbit circles
+        const explosionDuration = 3; // Duration of explosion in seconds
+        let explosionStartTime = null;
+        let isExploding = true;
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf0f0f0); // Light grey background
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Create a group to hold the atom (proton + electrons)
+        const atomGroup = new THREE.Group();
+        scene.add(atomGroup);
+
+        // Proton
+        const protonGeometry = new THREE.SphereGeometry(protonRadius, 32, 32);
+        const protonMaterial = new THREE.MeshBasicMaterial({ color: 0xff8c00 }); // Orange color
+        const proton = new THREE.Mesh(protonGeometry, protonMaterial);
+        atomGroup.add(proton);
+
+        // Electron setup with orbit calculation
+        const electronObjects = [];
+
+        // Function to calculate spherical coordinates for even distribution
+        function getSphericalCoordinates(index, total) {
+            const phi = Math.acos(-1 + (2 * index) / total);
+            const theta = Math.sqrt(total * Math.PI) * phi;
+            
+            return {
+                x: Math.sin(phi) * Math.cos(theta),
+                y: Math.sin(phi) * Math.sin(theta),
+                z: Math.cos(phi)
+            };
+        }
+
+        electrons.forEach((electron, index) => {
+            // Calculate spherical coordinates for this electron
+            const coords = getSphericalCoordinates(index, electrons.length);
+            
+            // Create rotation matrix to align orbit with the spherical point
+            const orbitNormal = new THREE.Vector3(coords.x, coords.y, coords.z).normalize();
+            const orbitUp = new THREE.Vector3(0, 1, 0);
+            const orbitRight = new THREE.Vector3().crossVectors(orbitUp, orbitNormal).normalize();
+            orbitUp.crossVectors(orbitNormal, orbitRight);
+
+            // Create orbit line
+            const orbitGeometry = new THREE.BufferGeometry();
+            const orbitPoints = [];
+            for (let i = 0; i <= orbitSegments; i++) {
+                const angle = (i / orbitSegments) * Math.PI * 2;
+                // Create points in the orbit's local space
+                const x = Math.cos(angle) * electron.orbitRadius;
+                const y = Math.sin(angle) * electron.orbitRadius;
+                const z = 0;
+                
+                // Transform point to world space using the orbit's orientation
+                const point = new THREE.Vector3(
+                    x * orbitRight.x + y * orbitUp.x,
+                    x * orbitRight.y + y * orbitUp.y,
+                    x * orbitRight.z + y * orbitUp.z
+                );
+                
+                orbitPoints.push(point.x, point.y, point.z);
+            }
+            orbitGeometry.setAttribute('position', new THREE.Float32BufferAttribute(orbitPoints, 3));
+            const orbitMaterial = new THREE.LineDashedMaterial({
+                color: 0x333333, // Dark grey color
+                dashSize: 0.5,
+                gapSize: 0.3,
+                linewidth: 1
+            });
+            const orbitLine = new THREE.Line(orbitGeometry, orbitMaterial);
+            orbitLine.computeLineDistances(); // Required for dashed lines
+            atomGroup.add(orbitLine);
+
+            // Create electron mesh
+            const electronGeometry = new THREE.SphereGeometry(electron.radius, 16, 16);
+            const electronMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Black color
+            const electronMesh = new THREE.Mesh(electronGeometry, electronMaterial);
+            atomGroup.add(electronMesh);
+
+            // Store electron data with orientation information
+            electronObjects.push({
+                mesh: electronMesh,
+                orbitRadius: electron.orbitRadius,
+                speed: electron.speed,
+                angle: Math.random() * Math.PI * 2, // Random starting angle
+                orbitNormal: orbitNormal,
+                orbitUp: orbitUp,
+                orbitRight: orbitRight,
+                finalOrbitRadius: electron.orbitRadius, // Store final orbit radius
+                orbitLine: orbitLine // Store reference to orbit line
+            });
+        });
+
+        // Camera position (static)
+        camera.position.set(0, 5, Math.max(electrons[electrons.length - 1].orbitRadius * 2, 10));
+        camera.lookAt(0, 0, 0);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const currentTime = performance.now() / 1000; // Convert to seconds
+
+            // Handle explosion animation
+            if (isExploding) {
+                if (!explosionStartTime) {
+                    explosionStartTime = currentTime;
+                }
+
+                const elapsedTime = currentTime - explosionStartTime;
+                const progress = Math.min(elapsedTime / explosionDuration, 1);
+
+                // Use easeOutExpo for smooth deceleration
+                const easedProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+
+                electronObjects.forEach(electron => {
+                    // Update electron angle during explosion
+                    electron.angle += electron.speed * 0.01;
+                    
+                    // Scale orbit radius
+                    const currentRadius = electron.finalOrbitRadius * easedProgress;
+                    
+                    // Update orbit line
+                    const orbitPoints = [];
+                    for (let i = 0; i <= orbitSegments; i++) {
+                        const angle = (i / orbitSegments) * Math.PI * 2;
+                        const x = Math.cos(angle) * currentRadius;
+                        const y = Math.sin(angle) * currentRadius;
+                        const z = 0;
+                        
+                        const point = new THREE.Vector3(
+                            x * electron.orbitRight.x + y * electron.orbitUp.x,
+                            x * electron.orbitRight.y + y * electron.orbitUp.y,
+                            x * electron.orbitRight.z + y * electron.orbitUp.z
+                        );
+                        
+                        orbitPoints.push(point.x, point.y, point.z);
+                    }
+                    electron.orbitLine.geometry.setAttribute('position', 
+                        new THREE.Float32BufferAttribute(orbitPoints, 3));
+                    electron.orbitLine.geometry.attributes.position.needsUpdate = true;
+                    electron.orbitLine.computeLineDistances();
+
+                    // Update electron position with current angle
+                    const x = Math.cos(electron.angle) * currentRadius;
+                    const y = Math.sin(electron.angle) * currentRadius;
+                    const z = 0;
+                    
+                    electron.mesh.position.set(
+                        x * electron.orbitRight.x + y * electron.orbitUp.x,
+                        x * electron.orbitRight.y + y * electron.orbitUp.y,
+                        x * electron.orbitRight.z + y * electron.orbitUp.z
+                    );
+                });
+
+                if (progress >= 1) {
+                    isExploding = false;
+                }
+            } else {
+                // Normal animation after explosion
+                electronObjects.forEach(electron => {
+                    electron.angle += electron.speed * 0.01;
+                    
+                    const x = Math.cos(electron.angle) * electron.finalOrbitRadius;
+                    const y = Math.sin(electron.angle) * electron.finalOrbitRadius;
+                    const z = 0;
+                    
+                    electron.mesh.position.set(
+                        x * electron.orbitRight.x + y * electron.orbitUp.x,
+                        x * electron.orbitRight.y + y * electron.orbitUp.y,
+                        x * electron.orbitRight.z + y * electron.orbitUp.z
+                    );
+                });
+            }
+
+            // Rotate the entire atom group
+            atomGroup.rotation.y += systemRotationSpeed;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>
