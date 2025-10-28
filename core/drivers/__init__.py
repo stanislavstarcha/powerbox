@@ -361,18 +361,20 @@ class BaseState:
             return 0x02
 
     @staticmethod
-    def _pack_version(value):
+    def _pack_version(value: str) -> int:
         """
-        Packs a version string into a numeric representation.
+        Packs a version string into an 8-bit integer representation.
+        Layout: 1 bit for major, 4 bits for minor, 3 bits for patch.
 
         Args:
-            value (str): The version string (e.g., "1.2.3").
+            value (str): The version string (e.g., "1.15.7").
 
         Returns:
-            int: The packed version.
+            int: The packed 8-bit integer.
         """
-        major, minor, patch = value.split(".")
-        return ((int(major) & 0b1) << 7) | (int(minor) & 0b1111111)
+        major, minor, patch = map(int, value.split("."))
+        # major: 1 bit (msb), minor: 4 bits, patch: 3 bits (lsb)
+        return ((major & 0b1) << 7) | ((minor & 0b1111) << 3) | (patch & 0b111)
 
     @staticmethod
     def _pack_bms_temperature(value):

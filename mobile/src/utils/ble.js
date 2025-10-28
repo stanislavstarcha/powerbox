@@ -3,11 +3,13 @@ function unpack(value) {
     return value - 1;
 }
 
-function unpack_version(value) {
-    const major = value & 128;
-    const minor = value & 127;
-    return major + "." + minor + ".0";
-}
+const unpack_version = (packedValue) => {
+    const major = (packedValue >> 7) & 0b1;
+    const minor = (packedValue >> 3) & 0b1111;
+    const patch = packedValue & 0b111;
+
+    return { major, minor, patch };
+};
 
 function unpack_bool(value) {
     if (value === 0) return null;
