@@ -8,6 +8,8 @@ import subprocess
 import requests
 
 REPO = "stanislavstarcha/powerbox"
+SCRIPT_DIR = Path(__file__).resolve().parent
+BUILD_DIR = SCRIPT_DIR / ".." / "build"
 
 
 def import_variable(file_path, variable_name):
@@ -92,8 +94,7 @@ def stage(lvgl_path, version):
         lvgl_path (str or Path): Path to the LVGL build system directory.
         version (str): Firmware version to include in the metadata.
     """
-    script_dir = Path(__file__).resolve().parent
-    stage_dir = (script_dir / "build").resolve()
+    stage_dir = BUILD_DIR.resolve()
     stage_dir.mkdir(parents=True, exist_ok=True)
 
     firmware_stage_path = stage_dir / "firmware.bin"
@@ -106,7 +107,7 @@ def stage(lvgl_path, version):
     file_sha256 = calculate_sha256(firmware_source_path)
 
     firmware_json = {
-        "firmware": f"https://github.com/stanislavstarcha/powerbox/releases/download/{version}/firmware.bin",
+        "firmware": f"https://github.com/{REPO}/releases/download/{version}/firmware.bin",
         "version": version,
         "sha": file_sha256,
         "length": file_length,
@@ -130,9 +131,8 @@ def publish(version, token):
     Raises:
         HTTPError: If any HTTP request fails during the release or upload process.
     """
-    script_dir = Path(__file__).resolve().parent
-    bin_path = script_dir / "build" / "firmware.bin"
-    json_path = script_dir / "build" / "firmware.json"
+    bin_path = BUILD_DIR / "firmware.bin"
+    json_path = BUILD_DIR / "firmware.json"
 
     RELEASE_NAME = "Release " + version
     API_URL = f"https://api.github.com/repos/{REPO}/releases"
@@ -169,7 +169,7 @@ def main():
     parser.add_argument(
         "--token",
         required=True,
-        help="Github token",
+        help="GitHub token",
     )
 
     args = parser.parse_args()
