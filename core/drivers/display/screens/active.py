@@ -106,6 +106,9 @@ class ActiveScreen(BaseScreen):
         self.errors = [0, 0, 0, 0]
         super(ActiveScreen, self).__init__()
 
+    def on_invalidate(self):
+        pass
+
     def set_cell_voltage(self, v1, v2, v3, v4):
         """
         Sets the voltage values for battery cells.
@@ -171,6 +174,7 @@ class ActiveScreen(BaseScreen):
         if value is not None:
             self.capacity.set_text(f"{value}%")
             self.capacity_bar.set_value(value, lv.ANIM.OFF)
+            self.capacity_bar.invalidate()
 
     def set_psu_state(self, t1, t2, ac_voltage, rpm):
         """
@@ -186,7 +190,7 @@ class ActiveScreen(BaseScreen):
             self.psu_temperature.set_text(f"{t1}°С / {t2}°С")
         if ac_voltage:
             self.psu_ac_voltage.set_text(f"{ac_voltage}В")
-        if rpm:
+        if rpm and False:
             self.psu_rpm.set_text(f"{rpm} об/хв")
 
     def set_inverter_state(self, temperature, ac_voltage, rpm):

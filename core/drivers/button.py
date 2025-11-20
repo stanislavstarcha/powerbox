@@ -48,6 +48,7 @@ class ButtonController:
         on_change=None,
         buzzer=None,
         trigger_timer=None,
+        inverted=False,
     ):
         """
         Initialize the ButtonController.
@@ -58,17 +59,24 @@ class ButtonController:
             on_change (callable): Callback function to execute on button state change.
             buzzer (BuzzerController): Optional buzzer controller for feedback.
             trigger_timer (machine.Timer): Timer for handling button press confirmation.
+            inverted (bool, optional): Whether the button is inverted (True for released). Defaults to False.:
         """
         self._buzzer = buzzer
+        self._inverted = inverted
         self._on_change = on_change
         self._trigger_timer = trigger_timer
         self._trigger_delay = trigger_delay
-        self._listen_pin = machine.Pin(
-            listen_pin, machine.Pin.IN, machine.Pin.PULL_DOWN
-        )
 
+        initial_state = machine.Pin.PULL_DOWN
+        trigger_state = machine.Pin.IRQ_RISING
+
+        if self._inverted:
+            initial_state = machine.Pin.PULL_UP
+            trigger_state = machine.Pin.IRQ_FALLING
+
+        self._listen_pin = machine.Pin(listen_pin, machine.Pin.IN, initial_state)
         self._listen_pin.irq(
-            trigger=machine.Pin.IRQ_RISING,
+            trigger=trigger_state,
             handler=self._check_state,
         )
         logger.info(
@@ -103,8 +111,12 @@ class ButtonController:
             timer (machine.Timer): The timer used for debouncing.
         """
         timer.deinit()
-        if self._listen_pin.value() == 0:
+        if not self._inverted and self._listen_pin.value() == 0:
             return
+
+        if self._inverted and self._listen_pin.value() == 1:
+            return
+
         logger.debug(f"Confirming button {self._listen_pin} state")
         if self._on_change is not None:
             self._on_change()

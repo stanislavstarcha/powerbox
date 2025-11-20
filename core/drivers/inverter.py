@@ -393,6 +393,7 @@ class InverterController:
             on_change=self.on_power_trigger,
             buzzer=buzzer,
             trigger_timer=power_button_timer,
+            inverted=True,
         )
 
         self._power_gate_pin = machine.Pin(

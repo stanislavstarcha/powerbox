@@ -5,6 +5,7 @@ This module provides the `DisplayController` class, which manages the display ha
 handles screen transitions, and updates the display based on system states.
 """
 
+import random
 import asyncio
 import time
 
@@ -34,7 +35,7 @@ class DisplayController:
         idle_screen (IdleScreen): The idle screen instance.
     """
 
-    BUFFER_SIZE = 65536
+    BUFFER_SIZE = 65535
     REFRESH_MS = 500
 
     _sleep_timer = None
@@ -68,6 +69,7 @@ class DisplayController:
             reset_pin (int, optional): Display reset pin.
             frequency (int, optional): SPI frequency.
         """
+        self._frequency = frequency
         self._sleep_timer = machine.Timer(-1)
         spi_bus = machine.SPI.Bus(host=1, mosi=mosi_pin, miso=miso_pin, sck=sck_pin)
         display_bus = lcd_bus.SPIBus(
@@ -85,7 +87,7 @@ class DisplayController:
             self.BUFFER_SIZE, lcd_bus.MEMORY_SPIRAM
         )
 
-        display = ili9488.ILI9488(
+        self._display = ili9488.ILI9488(
             data_bus=display_bus,
             display_width=width,
             display_height=height,
@@ -99,9 +101,9 @@ class DisplayController:
         reset = machine.Pin(reset_pin, machine.Pin.OUT)
         reset.on()
 
-        display.set_power(True)
-        display.init()
-        display.set_rotation(lv.DISPLAY_ROTATION._270)
+        self._display.set_power(True)
+        self._display.init()
+        self._display.set_rotation(lv.DISPLAY_ROTATION._270)
 
         led = machine.Pin(led_pin, machine.Pin.OUT)
         led.on()
@@ -134,6 +136,7 @@ class DisplayController:
         while True:
             counter += 1
             time_passed = time.time_ns() - start_time
+            lv.screen_active().invalidate()
 
             tick = int(time_passed / 1000000)
             lv.tick_inc(tick)
@@ -147,7 +150,7 @@ class DisplayController:
         Args:
             timer (machine.Timer): The timer triggering the sleep transition.
         """
-        logger.info("Load idle screen")
+        logger.info(f"Load idle screen {self._frequency}")
         lv.screen_load(self.idle_screen.get_screen())
 
     def on_wake(self):
@@ -155,7 +158,7 @@ class DisplayController:
         Handles the transition to the active screen when the system wakes up.
         """
         lv.screen_load(self.active_screen.get_screen())
-        logger.info("Load active screen")
+        logger.info(f"Load active screen {self._frequency}")
 
     def on_ats_state(self, state):
         """

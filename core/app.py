@@ -46,8 +46,9 @@ import version
 led = LedController(pin=conf.LED_PIN)
 led.on()
 
-buzzer = BuzzerController(signal_pin=conf.BUZZER_SIGNAL_PIN)
-buzzer.boot()
+buzzer = None
+# buzzer = BuzzerController(signal_pin=conf.BUZZER_SIGNAL_PIN)
+# buzzer.boot()
 
 
 def disable_keyboard_interrupt():

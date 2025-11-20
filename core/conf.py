@@ -10,7 +10,7 @@ from micropython import const
 
 FIRMWARE_URL = "https://github.com/stanislavstarcha/powerbox/releases/latest/download/firmware.json"
 
-BUZZER_SIGNAL_PIN = const(1)
+BUZZER_SIGNAL_PIN = const(0)
 LED_PIN = const(8)
 
 BLE_ENABLED = True
@@ -40,8 +40,8 @@ PSU_CURRENT_B_PIN = const(16)
 PSU_CURRENT_CHANNEL = const(2)
 PSU_MAX_CELL_VOLTAGE = const(3.5)
 
-INVERTER_MIN_CELL_VOLTAGE = const(2.75)
-INVERTER_POWER_BUTTON_PIN = const(40)
+INVERTER_MIN_CELL_VOLTAGE = const(2.7)
+INVERTER_POWER_BUTTON_PIN = const(1)
 INVERTER_POWER_GATE_PIN = const(39)
 INVERTER_UART_RX_PIN = const(45)
 INVERTER_UART_TX_PIN = const(48)
@@ -65,6 +65,6 @@ DISPLAY_CS_PIN = const(3)
 DISPLAY_RESET_PIN = const(46)
 DISPLAY_MISO_PIN = const(-1)
 
-DISPLAY_FREQ = const(10000000)
+DISPLAY_FREQ = const(20000000)
 DISPLAY_OFFSET_X = const(0)
 DISPLAY_OFFSET_Y = const(0)

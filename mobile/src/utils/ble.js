@@ -8,7 +8,7 @@ const unpack_version = (packedValue) => {
     const minor = (packedValue >> 3) & 0b1111;
     const patch = packedValue & 0b111;
 
-    return { major, minor, patch };
+    return major + "." + minor + "." + patch;
 };
 
 function unpack_bool(value) {
