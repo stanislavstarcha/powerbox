@@ -20,7 +20,9 @@ BLE_MANUFACTURER = "egg17"
 LOGGER_TRANSPORT = const(0)
 LOGGER_LEVEL = const(3)
 
-UART_IF = const(1)
+
+# Inverter and PSU UART interfaces
+UART_IF = const(2)
 
 BUTTON_TIMER_ID = const(0)
 

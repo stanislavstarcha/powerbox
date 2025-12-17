@@ -477,7 +477,7 @@ class PowerSupplyController:
         logger.info("Initialized power supply controller")
 
     def _initialize_tachometer(self, pin, timer_id):
-        """Initialize the fan tachometer if pin is provided."""
+        """Initialize the fan tachometer if a pin is provided."""
         if pin:
             self._tachometer = Tachometer(
                 pin=machine.Pin(pin, machine.Pin.IN),
@@ -488,6 +488,7 @@ class PowerSupplyController:
 
     def _initialize_power_button(self, pin, timer_id, buzzer):
         """Initialize the power button controller."""
+        logger.info(f"Initializing PSU power button on pin {pin} timer {timer_id}")
         try:
             self._power_button = ButtonController(
                 listen_pin=pin,
@@ -610,7 +611,8 @@ class PowerSupplyController:
         while True:
             if self.state.active:
                 self._state.parse_buffer(self._uart.sample(timeout=500))
-                self._tachometer.measure()
+                if self._tachometer:
+                    self._tachometer.measure()
                 self._state.snapshot()
             await self._state.sleep()
 

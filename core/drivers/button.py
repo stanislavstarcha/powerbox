@@ -97,6 +97,7 @@ class ButtonController:
         Args:
             pin (machine.Pin): The pin that triggered the interrupt.
         """
+        print("WHOAAAA!!!!")
         state = pin.value()
 
         if (self._inverted and not state) or (not self._inverted and state):
