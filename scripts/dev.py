@@ -7,14 +7,11 @@ from ampy.files import Files
 
 
 parser = argparse.ArgumentParser(
-    prog="Code initializer",
-    description="Erase core and upload fresh code",
+    prog="Dev code uploader",
+    description="Upload source files for development",
 )
 
-parser.add_argument("-a", "--address", default="0x1000")
 parser.add_argument("-e", "--erase", action="store_true")
-parser.add_argument("-s", "--sources", action="store_true")
-
 parser.add_argument("-b", "--baud_rate", type=int, default=115200)
 parser.add_argument("-p", "--port", required=True)
 parser.add_argument("-d", "--directory", default="../core")
@@ -23,9 +20,8 @@ args = parser.parse_args()
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-def upload_sources():
+def upload_firmware():
     source_directory = f"{script_dir}/{args.directory}"
-    print(f"Uploading sources {source_directory}")
     target_directory = ""
 
     # Initialize connection to the board
@@ -49,8 +45,6 @@ def upload_sources():
 
 
 if args.erase:
-    print(f"Erasing flash")
     esptool.main(["--port", args.port, "erase_flash"])
 
-if args.sources:
-    upload_sources()
+upload_firmware()

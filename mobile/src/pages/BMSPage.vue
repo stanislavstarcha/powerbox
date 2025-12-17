@@ -28,6 +28,19 @@
         </div>
 
         <div class="row q-mt-md">
+            <div class="col-9"><span>■</span> {{ $t("mcuConsumption") }}</div>
+            <div class="col text-right" v-if="bmsStore.voltage">
+                {{ bmsStore.mcu_consumption.toFixed(2) }} {{ $t("ah") }}
+            </div>
+            <div
+                class="col text-right text-grey-5"
+                v-if="!bmsStore.mcu_consumption"
+            >
+                &mdash;
+            </div>
+        </div>
+
+        <div class="row q-mt-md">
             <div class="col-9">
                 <span :style="{ color: POWER_COLOR }">■</span>
                 {{ $t("current") }}

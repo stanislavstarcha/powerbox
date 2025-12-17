@@ -15,6 +15,9 @@ discharging operations.
 
 import struct
 
+import math
+
+import const
 from drivers import BaseState, UART
 from lib.history import HistoricalData
 from logging import logger
@@ -29,6 +32,7 @@ from const import (
     DATA_TYPE_BYTE,
     DATA_TYPE_WORD,
     BLE_BMS_STATE_UUID,
+    PROFILE_KEY_MCU_POWER,
 )
 
 
@@ -122,6 +126,12 @@ class BMSState(BaseState):
 
     ERROR_NO_MODIFY_RESPONSE = 2
 
+    # Self-consumption power
+    MCU_POWER = 1.5
+    BMS_POWER = 0.9
+    USB_POWER = 0.17
+    mcu_consumed = 0
+
     # per cell voltage
     cells = [None, None, None, None]
 
@@ -132,6 +142,7 @@ class BMSState(BaseState):
     voltage = None
     current = None
     soc = None
+    soc_drift = None
 
     temperature_sensors = None
     cycles = None
@@ -161,6 +172,8 @@ class BMSState(BaseState):
 
     balancing_voltage = None
     balancing_pressure_difference = None
+
+    battery_capacity = None
 
     history = {
         HISTORY_BMS_SOC: HistoricalData(
@@ -206,6 +219,7 @@ class BMSState(BaseState):
         self.voltage = None
         self.current = None
         self.soc = None
+        self.soc_drift = None
 
         self.temperature_sensors = None
         self.cycles = None
@@ -235,6 +249,8 @@ class BMSState(BaseState):
 
         self.balancing_voltage = None
         self.balancing_pressure_difference = None
+
+        self.battery_capacity = None
 
     def parse(self, response):
         """
@@ -406,7 +422,13 @@ class BMSState(BaseState):
             ">BH", response, offset
         )
         assert descriptor == 0x9C
-        offset += 3
+        offset += 40
+
+        # ... skip temperature sensors ...
+
+        descriptor, self.battery_capacity = struct.unpack_from(">BI", response, offset)
+        assert descriptor == 0xAA
+        offset += 4
 
         if self.external_errors:
             self.set_error(self.ERROR_EXTERNAL)
@@ -421,7 +443,7 @@ class BMSState(BaseState):
         current, and per-cell voltages. This data is used for tracking battery
         performance over time and can be used for analysis and diagnostics.
         """
-        self.history[HISTORY_BMS_SOC].push(self._pack(self.soc))
+        self.history[HISTORY_BMS_SOC].push(self._pack(self.get_soc()))
         self.history[HISTORY_BMS_CURRENT].push(self._pack(self.current))
 
         self.history[HISTORY_BMS_CELL1_VOLTAGE].push(
@@ -468,10 +490,11 @@ class BMSState(BaseState):
             bytes: The packed BLE state data of the BMS.
         """
         return struct.pack(
-            ">HHBBBBBBBBBBHB",
-            self._pack(self.voltage),
+            ">HHHBBBBBBBBBBHB",
+            self._pack_voltage(self.voltage),
             self._pack(self.current),
-            self._pack(self.soc),
+            self._pack_voltage(self.mcu_consumed),
+            self._pack(self.get_soc()),
             self._pack_bool(self.charging_allowed),
             self._pack_bool(self.discharging_allowed),
             self._pack_bms_temperature(self.mos_temperature),
@@ -485,12 +508,25 @@ class BMSState(BaseState):
             self._pack(self.internal_errors),
         )
 
+    def get_soc(self):
+        if (
+            self.soc is None
+            or self.battery_capacity is None
+            or self.mcu_consumed is None
+        ):
+            return
+
+        mcu_consumption_percentage = math.floor(
+            100 * self.mcu_consumed / self.battery_capacity
+        )
+        return self.soc - mcu_consumption_percentage
+
     def get_direction(self):
         """
         Determine the current flow direction in the battery.
 
         Returns:
-            int: A value indicating the direction of current flow (0 for discharge,
+            int: A value indicating the direction of the current flow (0 for discharge,
                  non-zero for charge).
         """
         return self.current & (1 << 15)
@@ -511,6 +547,26 @@ class BMSState(BaseState):
 
         current = (self.current & (0xFFFF >> 1)) / 100
         return int(current * self.voltage / 100)
+
+    def increase_mcu_consumption(self, period, power, voltage):
+        ah = ((period / 3600) * power) / (voltage / 100)
+        self.mcu_consumed += ah
+        logger.debug("mcu inc consumption", ah, self.mcu_consumed)
+
+    def decrease_mcu_consumption(self, period, power, voltage):
+        ah = ((period / 3600) * power) / (voltage / 100)
+        self.mcu_consumed -= ah
+        if self.mcu_consumed < 0:
+            self.mcu_consumed = 0
+        logger.debug("mcu dec consumption", ah, self.mcu_consumed)
+
+    def reset_mcu_consumption(self):
+        logger.debug("reset mcu consumption")
+        self.mcu_consumed = 0
+
+    def set_mcu_consumption(self, ah):
+        logger.debug("set mcu consumption", ah)
+        self.mcu_consumed = ah
 
 
 class BMSController:
@@ -554,6 +610,17 @@ class BMSController:
     UART_TX_PIN = 18
     UART_RX_PIN = 16
 
+    # track mcu consumption every n seconds
+    MCU_POWER_FREQUENCY = 5
+
+    # time elapsed since the last update
+    mcu_power_ticks = 0
+
+    TURN_OFF_MAX_CONFIRMATIONS = 3
+    _turn_off_confirmations = 0
+    _turn_off_min_voltage = None
+    _turn_off_max_voltage = None
+
     _uart = None
     _state: BMSState = None
 
@@ -563,6 +630,9 @@ class BMSController:
         uart_if=UART_IF,
         uart_rx_pin=UART_RX_PIN,
         uart_tx_pin=UART_TX_PIN,
+        profile=None,
+        turn_off_min_voltage=None,
+        turn_off_max_voltage=None,
     ):
         """
         Initialize the BMSController with UART communication parameters.
@@ -573,8 +643,9 @@ class BMSController:
         Args:
             baud_rate (int, optional): The baud rate for UART communication. Defaults to 115200.
             uart_if (int, optional): The UART interface number. Defaults to 1.
-            uart_rx_pin (int, optional): The UART RX pin number. Defaults to 16.
-            uart_tx_pin (int, optional): The UART TX pin number. Defaults to 18.
+            uart_rx_pin (int, optional): The UART RX pin. Defaults to 16.
+            uart_tx_pin (int, optional): The UART TX pin. Defaults to 18.
+            profile (object, optional): The profile object to use for battery metrics. Defaults to None.
         """
         self._state = BMSState()
         self._uart = UART(
@@ -585,6 +656,17 @@ class BMSController:
             rx=uart_rx_pin,
             baud_rate=baud_rate,
         )
+
+        self._profile = profile
+        self.mcu_power_ticks = 0
+        if self._profile:
+            self.state.set_mcu_consumption(profile.get(PROFILE_KEY_MCU_POWER, 0))
+
+        if turn_off_min_voltage:
+            self._turn_off_min_voltage = turn_off_min_voltage
+
+        if turn_off_max_voltage:
+            self._turn_off_max_voltage = turn_off_max_voltage
 
     async def run(self):
         """
@@ -602,8 +684,38 @@ class BMSController:
 
         while True:
             self.request_status()
-            self._state.snapshot()
-            await self._state.sleep()
+            self.state.snapshot()
+            await self.state.sleep()
+
+    def update_mcu_consumption(self):
+        """Manage unrecorded power consumption by BMS itself and ESP32 ICs"""
+
+        direction = 0  # discharging
+        voltage = 3.2 * 4 * 100  # nominal voltage
+        power = self.state.MCU_POWER + self.state.USB_POWER  # always on
+
+        self.mcu_power_ticks += 1
+
+        if self.state.get_soc():
+            direction = self.state.get_direction()
+            power += self.state.BMS_POWER
+            voltage = self.state.voltage
+
+        if self.mcu_power_ticks < self.MCU_POWER_FREQUENCY:
+            return
+
+        period = self.mcu_power_ticks * self.state.STATE_FREQUENCY
+        self.mcu_power_ticks = 0
+
+        if direction:
+            self.state.decrease_mcu_consumption(
+                period, self.state.get_power() - power, voltage
+            )
+        else:
+            self.state.increase_mcu_consumption(period, power, voltage)
+
+        if self._profile:
+            self._profile.set(PROFILE_KEY_MCU_POWER, self.state.mcu_consumed, False)
 
     def request_status(self, delay=100):
         """
@@ -621,11 +733,13 @@ class BMSController:
             bool: True if the status was successfully retrieved and parsed,
                  False if a communication error occurred.
         """
+        self.update_mcu_consumption()
         data = self._uart.query(self.STATUS_REQUEST, delay=delay)
         if data:
             try:
                 logger.debug("BMS response", data)
                 self.state.parse(data)
+                self.check_voltage_thresholds()
                 self.state.reset_error(self._state.ERROR_NO_RESPONSE)
                 logger.info(
                     "BMS Voltage",
@@ -634,6 +748,8 @@ class BMSController:
                     self.state.mos_temperature,
                     "Power: ",
                     self.state.get_power(),
+                    "SOC: ",
+                    self.state.get_soc(),
                 )
                 return True
             except Exception as e:
@@ -741,6 +857,64 @@ class BMSController:
         logger.error("Failed to disable BMS discharging")
         self._state.set_error(self._state.ERROR_NO_MODIFY_RESPONSE)
         return False
+
+    def check_voltage_thresholds(self):
+        """
+        Process updates from the Battery Management System (BMS).
+
+        Monitors battery cell voltages and triggers PSU shutdown if voltage
+        exceeds the safety threshold for a sufficient number of confirmations.
+        """
+        # Check if any cell voltage exceeds the threshold
+        min_voltage_exceeded = False
+        max_voltage_exceeded = False
+
+        for cell_index, voltage in enumerate(self.state.cells):
+            if voltage is None:
+                continue
+
+            # Convert from mV to V
+            voltage_v = voltage / 1000
+
+            if self._turn_off_min_voltage and voltage_v < self._turn_off_min_voltage:
+                min_voltage_exceeded = True
+                logger.debug(
+                    f"Min cell {cell_index} voltage {voltage_v}V exceeds threshold {self._turn_off_min_voltage}V"
+                )
+                break
+
+            if self._turn_off_max_voltage and voltage_v > self._turn_off_max_voltage:
+                max_voltage_exceeded = True
+                logger.debug(
+                    f"Max cell {cell_index} voltage {voltage_v}V exceeds threshold {self._turn_off_max_voltage}V"
+                )
+                break
+
+        # Update confirmation counter based on voltage status
+        if any([min_voltage_exceeded, max_voltage_exceeded]):
+            self._turn_off_confirmations += 1
+            logger.debug(
+                f"Voltage threshold exceeded: {self.TURN_OFF_MAX_CONFIRMATIONS} confirmations"
+            )
+        else:
+            self._turn_off_confirmations = 0
+
+        threshold_triggerred = (
+            self._turn_off_confirmations >= self.TURN_OFF_MAX_CONFIRMATIONS
+        )
+
+        if max_voltage_exceeded and threshold_triggerred:
+            logger.info(
+                f"Battery cell reached max voltage threshold ({self._turn_off_max_voltage}V)"
+            )
+            self.state.trigger(const.EVENT_BATTERY_CHARGED)
+            self.state.reset_mcu_consumption()
+
+        if min_voltage_exceeded and threshold_triggerred:
+            logger.info(
+                f"Battery cell reached min voltage threshold ({self._turn_off_min_voltage}V)"
+            )
+            self.state.trigger(const.EVENT_BATTERY_DISCHARGED)
 
     @property
     def state(self):

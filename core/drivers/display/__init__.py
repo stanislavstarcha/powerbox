@@ -36,7 +36,7 @@ class DisplayController:
     """
 
     BUFFER_SIZE = 65535
-    REFRESH_MS = 500
+    REFRESH_MS = 200
 
     _sleep_timer = None
     _idle = False

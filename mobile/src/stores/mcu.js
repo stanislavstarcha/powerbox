@@ -175,11 +175,11 @@ export const useMCUStore = defineStore("esp", {
             appStore.runBLECommand(pack_bool_param(PROFILE_KEY_ATS, false));
 
             appStore.runBLECommand(
-                pack_float_param(PROFILE_KEY_MIN_VOLTAGE, 2.8),
+                pack_float_param(PROFILE_KEY_MIN_VOLTAGE, 2.9),
             );
 
             appStore.runBLECommand(
-                pack_float_param(PROFILE_KEY_MAX_VOLTAGE, 3.4),
+                pack_float_param(PROFILE_KEY_MAX_VOLTAGE, 3.5),
             );
         },
 

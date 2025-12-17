@@ -37,7 +37,7 @@ class ActiveScreen(BaseScreen):
         version_label, version: Widgets for version information.
         ats, ats_label: Widgets for ATS mode display.
         ble: Widget for BLE state indication.
-        psu_label, psu_temperature, psu_ac_voltage, psu_rpm:
+        psu_label, psu_temperature, psu_ac_voltage, psu_current:
             Widgets for PSU data.
         inverter_label, inverter_temperature, inverter_ac_voltage, inverter_rpm:
             Widgets for inverter data.
@@ -75,7 +75,7 @@ class ActiveScreen(BaseScreen):
     psu_label = None
     psu_temperature = None
     psu_ac_voltage = None
-    psu_rpm = None
+    psu_current = None
 
     inverter_label = None
     inverter_temperature = None
@@ -176,7 +176,7 @@ class ActiveScreen(BaseScreen):
             self.capacity_bar.set_value(value, lv.ANIM.OFF)
             self.capacity_bar.invalidate()
 
-    def set_psu_state(self, t1, t2, ac_voltage, rpm):
+    def set_psu_state(self, t1, t2, ac_voltage, current):
         """
         Updates the PSU state display with temperature, AC voltage, and RPM.
 
@@ -184,14 +184,14 @@ class ActiveScreen(BaseScreen):
             t1 (int or float): First temperature value.
             t2 (int or float): Second temperature value.
             ac_voltage (int or float): AC voltage.
-            rpm (int): Fan RPM.
+            current (int): Current mode.
         """
         if t1 and t2:
             self.psu_temperature.set_text(f"{t1}°С / {t2}°С")
         if ac_voltage:
             self.psu_ac_voltage.set_text(f"{ac_voltage}В")
-        if rpm and False:
-            self.psu_rpm.set_text(f"{rpm} об/хв")
+        if current:
+            self.psu_current.set_text(f"{current}%")
 
     def set_inverter_state(self, temperature, ac_voltage, rpm):
         """
@@ -270,7 +270,7 @@ class ActiveScreen(BaseScreen):
         """
         self.show_widget(self.psu_label)
         self.show_widget(self.psu_temperature)
-        self.show_widget(self.psu_rpm)
+        self.show_widget(self.psu_current)
         self.show_widget(self.psu_ac_voltage)
         self.show_widget(self.power_in_glyph_a)
         self.show_widget(self.power_in_glyph_b)
@@ -282,7 +282,7 @@ class ActiveScreen(BaseScreen):
         """
         self.hide_widget(self.psu_label)
         self.hide_widget(self.psu_temperature)
-        self.hide_widget(self.psu_rpm)
+        self.hide_widget(self.psu_current)
         self.hide_widget(self.psu_ac_voltage)
         self.hide_widget(self.power_in_glyph_a)
         self.hide_widget(self.power_in_glyph_b)
@@ -471,7 +471,7 @@ class ActiveScreen(BaseScreen):
         self.psu_ac_voltage = self.create_label(
             0, 10, col_span=3, row_span=2, font_size=24
         )
-        self.psu_rpm = self.create_label(0, 12, col_span=3, font_size=12)
+        self.psu_current = self.create_label(0, 12, col_span=3, font_size=12)
 
         # capacity
         self.capacity = self.create_label(3, 2, col_span=6, row_span=5, font_size=120)
@@ -528,9 +528,9 @@ class ActiveScreen(BaseScreen):
                 t1=random.randint(16, 42),
                 t2=random.randint(16, 42),
                 ac_voltage=random.randint(207, 230),
-                rpm=random.randint(
-                    1000,
-                    10000,
+                current=random.randint(
+                    0,
+                    100,
                 ),
             )
 
@@ -581,7 +581,7 @@ class ActiveScreen(BaseScreen):
 
         self.reset_error(DEVICE_BMS)
 
-        self.set_capacity(state.soc)
+        self.set_capacity(state.get_soc())
         self.set_power_consumption(
             direction=state.get_direction(),
             power=state.get_power(),
@@ -618,14 +618,22 @@ class ActiveScreen(BaseScreen):
 
         self.reset_error(DEVICE_PSU)
 
-        if state.t1 and state.t2 and state.t3:
-            average_temperature = int((state.t1 + state.t2) / 2)
+        current_channels = {0: 25, 1: 50, 2: 75, 3: 100}
+        average_temperature = None
+
+        if state.active:
+            if state.t1 and state.t2 and state.t3:
+                average_temperature = int((state.t1 + state.t2) / 2)
+
             self.set_psu_state(
                 t1=average_temperature,
                 t2=state.t3,
                 ac_voltage=state.ac,
-                rpm=state.rpm,
+                current=current_channels.get(state.current_channel),
             )
+
+        if not state.active:
+            self.set_psu_state(t1="", t2="", ac_voltage="", current="")
 
     def on_inverter_state(self, state):
         """
@@ -639,11 +647,18 @@ class ActiveScreen(BaseScreen):
         else:
             self.reset_error(DEVICE_INVERTER)
 
-        self.set_inverter_state(
-            temperature=state.temperature,
-            ac_voltage=state.ac,
-            rpm=state.get_avg_rpm(),
-        )
+        if state.active:
+            self.set_inverter_state(
+                temperature=state.temperature,
+                ac_voltage=state.ac,
+                rpm=state.get_avg_rpm(),
+            )
+        else:
+            self.set_inverter_state(
+                temperature="",
+                ac_voltage="",
+                rpm="",
+            )
 
     def on_mcu_state(self, state):
         """

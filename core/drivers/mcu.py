@@ -35,7 +35,7 @@ class MCUState(BaseState):
     NAME = "MCU"
     BLE_STATE_UUID = BLE_MCU_STATE_UUID
 
-    GC_FREQUENCY = 5
+    GC_FREQUENCY = 10
 
     version = None
     memory = 0
@@ -102,7 +102,8 @@ class MCUController:
         temperature, and heartbeat. It also performs garbage collection at
         regular intervals.
         """
-        gc_counter = 0
+        counter = 0
+        elapsed = counter * self._state.STATE_FREQUENCY
         while True:
             self._state.heartbeat = not self._state.heartbeat
             free_mem = gc.mem_free()
@@ -114,10 +115,9 @@ class MCUController:
             if self._led:
                 self._led.pulse((0, 0, 100), 50)
 
-            gc_counter += 1
-            if gc_counter >= self._state.GC_FREQUENCY:
+            counter += 1
+            if elapsed % self._state.GC_FREQUENCY == 0:
                 gc.collect()
-                gc_counter = 0
                 logger.debug(
                     "ESP stats memory",
                     self._state.memory,

@@ -17,6 +17,7 @@ from const import (
     PROFILE_KEY_WIFI_PASSWORD,
     PROFILE_KEY_MIN_VOLTAGE,
     PROFILE_KEY_MAX_VOLTAGE,
+    PROFILE_KEY_MCU_POWER,
     DATA_TYPE_BOOL,
     DATA_TYPE_INT8,
     DATA_TYPE_INT32,
@@ -33,6 +34,7 @@ KEY_TYPES = {
     PROFILE_KEY_WIFI_PASSWORD: DATA_TYPE_STRING,
     PROFILE_KEY_MIN_VOLTAGE: DATA_TYPE_FLOAT32,
     PROFILE_KEY_MAX_VOLTAGE: DATA_TYPE_FLOAT32,
+    PROFILE_KEY_MCU_POWER: DATA_TYPE_FLOAT32,
 }
 
 
@@ -57,15 +59,20 @@ class ProfileState(BaseState):
         """
         self.conf = values
 
-    def set(self, param, raw_value):
+    def set(self, param, value, as_bytes=True):
         """
         Sets a configuration parameter in the profile.
 
         Args:
             param (int): The parameter key.
-            raw_value (bytes): The raw value to set for the parameter.
+            value (bytes|object): The raw value to set for the parameter.
+            as_bytes (bool, optional): Whether to cast the value to the appropriate data type.
         """
-        self.conf[hex(param)] = self._cast(param, raw_value)
+        if as_bytes:
+            self.conf[hex(param)] = self._cast(param, value)
+        else:
+            self.conf[hex(param)] = value
+
         self.notify()
 
     def get(self, param):
@@ -89,7 +96,7 @@ class ProfileState(BaseState):
             value (bytes): The raw value to cast.
 
         Returns:
-            Any: The casted value.
+            Any: The cast value.
         """
         data_type = KEY_TYPES.get(param)
 
@@ -139,8 +146,9 @@ class ProfileController:
                     hex(PROFILE_KEY_WIFI_SSID): None,
                     hex(PROFILE_KEY_WIFI_PASSWORD): None,
                     hex(PROFILE_KEY_PSU_CURRENT): 0,
-                    hex(PROFILE_KEY_MIN_VOLTAGE): conf.INVERTER_MIN_CELL_VOLTAGE,
-                    hex(PROFILE_KEY_MAX_VOLTAGE): conf.PSU_MAX_CELL_VOLTAGE,
+                    hex(PROFILE_KEY_MIN_VOLTAGE): conf.BATTERY_MIN_CELL_VOLTAGE,
+                    hex(PROFILE_KEY_MAX_VOLTAGE): conf.BATTERY_MAX_CELL_VOLTAGE,
+                    hex(PROFILE_KEY_MCU_POWER): 0,
                 }
             )
             self._write()
@@ -156,17 +164,19 @@ class ProfileController:
         Returns:
             Any: The value of the parameter, or the default value if not found.
         """
-        return self.state.get(param) or default
+        value = self.state.get(param)
+        return value if value is not None else default
 
-    def set(self, param, value):
+    def set(self, param, value, as_bytes=True):
         """
         Sets a configuration parameter in the profile.
 
         Args:
             param (int): The parameter key.
             value (Any): The value to set for the parameter.
+            as_bytes (bool, optional): Whether to cast the value to the appropriate data type.
         """
-        self.state.set(param, value)
+        self.state.set(param, value, as_bytes)
         self._write()
         logger.info(json.dumps(self.state.conf))
 

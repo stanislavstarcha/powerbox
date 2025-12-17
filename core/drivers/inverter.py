@@ -309,8 +309,6 @@ class InverterController:
         STATUS_REQUEST (bytes): Command to request inverter status.
         SHUTDOWN_REQUEST (bytes): Command to shut down the inverter.
         TURN_ON_REQUEST (bytes): Command to turn on the inverter.
-        TURN_OFF_VOLTAGE (float): Voltage threshold for turning off the inverter.
-        TURN_OFF_MAX_CONFIRMATIONS (int): Maximum confirmations before turning off.
     """
 
     POWER_BUTTON_PIN = None
@@ -324,11 +322,6 @@ class InverterController:
     STATUS_REQUEST = b"\xae\x01\x01\x03\x05\xee"
     SHUTDOWN_REQUEST = b"\xae\x01\x02\x04\x01\x00\x08\xee"
     TURN_ON_REQUEST = b"\xae\x01\x02\x04\x00\x00\x07\xee"
-
-    TURN_OFF_VOLTAGE = 2.7
-    TURN_OFF_MAX_CONFIRMATIONS = 3
-    _turn_off_voltage = 2.7
-    _turn_off_confirmations = 0
 
     _bootstrapping = False
     _bootstrapping_delay = 3
@@ -349,7 +342,6 @@ class InverterController:
         uart_tx_pin=UART_TX_PIN,
         uart_rx_pin=UART_RX_PIN,
         buzzer=None,
-        turn_off_voltage=TURN_OFF_VOLTAGE,
         fan_tachometer_a_pin=None,
         fan_tachometer_b_pin=None,
         fan_tachometer_a_timer=None,
@@ -371,7 +363,6 @@ class InverterController:
             uart_tx_pin (int): UART TX pin number.
             uart_rx_pin (int): UART RX pin number.
             buzzer (BuzzerController): Buzzer controller for user feedback.
-            turn_off_voltage (float): Voltage threshold for turning off the inverter.
             fan_tachometer_a_pin (int): Pin for fan A tachometer.
             fan_tachometer_b_pin (int): Pin for fan B tachometer.
             fan_tachometer_a_timer (int): Timer for fan A tachometer.
@@ -381,7 +372,6 @@ class InverterController:
             None
         """
         self._state = InverterState()
-        self._turn_off_voltage = turn_off_voltage
 
         self._uart = uart
         self._tx_pin = uart_tx_pin
@@ -390,7 +380,7 @@ class InverterController:
 
         self._power_button = ButtonController(
             listen_pin=power_button_pin,
-            on_change=self.on_power_trigger,
+            on_long_press=self.on_power_trigger,
             buzzer=buzzer,
             trigger_timer=power_button_timer,
             inverted=True,
@@ -421,7 +411,7 @@ class InverterController:
                 timer_id=fan_tachometer_b_timer,
             )
 
-        logger.info(f"Initialized inverter turn off voltage: {turn_off_voltage}")
+        logger.info(f"Initialized inverter")
 
     def on_tachometer_a(self, rpm):
         """
@@ -454,38 +444,6 @@ class InverterController:
         """
         self._state.rpm_b = rpm
         logger.debug(f"INVERTER FAN B RPM: {rpm}")
-
-    def on_bms_state(self, bms_state):
-        """
-        Handle updates from the BMS state.
-
-        Monitors battery cell voltages and turns off the inverter if
-        any cell voltage falls below the configured threshold for a
-        sufficient number of consecutive readings.
-
-        Args:
-            bms_state (BMSState): The current state of the Battery Management System.
-
-        Returns:
-            None
-        """
-        triggered = False
-        for voltage in bms_state.cells:
-            if voltage is None or voltage == 0:
-                continue
-            voltage /= 1000
-            if voltage < self._turn_off_voltage:
-                triggered = True
-                break
-
-        if triggered:
-            self._turn_off_confirmations += 1
-            if self._turn_off_confirmations >= self.TURN_OFF_MAX_CONFIRMATIONS:
-                logger.info(f"Inverter reached min voltage threshold")
-                self.off()
-                self._turn_off_confirmations = 0
-        else:
-            self._turn_off_confirmations = 0
 
     def on(self):
         """

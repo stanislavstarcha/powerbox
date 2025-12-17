@@ -9,8 +9,10 @@ import struct
 
 import machine
 
+import conf
 from const import BLE_PSU_STATE_UUID
 from const import (
+    PROFILE_KEY_PSU_CURRENT,
     HISTORY_PSU_RPM,
     HISTORY_PSU_TEMPERATURE_1,
     HISTORY_PSU_TEMPERATURE_2,
@@ -414,11 +416,6 @@ class PowerSupplyController:
     _error = 0
 
     CURRENT_CHANNEL = 0
-    TURN_OFF_VOLTAGE = 3.5
-    TURN_OFF_MAX_CONFIRMATIONS = 3
-
-    _turn_off_voltage = 3.5
-    _turn_off_confirmations = 0
 
     _buffer = None
 
@@ -434,8 +431,7 @@ class PowerSupplyController:
         uart=None,
         uart_rx_pin=None,
         buzzer=None,
-        turn_off_voltage=TURN_OFF_VOLTAGE,
-        current_channel=CURRENT_CHANNEL,
+        profile=None,
     ):
         """
         Initialize the Power Supply Unit controller.
@@ -454,8 +450,7 @@ class PowerSupplyController:
             uart (UART, optional): UART interface for PSU communication.
             uart_rx_pin (int, optional): GPIO pin for UART RX.
             buzzer (Buzzer, optional): Buzzer instance for audio feedback.
-            turn_off_voltage (float, optional): Voltage threshold for safety shutdown.
-            current_channel (int, optional): Initial current channel (0-3).
+            profile (object): Profile storage.
 
         Raises:
             Exception: If pin initialization fails.
@@ -464,11 +459,16 @@ class PowerSupplyController:
         self._state = PSUState()
         self._uart = uart
         self._uart_rx_pin = uart_rx_pin
-        self._turn_off_voltage = turn_off_voltage
-        self._turn_off_confirmations = 0
         self._buffer = None
+        self._profile = profile
+
+        current_channel = self._profile.get(
+            PROFILE_KEY_PSU_CURRENT,
+            conf.PSU_CURRENT_CHANNEL,
+        )
 
         # Initialize hardware components
+        self._uart.init(rx=self._uart_rx_pin, baud_rate=4800)
         self._initialize_tachometer(fan_tachometer_pin, fan_tachometer_timer)
         self._initialize_power_button(power_button_pin, power_button_timer, buzzer)
         self._initialize_power_gate(power_gate_pin)
@@ -491,7 +491,8 @@ class PowerSupplyController:
         try:
             self._power_button = ButtonController(
                 listen_pin=pin,
-                on_change=self.on_power_trigger,
+                on_long_press=self.on_power_trigger,
+                on_short_press=self.rotate_current_channel,
                 buzzer=buzzer,
                 trigger_timer=timer_id,
             )
@@ -511,13 +512,13 @@ class PowerSupplyController:
             logger.error(f"PSU gate pin failed: {e}")
 
     def _initialize_current_control(self, pin_a, pin_b, channel):
-        """Initialize the current control pins and set initial channel."""
+        """Initialize the current control pins and set an initial channel."""
         try:
             self._current_a_pin = machine.Pin(
-                pin_a, machine.Pin.OUT, machine.Pin.PULL_DOWN
+                pin_a, machine.Pin.OUT, machine.Pin.PULL_DOWN, value=0
             )
             self._current_b_pin = machine.Pin(
-                pin_b, machine.Pin.OUT, machine.Pin.PULL_DOWN
+                pin_b, machine.Pin.OUT, machine.Pin.PULL_DOWN, value=0
             )
             self.set_current(channel)
         except Exception as e:
@@ -536,53 +537,9 @@ class PowerSupplyController:
         self._state.rpm = rpm
         logger.debug(f"PSU FAN RPM: {rpm}")
 
-    def on_bms_state(self, bms_state):
-        """
-        Process updates from the Battery Management System (BMS).
-
-        Monitors battery cell voltages and triggers PSU shutdown if voltage
-        exceeds the safety threshold for a sufficient number of confirmations.
-
-        Args:
-            bms_state (BMSState): The current state of the BMS.
-        """
-        # Check if any cell voltage exceeds the threshold
-        voltage_exceeded = False
-
-        for cell_index, voltage in enumerate(bms_state.cells):
-            if voltage is None:
-                continue
-
-            # Convert from mV to V
-            voltage_v = voltage / 1000
-
-            if voltage_v > self._turn_off_voltage:
-                voltage_exceeded = True
-                logger.debug(
-                    f"PSU cell {cell_index} voltage {voltage_v}V exceeds threshold {self._turn_off_voltage}V"
-                )
-                break
-
-        # Update confirmation counter based on voltage status
-        if voltage_exceeded:
-            self._turn_off_confirmations += 1
-            logger.debug(
-                f"PSU voltage threshold exceeded: {self._turn_off_confirmations}/{self.TURN_OFF_MAX_CONFIRMATIONS} confirmations"
-            )
-
-            # Shutdown if we've reached the maximum confirmations
-            if self._turn_off_confirmations >= self.TURN_OFF_MAX_CONFIRMATIONS:
-                logger.info(
-                    f"PSU reached max voltage threshold ({self._turn_off_voltage}V) - shutting down"
-                )
-                self.off()
-        else:
-            # Reset counter if voltage is within limits
-            if self._turn_off_confirmations > 0:
-                logger.debug(
-                    "PSU voltage within limits - resetting confirmation counter"
-                )
-                self._turn_off_confirmations = 0
+    def rotate_current_channel(self):
+        self.set_current((self._state.current_channel + 1) % 4)
+        self.state.notify()
 
     def set_current(self, channel):
         """
@@ -599,9 +556,10 @@ class PowerSupplyController:
         channel_b = (channel >> 1) & 0x01
         self._current_a_pin.value(channel_a)  # LSB (A)
         self._current_b_pin.value(channel_b)  # MSB (B)
-        logger.debug(
+        logger.info(
             f"Set PSU current channel: {channel} A: {channel_a} B: {channel_b} "
         )
+        self._profile.set(PROFILE_KEY_PSU_CURRENT, channel, as_bytes=False)
 
     def on(self):
         """
@@ -611,7 +569,6 @@ class PowerSupplyController:
         and updates the state to reflect the active status.
         """
         logger.info("Turning on PSU")
-        self._uart.init(rx=self._uart_rx_pin, baud_rate=4800)
         self._power_gate_pin.on()
         self._state.on()
         logger.info("PSU is on")

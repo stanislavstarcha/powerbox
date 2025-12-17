@@ -28,6 +28,12 @@ function unpack_voltage(value) {
     return (value - 1) / 100;
 }
 
+function unpack_mcu_consumption(value) {
+    if (value === null) return null;
+    if (value === 0) return null;
+    return (value - 1) / 100;
+}
+
 function unpack_current(value) {
     if (value === null) return null;
     if (value === 0) return null;
@@ -61,6 +67,7 @@ export {
     unpack,
     unpack_bool,
     unpack_voltage,
+    unpack_mcu_consumption,
     unpack_cell_voltage,
     unpack_current,
     unpack_version,

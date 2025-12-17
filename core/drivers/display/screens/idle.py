@@ -186,5 +186,5 @@ class IdleScreen(BaseScreen):
         Args:
             state: An object representing the current BMS state, which should include a 'soc' attribute.
         """
-        self.set_capacity(state.soc)
+        self.set_capacity(state.get_soc())
         self.set_eyes(random.randint(0, 100) > 80)

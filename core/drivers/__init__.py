@@ -211,6 +211,8 @@ class BaseState:
             event (str): The event type.
             callback (callable): The callback function.
         """
+        if event not in self._callbacks:
+            self._callbacks[event] = []
         self._callbacks[event].append(callback)
 
     def on(self):
@@ -233,6 +235,11 @@ class BaseState:
             for cb in self._callbacks[EVENT_STATE_OFF]:
                 cb()
         self.notify()
+
+    def trigger(self, event):
+        if self._callbacks[event]:
+            for cb in self._callbacks[event]:
+                cb()
 
     def fail(self, e=None):
         """

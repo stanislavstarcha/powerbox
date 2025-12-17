@@ -4,6 +4,7 @@ import {
     unpack_bool,
     unpack_voltage,
     unpack_cell_voltage,
+    unpack_mcu_consumption,
     unpack_current,
 } from "src/utils/ble.js";
 
@@ -23,6 +24,7 @@ export const useBMSStore = defineStore("bms", {
         level: null,
         voltage: null,
         current: null,
+        mcu_consumption: null,
         allowCharging: null,
         allowDischarging: null,
         mosTemperature: null,
@@ -56,6 +58,11 @@ export const useBMSStore = defineStore("bms", {
 
             // current
             this.current = unpack_current(view.getUint16(offset));
+            offset += 2;
+
+            this.mcu_consumption = unpack_mcu_consumption(
+                view.getUint16(offset),
+            );
             offset += 2;
 
             // level

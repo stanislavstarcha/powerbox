@@ -31,6 +31,8 @@ from const import (
     EVENT_STATE_ON,
     EVENT_STATE_OFF,
     EVENT_STATE_CHANGE,
+    EVENT_BATTERY_CHARGED,
+    EVENT_BATTERY_DISCHARGED,
     PROFILE_KEY_ATS,
     PROFILE_KEY_WIFI_SSID,
     PROFILE_KEY_WIFI_PASSWORD,
@@ -106,6 +108,15 @@ async def main():
         uart_if=conf.BMS_UART_IF,
         uart_rx_pin=conf.BMS_UART_RX_PIN,
         uart_tx_pin=conf.BMS_UART_TX_PIN,
+        profile=profile,
+        turn_off_min_voltage=profile.get(
+            PROFILE_KEY_MIN_VOLTAGE,
+            conf.BATTERY_MIN_CELL_VOLTAGE,
+        ),
+        turn_off_max_voltage=profile.get(
+            PROFILE_KEY_MAX_VOLTAGE,
+            conf.BATTERY_MAX_CELL_VOLTAGE,
+        ),
     )
 
     button_timer = machine.Timer(conf.BUTTON_TIMER_ID)
@@ -118,9 +129,6 @@ async def main():
         uart_rx_pin=conf.INVERTER_UART_RX_PIN,
         uart_tx_pin=conf.INVERTER_UART_TX_PIN,
         buzzer=buzzer,
-        turn_off_voltage=profile.get(
-            PROFILE_KEY_MIN_VOLTAGE, conf.INVERTER_MIN_CELL_VOLTAGE
-        ),
         fan_tachometer_a_pin=conf.INVERTER_FAN_TACHOMETER_A_PIN,
         fan_tachometer_b_pin=conf.INVERTER_FAN_TACHOMETER_B_PIN,
         fan_tachometer_a_timer=conf.INVERTER_FAN_TACHOMETER_A_TIMER,
@@ -133,18 +141,11 @@ async def main():
         power_gate_pin=conf.PSU_POWER_GATE_PIN,
         current_a_pin=conf.PSU_CURRENT_A_PIN,
         current_b_pin=conf.PSU_CURRENT_B_PIN,
-        turn_off_voltage=profile.get(
-            PROFILE_KEY_MAX_VOLTAGE,
-            conf.PSU_MAX_CELL_VOLTAGE,
-        ),
         fan_tachometer_pin=conf.PSU_FAN_TACHOMETER_A_PIN,
         fan_tachometer_timer=conf.PSU_FAN_TACHOMETER_TIMER,
         uart=uart,
         uart_rx_pin=conf.PSU_UART_RX_PIN,
-        current_channel=profile.get(
-            PROFILE_KEY_PSU_CURRENT,
-            conf.PSU_CURRENT_CHANNEL,
-        ),
+        profile=profile,
         buzzer=buzzer,
     )
 
@@ -214,8 +215,8 @@ async def main():
     profile.state.add_callback(EVENT_STATE_CHANGE, ota.on_profile_state)
     profile.state.add_callback(EVENT_STATE_CHANGE, ats.on_profile_state)
 
-    bms.state.add_callback(EVENT_STATE_CHANGE, inverter.on_bms_state)
-    bms.state.add_callback(EVENT_STATE_CHANGE, psu.on_bms_state)
+    bms.state.add_callback(EVENT_BATTERY_CHARGED, psu.off)
+    bms.state.add_callback(EVENT_BATTERY_DISCHARGED, inverter.off)
 
     psu.state.add_callback(EVENT_STATE_ON, inverter.off)
     psu.state.add_callback(EVENT_STATE_ON, bms.enable_charge)
