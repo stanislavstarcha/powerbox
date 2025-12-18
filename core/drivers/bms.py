@@ -491,9 +491,9 @@ class BMSState(BaseState):
         """
         return struct.pack(
             ">HHHBBBBBBBBBBHB",
-            self._pack_voltage(self.voltage),
+            self._pack(self.voltage),
             self._pack(self.current),
-            self._pack_voltage(self.mcu_consumed),
+            self._pack_float(self.mcu_consumed),
             self._pack(self.get_soc()),
             self._pack_bool(self.charging_allowed),
             self._pack_bool(self.discharging_allowed),

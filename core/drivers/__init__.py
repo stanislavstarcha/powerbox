@@ -361,11 +361,10 @@ class BaseState:
         if value is None:
             return 0x00
 
-        if value is False:
-            return 0x01
-
-        if value is True:
+        if value:
             return 0x02
+
+        return 0x01
 
     @staticmethod
     def _pack_version(value: str) -> int:
@@ -432,7 +431,22 @@ class BaseState:
         """
         if voltage is None:
             return 0
-        return int(100 * voltage) + 1
+        return voltage + 1
+
+    @staticmethod
+    def _pack_float(value, factor=100):
+        """
+        Packs a float value.
+
+        Args:
+            value (float): The value.
+
+        Returns:
+            int: The packed value.
+        """
+        if value is None:
+            return 0
+        return int(value * factor) + 1
 
     def get_ble_state(self):
         """

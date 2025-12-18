@@ -153,6 +153,7 @@ class PSUState(BaseState):
             bytes: A packed representation of the PSU state for BLE communication.
         """
         t1 = self.get_avg_temperature()
+
         return struct.pack(
             ">HHHBBBBBBB",
             self._pack(self.rpm),
