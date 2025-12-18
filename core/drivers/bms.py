@@ -616,7 +616,8 @@ class BMSController:
     # time elapsed since the last update
     mcu_power_ticks = 0
 
-    TURN_OFF_MAX_CONFIRMATIONS = 3
+    TURN_OFF_MAX_CONFIRMATIONS = 1
+
     _turn_off_confirmations = 0
     _turn_off_min_voltage = None
     _turn_off_max_voltage = None

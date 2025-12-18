@@ -45,18 +45,8 @@
                 <div class="text-caption text-grey-5">
                     {{ $t("maxChargingCurrent") }}
                 </div>
-                <q-slider
-                    class="q-pl-md q-pr-md"
-                    v-model="currentLimit"
-                    :disable="!charging"
-                    :color="charging ? 'red' : 'grey'"
-                    markers
-                    thumb-size="20px"
-                    track-size="5px"
-                    :marker-labels="currentLimitLabels"
-                    :min="0"
-                    :max="3"
-                />
+                <q-toggle v-model="turboMode" />
+
                 <div class="row">
                     <div class="col-6 text-left text-caption text-grey-5">
                         {{ $t("quiet") }}
@@ -102,13 +92,6 @@ const power = computed(() => {
     return bmsStore.voltage * bmsStore.current;
 });
 
-const currentLimitLabels = ref({
-    0: "25%",
-    1: "50%",
-    2: "75%",
-    3: "100%",
-});
-
 const charging = computed({
     get: () => psuStore.active,
     set: (value) => {
@@ -123,10 +106,10 @@ const discharging = computed({
     },
 });
 
-const currentLimit = computed({
-    get: () => appStore.currentLimit,
+const turboMode = computed({
+    get: () => appStore.psuTurbo,
     set: (value) => {
-        appStore.setCurrentLimit(value);
+        appStore.setPSUTurbo(value);
     },
 });
 

@@ -2,10 +2,14 @@ from micropython import const
 from bluetooth import UUID
 
 
+PSU_CURRENT_100 = const(3)
+PSU_CURRENT_75 = const(2)
+PSU_REDUCE_CURRENT_VOLTAGE = const(3.48)
+
 PROFILE_KEY_ATS = const(0x00)
 PROFILE_KEY_WIFI_SSID = const(0x10)
 PROFILE_KEY_WIFI_PASSWORD = const(0x11)
-PROFILE_KEY_PSU_CURRENT = const(0x20)
+PROFILE_KEY_PSU_TURBO = const(0x20)
 PROFILE_KEY_MIN_VOLTAGE = const(0x40)
 PROFILE_KEY_MAX_VOLTAGE = const(0x41)
 PROFILE_KEY_MODEL = const(0x50)

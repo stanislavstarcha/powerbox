@@ -9,10 +9,9 @@ import struct
 
 import machine
 
-import conf
 from const import BLE_PSU_STATE_UUID
 from const import (
-    PROFILE_KEY_PSU_CURRENT,
+    PROFILE_KEY_PSU_TURBO,
     HISTORY_PSU_RPM,
     HISTORY_PSU_TEMPERATURE_1,
     HISTORY_PSU_TEMPERATURE_2,
@@ -20,6 +19,9 @@ from const import (
     HISTORY_PSU_POWER_2,
     DATA_TYPE_BYTE,
     DATA_TYPE_WORD,
+    PSU_CURRENT_100,
+    PSU_CURRENT_75,
+    PSU_REDUCE_CURRENT_VOLTAGE,
 )
 from drivers import BaseState
 from drivers.button import ButtonController
@@ -69,8 +71,8 @@ class PSUState(BaseState):
     # on/off
     active = False
 
-    # current channel (0-3)
-    current = 0
+    # turbo mode
+    turbo_mode = False
 
     FRAME_SIZE = 22
 
@@ -159,7 +161,7 @@ class PSUState(BaseState):
             self._pack(self.ac),
             self._pack(t1),
             self._pack(self.t3),
-            self._pack(self.current_channel),
+            self._pack_bool(self.turbo_mode),
             self._pack_bool(self.active),
             self._pack(self.external_errors),
             self._pack(self.internal_errors),
@@ -383,9 +385,6 @@ class PowerSupplyController:
         POWER_GATE_PIN (int): Pin for controlling the PSU power gate.
         CURRENT_A_PIN (int): Pin A for current control.
         CURRENT_B_PIN (int): Pin B for current control.
-        TURN_OFF_VOLTAGE (float): Voltage threshold for turning off the PSU.
-        TURN_OFF_MAX_CONFIRMATIONS (int): Maximum confirmations for turn-off voltage.
-        CURRENT_CHANNEL (int): Default current channel.
     """
 
     # A pin to listen to
@@ -414,8 +413,6 @@ class PowerSupplyController:
     _state = None
 
     _error = 0
-
-    CURRENT_CHANNEL = 0
 
     _buffer = None
 
@@ -462,9 +459,9 @@ class PowerSupplyController:
         self._buffer = None
         self._profile = profile
 
-        current_channel = self._profile.get(
-            PROFILE_KEY_PSU_CURRENT,
-            conf.PSU_CURRENT_CHANNEL,
+        self._state.turbo_mode = self._profile.get(
+            PROFILE_KEY_PSU_TURBO,
+            False,
         )
 
         # Initialize hardware components
@@ -472,7 +469,7 @@ class PowerSupplyController:
         self._initialize_tachometer(fan_tachometer_pin, fan_tachometer_timer)
         self._initialize_power_button(power_button_pin, power_button_timer, buzzer)
         self._initialize_power_gate(power_gate_pin)
-        self._initialize_current_control(current_a_pin, current_b_pin, current_channel)
+        self._initialize_current_control(current_a_pin, current_b_pin)
 
         logger.info("Initialized power supply controller")
 
@@ -493,7 +490,7 @@ class PowerSupplyController:
             self._power_button = ButtonController(
                 listen_pin=pin,
                 on_long_press=self.on_power_trigger,
-                on_short_press=self.rotate_current_channel,
+                on_short_press=self.toggle_turbo_mode,
                 buzzer=buzzer,
                 trigger_timer=timer_id,
             )
@@ -512,7 +509,7 @@ class PowerSupplyController:
             self._state.set_error(self._state.ERROR_PIN)
             logger.error(f"PSU gate pin failed: {e}")
 
-    def _initialize_current_control(self, pin_a, pin_b, channel):
+    def _initialize_current_control(self, pin_a, pin_b):
         """Initialize the current control pins and set an initial channel."""
         try:
             self._current_a_pin = machine.Pin(
@@ -521,7 +518,6 @@ class PowerSupplyController:
             self._current_b_pin = machine.Pin(
                 pin_b, machine.Pin.OUT, machine.Pin.PULL_DOWN, value=0
             )
-            self.set_current(channel)
         except Exception as e:
             self._state.set_error(self._state.ERROR_PIN)
             logger.critical(f"PSU current control pins failed: {e}")
@@ -538,9 +534,17 @@ class PowerSupplyController:
         self._state.rpm = rpm
         logger.debug(f"PSU FAN RPM: {rpm}")
 
-    def rotate_current_channel(self):
-        self.set_current((self._state.current_channel + 1) % 4)
+    def toggle_turbo_mode(self):
+        self.set_turbo_mode(not self._state.turbo_mode)
+
+    def set_turbo_mode(self, mode):
+        self._state.turbo_mode = mode
+        self.set_current(self.get_max_current())
+        self._profile.set(PROFILE_KEY_PSU_TURBO, self._state.turbo_mode, as_bytes=False)
         self.state.notify()
+
+    def get_max_current(self):
+        return PSU_CURRENT_100 if self._state.turbo_mode else PSU_CURRENT_75
 
     def set_current(self, channel):
         """
@@ -551,6 +555,7 @@ class PowerSupplyController:
 
         Args:
             channel (int): The current channel to set (0-3).
+            config (bool, optional): Whether to save the channel to persistent storage. Defaults to True.
         """
         self._state.current_channel = channel
         channel_a = channel & 0x01
@@ -560,7 +565,6 @@ class PowerSupplyController:
         logger.info(
             f"Set PSU current channel: {channel} A: {channel_a} B: {channel_b} "
         )
-        self._profile.set(PROFILE_KEY_PSU_CURRENT, channel, as_bytes=False)
 
     def on(self):
         """
@@ -570,6 +574,7 @@ class PowerSupplyController:
         and updates the state to reflect the active status.
         """
         logger.info("Turning on PSU")
+        self.set_current(self.get_max_current())
         self._power_gate_pin.on()
         self._state.on()
         logger.info("PSU is on")
@@ -598,6 +603,25 @@ class PowerSupplyController:
             self.off()
         else:
             self.on()
+
+    def check_threshold(self, bms_state):
+        max_cell_voltage = 0
+        for cell_index, voltage in enumerate(bms_state.cells):
+            if voltage > max_cell_voltage:
+                max_cell_voltage = voltage
+
+        max_cell_voltage = max_cell_voltage / 1000
+
+        if (
+            max_cell_voltage >= PSU_REDUCE_CURRENT_VOLTAGE
+            and self._state.current_channel > 0
+        ):
+            logger.info(
+                f"PSU battery voltage too high {max_cell_voltage}, reducing current to",
+                self._state.current_channel - 1,
+            )
+
+            self.set_current(self._state.current_channel - 1)
 
     async def run(self):
         """

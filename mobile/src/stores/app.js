@@ -24,7 +24,7 @@ import {
     BLE_HISTORY_STATE_UUID,
     BLE_RUN_COMMAND_UUID,
     COMMAND_PULL_HISTORY,
-    COMMAND_PSU_CURRENT,
+    COMMAND_PSU_TURBO,
     COMMAND_ATS_ENABLE,
     COMMAND_ATS_DISABLE,
 } from "stores/uuids";
@@ -53,7 +53,7 @@ export const useAppStore = defineStore("app", {
         devices: [],
 
         ats: false,
-        currentLimit: 0,
+        psuTurbo: false,
         language: i18n.global.locale,
     }),
 
@@ -172,75 +172,72 @@ export const useAppStore = defineStore("app", {
                     ),
                 ]);
 
-                await Promise.all([
-                    BleClient.startNotifications(
-                        deviceId,
-                        BLE_CORE_SERVICE_UUID,
-                        BLE_ATS_STATE_UUID,
-                        this.atsStore.parseState,
-                    ),
+                await BleClient.startNotifications(
+                    deviceId,
+                    BLE_CORE_SERVICE_UUID,
+                    BLE_ATS_STATE_UUID,
+                    this.atsStore.parseState,
+                );
+                await new Promise((r) => setTimeout(r, 50));
 
-                    BleClient.startNotifications(
-                        deviceId,
-                        BLE_CORE_SERVICE_UUID,
-                        BLE_BMS_STATE_UUID,
-                        this.bmsStore.parseState,
-                    ),
+                await BleClient.startNotifications(
+                    deviceId,
+                    BLE_CORE_SERVICE_UUID,
+                    BLE_BMS_STATE_UUID,
+                    this.bmsStore.parseState,
+                );
+                await new Promise((r) => setTimeout(r, 50));
 
-                    BleClient.startNotifications(
-                        deviceId,
-                        BLE_CORE_SERVICE_UUID,
-                        BLE_PSU_STATE_UUID,
-                        this.psuStore.parseState,
-                    ),
+                await BleClient.startNotifications(
+                    deviceId,
+                    BLE_CORE_SERVICE_UUID,
+                    BLE_PSU_STATE_UUID,
+                    this.psuStore.parseState,
+                );
+                await new Promise((r) => setTimeout(r, 50));
 
-                    BleClient.startNotifications(
-                        deviceId,
-                        BLE_CORE_SERVICE_UUID,
-                        BLE_INVERTER_STATE_UUID,
-                        this.inverterStore.parseState,
-                    ),
+                await BleClient.startNotifications(
+                    deviceId,
+                    BLE_CORE_SERVICE_UUID,
+                    BLE_INVERTER_STATE_UUID,
+                    this.inverterStore.parseState,
+                );
+                await new Promise((r) => setTimeout(r, 50));
 
-                    BleClient.startNotifications(
-                        deviceId,
-                        BLE_CORE_SERVICE_UUID,
-                        BLE_MCU_STATE_UUID,
-                        this.mcuStore.parseState,
-                    ),
+                await BleClient.startNotifications(
+                    deviceId,
+                    BLE_CORE_SERVICE_UUID,
+                    BLE_MCU_STATE_UUID,
+                    this.mcuStore.parseState,
+                );
+                await new Promise((r) => setTimeout(r, 50));
 
-                    BleClient.startNotifications(
-                        deviceId,
-                        BLE_CORE_SERVICE_UUID,
-                        BLE_OTA_STATE_UUID,
-                        this.mcuStore.parseOTAState,
-                    ),
+                await BleClient.startNotifications(
+                    deviceId,
+                    BLE_CORE_SERVICE_UUID,
+                    BLE_OTA_STATE_UUID,
+                    this.mcuStore.parseOTAState,
+                );
+                await new Promise((r) => setTimeout(r, 50));
 
-                    BleClient.startNotifications(
-                        deviceId,
-                        BLE_CORE_SERVICE_UUID,
-                        BLE_HISTORY_STATE_UUID,
-                        this.historyStore.parseState,
-                    ),
-
-                    BleClient.startNotifications(
-                        deviceId,
-                        BLE_CORE_SERVICE_UUID,
-                        BLE_ATS_STATE_UUID,
-                        this.atsStore.parseState,
-                    ),
-                ]);
+                await BleClient.startNotifications(
+                    deviceId,
+                    BLE_CORE_SERVICE_UUID,
+                    BLE_HISTORY_STATE_UUID,
+                    this.historyStore.parseState,
+                );
 
                 // request history
                 await this.runBLECommand(
                     numbersToDataView([COMMAND_PULL_HISTORY]),
                 );
 
+                this.mcuStore.parseState(mcuState);
+                this.mcuStore.checkFirmwareUpdate();
                 this.atsStore.parseState(atsState);
                 this.bmsStore.parseState(bmsState);
                 this.psuStore.parseState(psuState);
                 this.inverterStore.parseState(inverterState);
-                this.mcuStore.parseState(mcuState);
-                this.mcuStore.checkFirmwareUpdate();
 
                 console.log("Connected to device:", deviceId);
                 Loading.hide();
@@ -291,9 +288,9 @@ export const useAppStore = defineStore("app", {
 
         async loadDevicePreferences() {
             const ats = await Preferences.get({ key: "ats" });
-            const current = await Preferences.get({ key: "current" });
+            const turbo = await Preferences.get({ key: "turbo" });
             this.setATS(_.defaultTo(JSON.parse(ats.value), false));
-            this.setCurrentLimit(_.defaultTo(JSON.parse(current.value), 0));
+            this.setPSUTurbo(_.defaultTo(JSON.parse(turbo.value), false));
         },
 
         async getPreference(key) {
@@ -330,11 +327,11 @@ export const useAppStore = defineStore("app", {
             });
         },
 
-        setCurrentLimit(value) {
-            this.savePreference("current", value).then(() => {
-                this.currentLimit = value;
+        setPSUTurbo(value) {
+            this.savePreference("turbo", value).then(() => {
+                this.psuTurbo = value;
                 this.runBLECommand(
-                    numbersToDataView([COMMAND_PSU_CURRENT, value]),
+                    numbersToDataView([COMMAND_PSU_TURBO, value]),
                 );
             });
         },

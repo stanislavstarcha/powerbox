@@ -18,7 +18,7 @@ import {
     PROFILE_KEY_ATS,
     PROFILE_KEY_WIFI_SSID,
     PROFILE_KEY_WIFI_PASSWORD,
-    PROFILE_KEY_PSU_CURRENT,
+    PROFILE_KEY_PSU_TURBO,
     PROFILE_KEY_MIN_VOLTAGE,
     PROFILE_KEY_MAX_VOLTAGE,
     COMMAND_UPDATE_FIRMWARE,
@@ -100,6 +100,7 @@ export const useMCUStore = defineStore("esp", {
         parseState(view) {
             let offset = 0;
             console.log("MCU state", dataViewToHexDump(view));
+            console.log("MCU state 1");
 
             this.uptime = unpack(view.getUint32(offset));
             offset += 4;
@@ -115,15 +116,19 @@ export const useMCUStore = defineStore("esp", {
 
             this.internalErrors = unpack(view.getUint8(offset));
             offset += 1;
+
+            console.log("MCU parsed", this.version);
         },
 
         checkFirmwareUpdate() {
+            console.log("OTA checking for updates");
             axios
                 .get(
                     "https://api.github.com/repos/stanislavstarcha/powerbox/releases/latest",
                 )
                 .then((response) => {
                     this.remoteVersion = response.data.tag_name;
+                    console.log("OTA remote version", this.remoteVersion);
                     this.updateAvailable = this.compareVersions(
                         this.version,
                         response.data.tag_name,

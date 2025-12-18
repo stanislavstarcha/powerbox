@@ -46,7 +46,7 @@ _ADV_TYPE_APPEARANCE = const(0x19)
 COMMAND_PULL_HISTORY = const(0x01)
 COMMAND_PSU_ENABLE = const(0x10)
 COMMAND_PSU_DISABLE = const(0x11)
-COMMAND_PSU_CURRENT = const(0x12)
+COMMAND_PSU_TURBO = const(0x12)
 COMMAND_INVERTER_ENABLE = const(0x20)
 COMMAND_INVERTER_DISABLE = const(0x21)
 COMMAND_ATS_ENABLE = const(0x30)
@@ -400,10 +400,10 @@ class BLEServerController:
             logger.debug("Turn off PSU via BLE command")
             self._instructions.add(self._psu.off)
 
-        if subcommand == COMMAND_PSU_CURRENT:
-            logger.debug("Set PSU current via BLE command")
+        if subcommand == COMMAND_PSU_TURBO:
+            logger.debug("Set PSU turbo via BLE command")
             level = struct.unpack_from(">B", data, 1)[0]
-            self._instructions.add(self._psu.set_current, level)
+            self._instructions.add(self._psu.set_turbo_mode, level)
 
         if subcommand == COMMAND_INVERTER_ENABLE:
             logger.debug("Turn on INVERTER via BLE command")

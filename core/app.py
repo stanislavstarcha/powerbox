@@ -36,7 +36,7 @@ from const import (
     PROFILE_KEY_ATS,
     PROFILE_KEY_WIFI_SSID,
     PROFILE_KEY_WIFI_PASSWORD,
-    PROFILE_KEY_PSU_CURRENT,
+    PROFILE_KEY_PSU_TURBO,
     PROFILE_KEY_MAX_VOLTAGE,
     PROFILE_KEY_MIN_VOLTAGE,
     PROFILE_KEY_MODEL,
@@ -217,6 +217,7 @@ async def main():
 
     bms.state.add_callback(EVENT_BATTERY_CHARGED, psu.off)
     bms.state.add_callback(EVENT_BATTERY_DISCHARGED, inverter.off)
+    bms.state.add_callback(EVENT_STATE_CHANGE, psu.check_threshold)
 
     psu.state.add_callback(EVENT_STATE_ON, inverter.off)
     psu.state.add_callback(EVENT_STATE_ON, bms.enable_charge)

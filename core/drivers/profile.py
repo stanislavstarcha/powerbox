@@ -12,7 +12,7 @@ import struct
 import conf
 from const import (
     PROFILE_KEY_ATS,
-    PROFILE_KEY_PSU_CURRENT,
+    PROFILE_KEY_PSU_TURBO,
     PROFILE_KEY_WIFI_SSID,
     PROFILE_KEY_WIFI_PASSWORD,
     PROFILE_KEY_MIN_VOLTAGE,
@@ -29,7 +29,7 @@ from logging import logger
 
 KEY_TYPES = {
     PROFILE_KEY_ATS: DATA_TYPE_BOOL,
-    PROFILE_KEY_PSU_CURRENT: DATA_TYPE_INT8,
+    PROFILE_KEY_PSU_TURBO: DATA_TYPE_BOOL,
     PROFILE_KEY_WIFI_SSID: DATA_TYPE_STRING,
     PROFILE_KEY_WIFI_PASSWORD: DATA_TYPE_STRING,
     PROFILE_KEY_MIN_VOLTAGE: DATA_TYPE_FLOAT32,
@@ -145,7 +145,7 @@ class ProfileController:
                     hex(PROFILE_KEY_ATS): False,
                     hex(PROFILE_KEY_WIFI_SSID): None,
                     hex(PROFILE_KEY_WIFI_PASSWORD): None,
-                    hex(PROFILE_KEY_PSU_CURRENT): 0,
+                    hex(PROFILE_KEY_PSU_TURBO): False,
                     hex(PROFILE_KEY_MIN_VOLTAGE): conf.BATTERY_MIN_CELL_VOLTAGE,
                     hex(PROFILE_KEY_MAX_VOLTAGE): conf.BATTERY_MAX_CELL_VOLTAGE,
                     hex(PROFILE_KEY_MCU_POWER): 0,

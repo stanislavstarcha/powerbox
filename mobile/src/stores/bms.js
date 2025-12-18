@@ -55,15 +55,17 @@ export const useBMSStore = defineStore("bms", {
             // voltage
             this.voltage = unpack_voltage(view.getUint16(offset));
             offset += 2;
+            console.log("BMS voltage", this.voltage);
 
             // current
             this.current = unpack_current(view.getUint16(offset));
             offset += 2;
+            console.log("BMS current", this.current);
 
-            this.mcu_consumption = unpack_mcu_consumption(
-                view.getUint16(offset),
-            );
-            offset += 2;
+            // this.mcu_consumption = unpack_mcu_consumption(
+            //     view.getUint16(offset),
+            // );
+            // offset += 2;
 
             // level
             this.level = unpack(view.getUint8(offset));

@@ -176,7 +176,7 @@ class ActiveScreen(BaseScreen):
             self.capacity_bar.set_value(value, lv.ANIM.OFF)
             self.capacity_bar.invalidate()
 
-    def set_psu_state(self, t1, t2, ac_voltage, current):
+    def set_psu_state(self, t1, t2, ac_voltage, turbo, current):
         """
         Updates the PSU state display with temperature, AC voltage, and RPM.
 
@@ -184,6 +184,7 @@ class ActiveScreen(BaseScreen):
             t1 (int or float): First temperature value.
             t2 (int or float): Second temperature value.
             ac_voltage (int or float): AC voltage.
+            turbo (bool): Turbo mode flag.
             current (int): Current mode.
         """
         if t1 and t2:
@@ -191,7 +192,8 @@ class ActiveScreen(BaseScreen):
         if ac_voltage:
             self.psu_ac_voltage.set_text(f"{ac_voltage}В")
         if current:
-            self.psu_current.set_text(f"{current}%")
+            turbo = "МАКС " if turbo else ""
+            self.psu_current.set_text(f"{turbo}{current}%")
 
     def set_inverter_state(self, temperature, ac_voltage, rpm):
         """
@@ -528,6 +530,7 @@ class ActiveScreen(BaseScreen):
                 t1=random.randint(16, 42),
                 t2=random.randint(16, 42),
                 ac_voltage=random.randint(207, 230),
+                turbo=False,
                 current=random.randint(
                     0,
                     100,
@@ -629,11 +632,12 @@ class ActiveScreen(BaseScreen):
                 t1=average_temperature,
                 t2=state.t3,
                 ac_voltage=state.ac,
+                turbo=state.turbo_mode,
                 current=current_channels.get(state.current_channel),
             )
 
         if not state.active:
-            self.set_psu_state(t1="", t2="", ac_voltage="", current="")
+            self.set_psu_state(t1="", t2="", ac_voltage="", turbo=False, current="")
 
     def on_inverter_state(self, state):
         """
