@@ -607,6 +607,8 @@ class PowerSupplyController:
     def check_threshold(self, bms_state):
         max_cell_voltage = 0
         for cell_index, voltage in enumerate(bms_state.cells):
+            if voltage is None:
+                continue
             if voltage > max_cell_voltage:
                 max_cell_voltage = voltage
 
@@ -614,7 +616,7 @@ class PowerSupplyController:
 
         if (
             max_cell_voltage >= PSU_REDUCE_CURRENT_VOLTAGE
-            and self._state.current_channel > 0
+            and self._state.current_channel > 1
         ):
             logger.info(
                 f"PSU battery voltage too high {max_cell_voltage}, reducing current to",
